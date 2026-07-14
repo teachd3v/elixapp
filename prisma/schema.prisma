@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enum untuk Role Pengguna
+enum Role {
+  UNVERIFIED
+  AWARDEE
+  MENTOR
+  SUPERADMIN
+}
+
+// Model User: Terhubung dengan Clerk Auth via clerkId
+model User {
+  id                String   @id @default(uuid())
+  clerkId           String   @unique // ID dari Clerk Authentication
+  email             String   @unique
+  name              String
+  role              Role     @default(UNVERIFIED)
+  phone             String?
+  avatarUrl         String?
+  
+  // Status Onboarding
+  isProfileComplete Boolean  @default(false)
+  
+  // Relasi jika user adalah Awardee
+  awardeeProfile    AwardeeProfile?
+  
+  // Relasi jika user adalah Mentor
+  mentorProfile    MentorProfile?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Profil Khusus Awardee
+model AwardeeProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  wilayahId    String
+  wilayah      Wilayah  @relation(fields: [wilayahId], references: [id])
+
+  school       String?
+  university   String?
+  major        String?
+  generation   String?
+  gpa          Float?
+  gender       String?
+  birthInfo    String?
+  address      String?
+  ktp          String?
+  kk           String?
+  province     String?
+  city         String?
+
+  // Nilai
+  saScore          Float    @default(0.0) // Self Assessment Score (0-4)
+  maScore          Float    @default(0.0) // Mentor Assessment Score (0-4)
+  hasFilledSA      Boolean  @default(false)
+  hasFilledMA      Boolean  @default(false)
+  saResponses      Json?    // { statementId: 1-4 }
+  saDimensionScores Json?   // { dimensionId: avg score }
+  saSubmittedAt    DateTime?
+  maResponses      Json?    // { statementId: 1-4 } — filled by mentor
+  maDimensionScores Json?   // { dimensionId: avg score }
+  maSubmittedAt    DateTime?
+  maById           String?  // User.id of the mentor who assessed
+  
+  // Relasi Absensi & Izin
+  attendances  Attendance[]
+  excuses      Excuse[]
+}
+
+// Profil Khusus Mentor
+model MentorProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  wilayahId    String   @unique
+  wilayah      Wilayah  @relation(fields: [wilayahId], references: [id])
+  
+  sessions     Session[]
+}
+
+// Model Wilayah
+model Wilayah {
+  id             String          @id @default(uuid())
+  name           String          @unique
+  
+  mentorProfile  MentorProfile?
+  awardees       AwardeeProfile[]
+  sessions       Session[]
+}
+
+// Sesi Pembinaan (Dibuat oleh Mentor)
+model Session {
+  id          String   @id @default(uuid())
+  title       String
+  date        DateTime
+  
+  mentorId    String
+  mentor      MentorProfile @relation(fields: [mentorId], references: [id])
+  
+  wilayahId   String
+  wilayah     Wilayah       @relation(fields: [wilayahId], references: [id])
+  
+  attendances Attendance[]
+  
+  createdAt   DateTime @default(now())
+}
+
+// Enum Status Absensi
+enum AttendanceStatus {
+  HADIR
+  ALFA
+  IZIN
+  MENUNGGU_KONFIRMASI
+}
+
+// Catatan Kehadiran (Absensi)
+model Attendance {
+  id              String   @id @default(uuid())
+  
+  sessionId       String
+  session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  awardeeId       String
+  awardee         AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
+  
+  status          AttendanceStatus @default(MENUNGGU_KONFIRMASI)
+  proofPhotoUrl   String? // URL foto selfie/bukti
+  notes           String?
+  
+  submittedAt     DateTime @default(now())
+  verifiedAt      DateTime?
+}
+
+// Enum Status Izin
+enum ExcuseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Pengajuan Izin (Excuse)
+model Excuse {
+  id          String   @id @default(uuid())
+  
+  awardeeId   String
+  awardee     AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
+  
+  reason      String
+  date        DateTime
+  proofUrl    String? // Surat keterangan/bukti izin
+  
+  status      ExcuseStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+}
+
+// Pengumuman Terintegrasi
+enum TargetRole {
+  ALL
+  AWARDEE
+  MENTOR
+}
+
+model Announcement {
+  id           String   @id @default(uuid())
+  title        String
+  message      String
+  
+  targetRole   TargetRole @default(ALL)
+  targetRegion String?    // ID Wilayah atau "all"
+  
+  createdAt    DateTime @default(now())
+}
