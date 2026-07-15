@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import RealProfile from './RealProfile';
 import MentorAssessment from './MentorAssessment';
+import SessionsManager from './SessionsManager';
+import AnnouncementsManager from './AnnouncementsManager';
 import { blendedScore, toElixIndex } from '../lib/assessment';
 
 async function fetchJson(url) {
@@ -65,17 +67,11 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   if (activeTab === 'profile') {
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;
   }
-  if (activeTab === 'attendance') {
-    return <EmptyState darkMode={darkMode} icon={ClipboardCheck} title="Monitoring absensi belum tersedia"
-      desc="Absensi sesi pembinaan wilayahmu akan muncul di sini. Belum ada data." />;
-  }
   if (activeTab === 'pengumuman') {
-    return <EmptyState darkMode={darkMode} icon={Megaphone} title="Pengumuman belum tersedia"
-      desc="Fitur pengumuman untuk awardee wilayahmu akan segera hadir." />;
+    return <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />;
   }
   if (activeTab === 'sessions') {
-    return <EmptyState darkMode={darkMode} icon={Calendar} title="Sesi pembinaan belum tersedia"
-      desc="Penjadwalan sesi pembinaan wilayah akan segera hadir." />;
+    return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
   }
 
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';

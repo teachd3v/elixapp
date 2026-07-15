@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import RealProfile from './RealProfile';
 import SelfAssessment from './SelfAssessment';
+import SessionsManager from './SessionsManager';
+import PortfolioManager from './PortfolioManager';
 import { dimensions as DIMENSIONS, toElixIndex, elixCategory, blendedScore } from '../lib/assessment';
 
 async function fetchJson(url) {
@@ -57,14 +59,12 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
     return <SelfAssessment darkMode={darkMode} onSaved={load} />;
   }
   if (activeTab === 'attendance') {
-    return <EmptyState darkMode={darkMode} icon={ClipboardCheck}
-      title="Belum ada sesi pembinaan"
-      desc="Sesi pembinaan dari mentor wilayahmu akan muncul di sini beserta absensimu. Belum ada data." />;
+    // Fase 6a: awardee bisa lihat daftar sesi (mendatang & riwayat).
+    // Tombol absen dengan foto akan hadir di Fase 6b.
+    return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate={false} />;
   }
   if (activeTab === 'portfolio') {
-    return <EmptyState darkMode={darkMode} icon={FolderHeart}
-      title="Portofolio masih kosong"
-      desc="Belum ada karya yang kamu unggah. Fitur unggah portofolio akan segera hadir." />;
+    return <PortfolioManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
   }
 
   // ---------- dashboard tab ----------

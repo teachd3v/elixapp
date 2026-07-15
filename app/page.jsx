@@ -23,6 +23,7 @@ import { useAppLogic } from '../hooks/useAppLogic';
 
 import UnverifiedView from '../components/UnverifiedView';
 import RealProfile from '../components/RealProfile';
+import NotificationsBell from '../components/NotificationsBell';
 import AwardeeDashboard from '../components/AwardeeDashboard';
 import MentorDashboard from '../components/MentorDashboard';
 import SuperadminDashboardReal from '../components/SuperadminDashboardReal';
@@ -298,83 +299,7 @@ return (
 
             {/* Profile Avatar Quick info removed */}
 
-            <div className="relative">
-              <button 
-                onClick={() => setShowNotifPopup(!showNotifPopup)}
-                className={`p-2.5 rounded-full ${darkMode ? 'bg-slate-900 text-sky-400' : 'bg-sky-100 text-[#13385c]'} transition-all relative`}
-              >
-                <Bell className="w-4 h-4" />
-                {notifications.filter(n => !n.isRead && (n.targetRole === 'all' || n.targetRole === role) && (n.targetRegion === 'all' || n.targetRegion === (role === 'awardee' ? awardeeProfile.region : (role === 'mentor' ? mentorProfile.region : 'all')))).length > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse"></span>
-                )}
-              </button>
-              
-              {/* Notification Dropdown / Modal (responsive logic via CSS) */}
-              {showNotifPopup && (
-                <>
-                  <div className="fixed inset-0 z-40 md:hidden bg-slate-900/20 backdrop-blur-sm" onClick={() => setShowNotifPopup(false)}></div>
-                  <div className={`absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 md:w-96 rounded-3xl shadow-2xl z-50 overflow-hidden border flex flex-col ${
-                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
-                  } origin-top-right animate-scale-up max-h-[80vh] sm:max-h-[60vh] -mr-[4.5rem] sm:mr-0`}>
-                    <div className={`p-4 border-b flex items-center justify-between ${darkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
-                      <h4 className="font-bold text-sm">Notifikasi</h4>
-                      <button 
-                        onClick={() => {
-                          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-                        }}
-                        className="text-[10px] font-bold text-sky-500 hover:text-sky-600 transition-colors"
-                      >
-                        Tandai semua dibaca
-                      </button>
-                    </div>
-                    <div className="p-2 overflow-y-auto flex-1">
-                      {notifications.filter(n => (n.targetRole === 'all' || n.targetRole === role) && (n.targetRegion === 'all' || n.targetRegion === (role === 'awardee' ? awardeeProfile.region : (role === 'mentor' ? mentorProfile.region : 'all')))).length === 0 ? (
-                        <div className="p-6 text-center text-slate-400 text-xs font-bold flex flex-col items-center gap-2">
-                          <Bell className="w-8 h-8 opacity-20 mb-2" />
-                          Belum ada notifikasi baru
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {notifications
-                            .filter(n => (n.targetRole === 'all' || n.targetRole === role) && (n.targetRegion === 'all' || n.targetRegion === (role === 'awardee' ? awardeeProfile.region : (role === 'mentor' ? mentorProfile.region : 'all'))))
-                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                            .map(notif => (
-                              <div 
-                                key={notif.id} 
-                                className={`p-3 rounded-2xl transition-all cursor-pointer flex gap-3 ${
-                                  !notif.isRead 
-                                    ? (darkMode ? 'bg-sky-900/20' : 'bg-sky-50') 
-                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                }`}
-                                onClick={() => {
-                                  setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
-                                }}
-                              >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                                  notif.targetRole === 'all' ? 'bg-purple-500/10 text-purple-600' : 'bg-sky-500/10 text-sky-600'
-                                }`}>
-                                  <Megaphone className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-start mb-1 gap-2">
-                                    <h5 className={`text-xs font-bold ${!notif.isRead ? (darkMode ? 'text-white' : 'text-slate-900') : (darkMode ? 'text-slate-300' : 'text-slate-600')}`}>
-                                      {notif.title}
-                                    </h5>
-                                    <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">{notif.date}</span>
-                                  </div>
-                                  <p className={`text-[10px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                    {notif.message}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <NotificationsBell darkMode={darkMode} />
 
             <button
               onClick={() => {
@@ -429,7 +354,7 @@ return (
 
         {/* ---------------- SUPERADMIN (real, DB-backed) ---------------- */}
         {role === 'superadmin' && (
-          <SuperadminDashboardReal darkMode={darkMode} activeTab={activeTab} dbUser={dbUser} />
+          <SuperadminDashboardReal darkMode={darkMode} activeTab={activeTab} dbUser={dbUser} role={role} />
         )}
 
       </main>

@@ -15,9 +15,8 @@ const MENU_CONFIG = {
   mentor: [
     { id: 'dashboard', label: 'Dashboard', icon: Compass },
     { id: 'assessment', label: 'Nilai MA', icon: UserCheck },
-    { id: 'attendance', label: 'Monitoring', icon: ClipboardCheck },
+    { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck },
     { id: 'pengumuman', label: 'Info', icon: Megaphone },
-    { id: 'sessions', label: 'Sesi', icon: Calendar },
     { id: 'profile', label: 'Profil', icon: User },
   ],
   superadmin: [

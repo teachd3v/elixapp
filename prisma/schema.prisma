@@ -35,7 +35,14 @@ model User {
   
   // Relasi jika user adalah Mentor
   mentorProfile    MentorProfile?
-  
+
+  // Sesi pembinaan yang dibuat user ini (mentor atau superadmin)
+  sessionsCreated  Session[]  @relation("SessionCreator")
+
+  // Pengumuman yang dibuat user ini (mentor atau superadmin)
+  announcementsCreated Announcement[] @relation("AnnouncementCreator")
+  announcementReads    AnnouncementRead[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -78,6 +85,9 @@ model AwardeeProfile {
   // Relasi Absensi & Izin
   attendances  Attendance[]
   excuses      Excuse[]
+
+  // Portofolio karya/prestasi awardee
+  portfolios   Portfolio[]
 }
 
 // Profil Khusus Mentor
@@ -102,20 +112,33 @@ model Wilayah {
   sessions       Session[]
 }
 
-// Sesi Pembinaan (Dibuat oleh Mentor)
+// Cakupan sesi: WILAYAH (dibuat mentor untuk wilayahnya) atau NASIONAL (dibuat superadmin, semua wilayah).
+enum SessionScope {
+  WILAYAH
+  NASIONAL
+}
+
+// Sesi Pembinaan
 model Session {
   id          String   @id @default(uuid())
   title       String
   date        DateTime
-  
-  mentorId    String
-  mentor      MentorProfile @relation(fields: [mentorId], references: [id])
-  
-  wilayahId   String
-  wilayah     Wilayah       @relation(fields: [wilayahId], references: [id])
-  
+  time        String?  // e.g. "13:30 - 15:30"
+  scope       SessionScope @default(WILAYAH)
+
+  // Siapa pun (mentor / superadmin) yang membuat sesi ini
+  createdById String
+  createdBy   User @relation("SessionCreator", fields: [createdById], references: [id])
+
+  // Hanya diisi untuk sesi WILAYAH
+  mentorId    String?
+  mentor      MentorProfile? @relation(fields: [mentorId], references: [id])
+
+  wilayahId   String?
+  wilayah     Wilayah? @relation(fields: [wilayahId], references: [id])
+
   attendances Attendance[]
-  
+
   createdAt   DateTime @default(now())
 }
 
@@ -127,22 +150,40 @@ enum AttendanceStatus {
   MENUNGGU_KONFIRMASI
 }
 
+// Kategori izin (dipakai saat awardee mengajukan izin untuk sebuah sesi).
+enum ExcuseCategory {
+  SAKIT
+  AGENDA_KELUARGA
+  AGENDA_ORGANISASI
+  AGENDA_PRIBADI
+  LAINNYA
+}
+
 // Catatan Kehadiran (Absensi)
 model Attendance {
   id              String   @id @default(uuid())
-  
+
   sessionId       String
   session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
+
   awardeeId       String
   awardee         AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
-  
+
   status          AttendanceStatus @default(MENUNGGU_KONFIRMASI)
-  proofPhotoUrl   String? // URL foto selfie/bukti
+  // Absen (HADIR)
+  selfiePhoto     String? @db.Text // base64 data URL (client-compressed)
+  atmospherePhoto String? @db.Text // base64 data URL (client-compressed)
   notes           String?
-  
+  // Izin (IZIN)
+  excuseCategory  ExcuseCategory?
+  excuseReason    String?
+  excusePhoto     String? @db.Text // bukti izin: surat sakit, undangan, dll.
+
   submittedAt     DateTime @default(now())
   verifiedAt      DateTime?
+  verifiedById    String?  // User.id mentor/superadmin who set HADIR/ALFA/IZIN
+
+  @@unique([sessionId, awardeeId]) // one attendance per awardee per session
 }
 
 // Enum Status Izin
@@ -179,9 +220,58 @@ model Announcement {
   id           String   @id @default(uuid())
   title        String
   message      String
-  
+
   targetRole   TargetRole @default(ALL)
-  targetRegion String?    // ID Wilayah atau "all"
-  
+  targetRegion String?    // Wilayah.id atau null (semua wilayah)
+
+  createdById  String
+  createdBy    User @relation("AnnouncementCreator", fields: [createdById], references: [id])
+
+  reads        AnnouncementRead[]
+
   createdAt    DateTime @default(now())
+}
+
+// Kategori portofolio awardee (prestasi, organisasi, dsb.)
+enum PortfolioCategory {
+  PRESTASI
+  ORGANISASI
+  PELATIHAN
+  KARYA_PERSONAL
+  LAINNYA
+}
+
+// Portofolio karya/prestasi yang di-upload awardee.
+model Portfolio {
+  id          String @id @default(uuid())
+
+  awardeeId   String
+  awardee     AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
+
+  title       String
+  category    PortfolioCategory @default(LAINNYA)
+  // `date`      = tanggal event untuk kategori non-Organisasi
+  //             = periode awal (bulan/tahun, day=1) untuk Organisasi
+  date        DateTime
+  // Hanya untuk Organisasi. Null jika `isOngoing` true.
+  dateEnd     DateTime?
+  isOngoing   Boolean  @default(false)
+  description String?
+  link        String?  // URL opsional (YouTube, portfolio online, dll.)
+  attachment  String? @db.Text // base64 data URL (client-compressed) — sertifikat/foto bukti
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Pelacak siapa saja yang sudah membaca sebuah pengumuman (untuk badge unread).
+model AnnouncementRead {
+  id             String @id @default(uuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime @default(now())
+
+  @@unique([announcementId, userId])
 }

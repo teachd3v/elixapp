@@ -8,6 +8,8 @@ import {
   TrendingUp, UserCheck, CheckCircle2, BarChart3, Shield,
 } from 'lucide-react';
 import PendingApprovals from './PendingApprovals';
+import SessionsManager from './SessionsManager';
+import AnnouncementsManager from './AnnouncementsManager';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -34,7 +36,7 @@ function EmptyState({ icon: Icon, title, desc, darkMode }) {
 // Wired tabs: dashboard, users (PendingApprovals + real directory), elix_analysis.
 // The remaining tabs (attendance/instruments/pengumuman) are honest EmptyStates
 // until those features have a real backend.
-export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser }) {
+export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, role }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,16 +59,16 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser })
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (activeTab === 'attendance') {
-    return <EmptyState darkMode={darkMode} icon={ClipboardCheck} title="Kelola Presensi belum tersedia"
-      desc="Data absensi sesi pembinaan akan muncul di sini setelah fitur sesi & absensi dibangun." />;
+    // Fase 6a: superadmin mengelola sesi Nasional (dan melihat semua sesi wilayah).
+    // Fitur monitoring absensi lintas wilayah menyusul di Fase 6b.
+    return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
   }
   if (activeTab === 'instruments') {
     return <EmptyState darkMode={darkMode} icon={SlidersHorizontal} title="Instrumen & Formula"
       desc="Bobot dimensi ELIX & pernyataan SA/MA saat ini diambil dari data/constants.js. Editor dinamis belum tersedia." />;
   }
   if (activeTab === 'pengumuman') {
-    return <EmptyState darkMode={darkMode} icon={Megaphone} title="Pengumuman belum tersedia"
-      desc="Fitur pengumuman terintegrasi akan segera hadir." />;
+    return <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />;
   }
 
   if (loading) {
