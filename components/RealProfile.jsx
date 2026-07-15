@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { UserCheck, Save, Edit, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { UserCheck, Save, Edit, CheckCircle2, AlertCircle, Sparkles, Camera, Trash2 } from 'lucide-react';
+import { fileToCompressedDataUrl } from '../lib/image';
 
 async function fetchJson(url, options) {
   const res = await fetch(url, options);
@@ -27,6 +28,55 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  // Cascading province → city dropdown data (bundled to public/api-wilayah/).
+  // provinces = [{ id, name }]; cities = [{ id, name }] scoped to current provinceId.
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // Avatar upload state (available in view mode via camera overlay button).
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState(null);
+  const avatarInputRef = useRef(null);
+
+  // Called when user picks a new file from the hidden <input>. Compresses to a
+  // small square avatar-sized JPEG then POSTs — server updates User.avatarUrl,
+  // which naturally OVERWRITES the previous image (no old-blob orphan).
+  const uploadAvatar = async (file) => {
+    if (!file) return;
+    setAvatarBusy(true); setAvatarError(null);
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file, { maxDim: 400, quality: 0.8 });
+      const res = await fetchJson('/api/profile/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl: dataUrl }),
+      });
+      if (setDbUser) setDbUser(res.user);
+    } catch (e) {
+      setAvatarError(e.message);
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    if (!window.confirm('Hapus foto profil? Nanti akan muncul ikon default.')) return;
+    setAvatarBusy(true); setAvatarError(null);
+    try {
+      const res = await fetchJson('/api/profile/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl: null }),
+      });
+      if (setDbUser) setDbUser(res.user);
+    } catch (e) {
+      setAvatarError(e.message);
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   const [form, setForm] = useState({
     name: dbUser?.name || '',
     phone: dbUser?.phone || '',
@@ -42,12 +92,14 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
     (async () => {
       setLoading(true);
       try {
-        const [wilayah, data] = await Promise.all([
+        const [wilayah, data, provs] = await Promise.all([
           fetchJson('/api/wilayah'),
           fetchJson('/api/profile'),
+          fetchJson('/api-wilayah/provinces.json').catch(() => []),
         ]);
         if (!active) return;
         setWilayahList(wilayah);
+        setProvinces(provs);
         setProfile(data.profile);
         // Prefill form from any existing profile.
         setForm((f) => ({
@@ -77,6 +129,23 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
     })();
     return () => { active = false; };
   }, []);
+
+  // Cascade: whenever the selected province changes (or provinces load in),
+  // fetch that province's kabupaten/kota list. Case-insensitive name match
+  // handles pre-existing profile values that may differ in casing.
+  useEffect(() => {
+    if (!form.province || provinces.length === 0) { setCities([]); return; }
+    const match = provinces.find((p) => p.name.toLowerCase() === form.province.toLowerCase());
+    if (!match) { setCities([]); return; }
+    let active = true;
+    setLoadingCities(true);
+    fetch(`/api-wilayah/regencies/${match.id}.json`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((list) => { if (active) setCities(list); })
+      .catch(() => { if (active) setCities([]); })
+      .finally(() => { if (active) setLoadingCities(false); });
+    return () => { active = false; };
+  }, [form.province, provinces]);
 
   const save = async (e) => {
     e.preventDefault();
@@ -141,12 +210,52 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
         <div className={`border rounded-3xl p-6 ${card}`}>
           <div className="flex items-center justify-between gap-3 mb-5">
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                {dbUser?.avatarUrl ? <img src={dbUser.avatarUrl} alt={dbUser.name} className="w-full h-full object-cover" /> : <UserCheck className="w-6 h-6 text-slate-400" />}
+              <div className="relative group shrink-0">
+                <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                  {dbUser?.avatarUrl
+                    ? <img src={dbUser.avatarUrl} alt={dbUser.name} className="w-full h-full object-cover" />
+                    : <UserCheck className="w-6 h-6 text-slate-400" />}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarBusy}
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                  title="Ganti foto profil"
+                >
+                  {avatarBusy ? <span className="text-[9px] font-bold">...</span> : <Camera className="w-5 h-5" />}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { uploadAvatar(e.target.files?.[0]); e.target.value = ''; }}
+                />
               </div>
               <div className="min-w-0">
                 <h2 className="text-lg font-black truncate">{dbUser?.name}</h2>
                 <p className="text-xs text-slate-500 truncate">{dbUser?.email} • {isMentor ? 'Mentor' : 'Awardee'}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarBusy}
+                    className="text-[10px] font-bold text-sky-500 hover:text-sky-600 flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <Camera className="w-3 h-3" /> {dbUser?.avatarUrl ? 'Ganti foto' : 'Tambah foto'}
+                  </button>
+                  {dbUser?.avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={removeAvatar}
+                      disabled={avatarBusy}
+                      className="text-[10px] font-bold text-rose-500 hover:text-rose-600 flex items-center gap-1 disabled:opacity-40"
+                    >
+                      <Trash2 className="w-3 h-3" /> Hapus
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <button
@@ -156,6 +265,11 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
               <Edit className="w-4 h-4" /> Edit
             </button>
           </div>
+          {avatarError && (
+            <div className="flex items-start gap-2 text-xs font-bold px-4 py-3 rounded-2xl bg-rose-500/10 text-rose-600 mb-4">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{avatarError}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
             {rows.map(([label, value]) => (
@@ -253,11 +367,32 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
               </div>
               <div>
                 <label className={labelCls}>Provinsi</label>
-                <input className={inputCls} value={form.province} onChange={set('province')} placeholder="Provinsi" />
+                <select
+                  className={`${inputCls} cursor-pointer`}
+                  value={form.province}
+                  onChange={(e) => setForm((f) => ({ ...f, province: e.target.value, city: '' }))}
+                >
+                  <option value="">— Pilih Provinsi —</option>
+                  {provinces.map((p) => (
+                    <option key={p.id} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelCls}>Kota/Kabupaten</label>
-                <input className={inputCls} value={form.city} onChange={set('city')} placeholder="Kota/Kabupaten" />
+                <select
+                  className={`${inputCls} cursor-pointer`}
+                  value={form.city}
+                  onChange={set('city')}
+                  disabled={!form.province || loadingCities}
+                >
+                  <option value="">
+                    {!form.province ? '— Pilih provinsi dulu —' : loadingCities ? 'Memuat...' : '— Pilih Kota/Kabupaten —'}
+                  </option>
+                  {cities.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Alamat</label>

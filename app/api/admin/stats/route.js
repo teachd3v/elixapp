@@ -10,7 +10,7 @@ export async function GET() {
   if (!me) return new NextResponse('Unauthorized', { status: 401 });
   if (me.role !== 'SUPERADMIN') return new NextResponse('Forbidden', { status: 403 });
 
-  const [users, wilayahList, awardees, mentors] = await Promise.all([
+  const [users, wilayahList, awardees, mentors, superadmins] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.wilayah.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
     prisma.awardeeProfile.findMany({
@@ -26,6 +26,11 @@ export async function GET() {
         id: true, wilayahId: true,
         user: { select: { id: true, name: true, email: true, avatarUrl: true } },
       },
+    }),
+    prisma.user.findMany({
+      where: { role: 'SUPERADMIN' },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, email: true, avatarUrl: true },
     }),
   ]);
 
@@ -104,5 +109,6 @@ export async function GET() {
     dimensionAverages,
     awardees: enrichedAwardees,
     mentors: mentors.map((m) => ({ id: m.id, wilayahId: m.wilayahId, user: m.user })),
+    superadmins,
   });
 }

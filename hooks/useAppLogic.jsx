@@ -166,21 +166,9 @@ export function useAppLogic() {
     setDialogOpen(true);
   };
 
-  // Fetch provinces
-  React.useEffect(() => {
-    setLoadingProvinces(true);
-    fetchWilayah('/api-wilayah/provinces.json')
-      .then(list => {
-        setProvinces(list);
-        setLoadingProvinces(false);
-      })
-      .catch(err => {
-        // Data wilayah sengaja ditunda (file public/api-wilayah/* belum ada).
-        // Pakai warn, bukan error, supaya nggak memicu overlay error Next.js.
-        console.warn("Data provinsi belum tersedia (ditunda):", err.message);
-        setLoadingProvinces(false);
-      });
-  }, []);
+  // (Wilayah dropdown sekarang di-handle langsung di RealProfile.jsx — komponen
+  // mock lama yang butuh state ini sudah dihapus. State + handlers di-preserve
+  // di return object supaya destructure di page.jsx yang masih ada tidak error.)
 
   // Fetch regencies initially if province is pre-populated
   React.useEffect(() => {

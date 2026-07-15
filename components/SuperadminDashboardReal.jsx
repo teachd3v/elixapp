@@ -10,6 +10,8 @@ import {
 import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
+import ChangeRoleModal from './ChangeRoleModal';
+import { Edit } from 'lucide-react';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -40,21 +42,20 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingUser, setEditingUser] = useState(null); // { user, currentRole }
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const d = await fetchJson('/api/admin/stats');
-        if (active) setData(d);
-      } catch (e) {
-        if (active) setError(e.message);
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, []);
+  const load = async () => {
+    try {
+      const d = await fetchJson('/api/admin/stats');
+      setData(d);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
 
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
@@ -78,12 +79,14 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm text-rose-500">Gagal memuat: {error}</p></div>;
   }
 
-  const { roleCounts = {}, totals = {}, nationalElix, wilayahRollup = [], dimensionAverages = [], awardees = [], mentors = [] } = data || {};
+  const { roleCounts = {}, totals = {}, nationalElix, wilayahRollup = [], dimensionAverages = [], awardees = [], mentors = [], superadmins = [] } = data || {};
 
   // ---------- USERS TAB (approvals + real directory) ----------
   if (activeTab === 'users') {
+    // Normalize bucket entries so each row exposes `user` + optional `wilayahId`.
     const roleBuckets = [
-      { role: 'SUPERADMIN', label: 'Superadmin', tone: 'bg-rose-500/10 text-rose-600', users: awardees.filter(()=>false), extras: (roleCounts.SUPERADMIN || 0) },
+      { role: 'SUPERADMIN', label: 'Superadmin', tone: 'bg-rose-500/10 text-rose-600',
+        users: superadmins.map((u) => ({ id: u.id, user: u })) },
       { role: 'MENTOR', label: 'Mentor', tone: 'bg-amber-500/10 text-amber-600', users: mentors },
       { role: 'AWARDEE', label: 'Awardee', tone: 'bg-sky-500/10 text-sky-600', users: awardees },
     ];
@@ -133,6 +136,13 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                               <MapPin className="w-3 h-3 inline mr-0.5" />{wilayah}
                             </span>
                           )}
+                          <button
+                            onClick={() => setEditingUser({ user, currentRole: b.role })}
+                            className="px-3 py-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg font-bold text-xs flex items-center gap-1 shrink-0"
+                            title="Ubah role"
+                          >
+                            <Edit className="w-3.5 h-3.5" /> Ubah Role
+                          </button>
                         </div>
                       );
                     })}
@@ -142,6 +152,17 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             ))}
           </div>
         </div>
+
+        {editingUser && (
+          <ChangeRoleModal
+            darkMode={darkMode}
+            user={editingUser.user}
+            currentRole={editingUser.currentRole}
+            meId={dbUser?.id}
+            onClose={() => setEditingUser(null)}
+            onSaved={load}
+          />
+        )}
       </div>
     );
   }
