@@ -60,8 +60,9 @@ async function manageWhere(me) {
 // scope=feed (default): notifikasi personal (exclude yang dia bikin sendiri).
 // scope=manage       : dashboard mentor/superadmin (include yang dia bikin).
 export async function GET(request) {
-  const me = await getCurrentDbUser();
-  if (!me) return new NextResponse('Unauthorized', { status: 401 });
+  try {
+    const me = await getCurrentDbUser();
+    if (!me) return new NextResponse('Unauthorized', { status: 401 });
 
   const url = new URL(request.url);
   const scope = url.searchParams.get('scope') === 'manage' ? 'manage' : 'feed';
@@ -93,6 +94,10 @@ export async function GET(request) {
     createdByName: r.createdBy?.name || null,
     isRead: r.reads.length > 0,
   })));
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    return new NextResponse(`Internal Error: ${error.message}`, { status: 500 });
+  }
 }
 
 // POST /api/announcements — buat pengumuman.

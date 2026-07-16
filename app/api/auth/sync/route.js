@@ -49,6 +49,6 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('Error syncing user:', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    return new NextResponse(`Internal Error: ${error.message}`, { status: 500 });
   }
 }
