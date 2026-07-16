@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 import { getCurrentDbUser } from '@/lib/auth';
 
 // GET /api/users — list all users. SUPERADMIN only.
@@ -24,6 +26,12 @@ export async function GET() {
       avatarUrl: true,
       isProfileComplete: true,
       createdAt: true,
+      awardeeProfile: {
+        select: {
+          hasFilledSA: true,
+          hasFilledMA: true
+        }
+      }
     },
   });
 

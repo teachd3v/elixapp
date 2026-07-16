@@ -4,13 +4,14 @@ import {
 } from 'recharts';
 import {
   BookOpen, ClipboardCheck, FolderHeart, Award, MapPin,
-  GraduationCap, UserCheck, TrendingUp, CalendarDays,
+  GraduationCap, UserCheck, TrendingUp, CalendarDays, Loader2
 } from 'lucide-react';
 import RealProfile from './RealProfile';
 import SelfAssessment from './SelfAssessment';
 import SessionsManager from './SessionsManager';
 import PortfolioManager from './PortfolioManager';
-import { dimensions as DIMENSIONS, toElixIndex, elixCategory, blendedScore } from '../lib/assessment';
+import { toElixIndex, elixCategory, blendedScore } from '../lib/assessment';
+// Force Turbopack reload
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -37,12 +38,17 @@ function EmptyState({ icon: Icon, title, desc, darkMode }) {
 // from the real Self Assessment. New awardees see honest empty/zero states.
 export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, activeTab }) {
   const [data, setData] = useState(null);
+  const [dimensions, setDimensions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const d = await fetchJson('/api/profile');
+      const [d, inst] = await Promise.all([
+        fetchJson('/api/profile'),
+        fetchJson('/api/instruments')
+      ]);
       setData(d);
+      setDimensions(inst || []);
     } catch {
       /* handled by empty defaults */
     } finally {
@@ -71,7 +77,12 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (loading) {
-    return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat dashboard...</p></div>;
+    return (
+      <div className={`border rounded-3xl p-16 flex flex-col items-center justify-center gap-4 ${card}`}>
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <p className="text-sm font-bold opacity-60">Memuat dashboard...</p>
+      </div>
+    );
   }
 
   const profile = data?.profile;
@@ -95,7 +106,7 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
     { label: 'Sesi Dihadiri', value: 0, icon: CalendarDays, tone: 'text-emerald-500' },
   ];
 
-  const radarData = DIMENSIONS.map((dim) => ({
+  const radarData = dimensions.map((dim) => ({
     subject: dim.name.split(' ')[0],
     A: dimScores[dim.id] || 0,
     fullMark: 4,

@@ -5,13 +5,16 @@ import {
 } from 'recharts';
 import {
   Users, MapPin, ClipboardCheck, SlidersHorizontal, Megaphone,
-  TrendingUp, UserCheck, CheckCircle2, BarChart3, Shield,
+  TrendingUp, UserCheck, CheckCircle2, BarChart3, Shield, Loader2, RotateCcw,
+  ChevronDown, ChevronUp, X
 } from 'lucide-react';
 import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
 import ChangeRoleModal from './ChangeRoleModal';
 import { Edit } from 'lucide-react';
+import InstrumentEditor from './InstrumentEditor';
+import { useDialog } from './DialogProvider';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -34,6 +37,78 @@ function EmptyState({ icon: Icon, title, desc, darkMode }) {
   );
 }
 
+function ProfileModal({ profile, onClose, darkMode }) {
+  if (!profile) return null;
+  const isAwardee = 'gpa' in profile;
+  
+  return (
+    <div className="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className={`w-full max-w-md my-8 border rounded-3xl p-6 ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-black text-lg">Detail Profil</h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-4 mb-6">
+          <img src={profile.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.user?.name || 'User')}&background=random`} alt="Avatar" className="w-16 h-16 rounded-full object-cover" />
+          <div>
+            <h4 className="font-bold text-lg leading-tight">{profile.user?.name}</h4>
+            <p className="text-sm opacity-60">{profile.user?.email}</p>
+            <p className="text-xs font-bold text-blue-500 mt-1">{isAwardee ? 'Awardee' : 'Mentor'}</p>
+          </div>
+        </div>
+        
+        <div className="space-y-4 text-sm">
+          {profile.user?.phone && (
+             <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">No. HP</span>
+                <span className="col-span-2">{profile.user.phone}</span>
+             </div>
+          )}
+          {isAwardee && (
+            <>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">TTL</span>
+                <span className="col-span-2">{profile.birthInfo || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">Jenis Kelamin</span>
+                <span className="col-span-2">{profile.gender || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">Alamat</span>
+                <span className="col-span-2">{profile.address || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">Sekolah/Univ</span>
+                <span className="col-span-2">{profile.university || profile.school || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">Jurusan</span>
+                <span className="col-span-2">{profile.major || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">Angkatan</span>
+                <span className="col-span-2">{profile.generation || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-bold opacity-60">IPK / Rata-rata</span>
+                <span className="col-span-2">{profile.gpa || '—'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                <span className="font-bold opacity-60">Nilai ELIX</span>
+                <span className="col-span-2 font-black text-lg">{profile.elix != null ? profile.elix.toFixed(1) : '—'}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Real, DB-backed Superadmin experience. Replaces the mock SuperadminView.
 // Wired tabs: dashboard, users (PendingApprovals + real directory), elix_analysis.
 // The remaining tabs (attendance/instruments/pengumuman) are honest EmptyStates
@@ -43,6 +118,13 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null); // { user, currentRole }
+  const [expandedWilayah, setExpandedWilayah] = useState({});
+  const [viewingProfile, setViewingProfile] = useState(null);
+  const { confirm, alert } = useDialog();
+
+  const toggleWilayah = (id) => {
+    setExpandedWilayah(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const load = async () => {
     try {
@@ -57,6 +139,19 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   useEffect(() => { load(); }, []);
 
+  const resetAssessment = async (userId, type, userName) => {
+    const isConfirmed = await confirm(`Yakin ingin mereset data penilaian ${type} untuk ${userName}? Data yang dihapus tidak bisa dikembalikan.`);
+    if (!isConfirmed) return;
+    setLoading(true);
+    try {
+      await fetch(`/api/admin/reset-assessment/${userId}?type=${type}`, { method: 'DELETE' });
+      await load();
+    } catch (e) {
+      await alert(`Gagal mereset: ${e.message}`, 'Gagal');
+      setLoading(false);
+    }
+  };
+
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (activeTab === 'attendance') {
@@ -65,15 +160,19 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
   }
   if (activeTab === 'instruments') {
-    return <EmptyState darkMode={darkMode} icon={SlidersHorizontal} title="Instrumen & Formula"
-      desc="Bobot dimensi ELIX & pernyataan SA/MA saat ini diambil dari data/constants.js. Editor dinamis belum tersedia." />;
+    return <InstrumentEditor darkMode={darkMode} />;
   }
   if (activeTab === 'pengumuman') {
     return <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />;
   }
 
   if (loading) {
-    return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat data...</p></div>;
+    return (
+      <div className={`border rounded-3xl p-16 flex flex-col items-center justify-center gap-4 ${card}`}>
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <p className="text-sm font-bold opacity-60">Memuat data...</p>
+      </div>
+    );
   }
   if (error) {
     return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm text-rose-500">Gagal memuat: {error}</p></div>;
@@ -136,12 +235,21 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                               <MapPin className="w-3 h-3 inline mr-0.5" />{wilayah}
                             </span>
                           )}
+                          {b.role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
+                            <button
+                              onClick={() => resetAssessment(user.id, 'BOTH', user.name)}
+                              className="p-2 md:px-3 md:py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
+                              title="Reset Data SA/MA"
+                            >
+                              <RotateCcw className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Reset SA/MA</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => setEditingUser({ user, currentRole: b.role })}
-                            className="px-3 py-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg font-bold text-xs flex items-center gap-1 shrink-0"
+                            className="p-2 md:px-3 md:py-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
                             title="Ubah role"
                           >
-                            <Edit className="w-3.5 h-3.5" /> Ubah Role
+                            <Edit className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Ubah Role</span>
                           </button>
                         </div>
                       );
@@ -284,29 +392,75 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           <p className="text-xs text-slate-400 text-center py-6">Belum ada wilayah.</p>
         ) : (
           <div className="space-y-3">
-            {wilayahRollup.map((w) => (
-              <div key={w.id} className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span className="font-bold text-sm truncate">{w.name}</span>
+            {wilayahRollup.map((w) => {
+              const isExpanded = expandedWilayah[w.id];
+              const wAwardees = awardees.filter(a => a.wilayahId === w.id);
+              const wMentor = mentors.find(m => m.wilayahId === w.id);
+
+              return (
+                <div key={w.id} className={`p-4 rounded-2xl border transition-colors ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div 
+                    className="flex items-center justify-between gap-3 mb-2 cursor-pointer group"
+                    onClick={() => toggleWilayah(w.id)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="font-bold text-sm truncate group-hover:text-blue-500 transition-colors">{w.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-black">{w.avgElix == null ? '—' : w.avgElix.toFixed(0)}</span>
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    </div>
                   </div>
-                  <span className="text-xs font-black">{w.avgElix == null ? '—' : w.avgElix.toFixed(0)}</span>
+                  <div className="flex items-center gap-2 flex-wrap text-[10px] font-bold text-slate-500 mb-2">
+                    <span>Awardee: <span className="text-slate-700 dark:text-slate-300">{w.awardeeCount}</span></span>
+                    <span>·</span>
+                    <span>SA: <span className="text-slate-700 dark:text-slate-300">{w.saFilled}</span></span>
+                    <span>·</span>
+                    <span>MA: <span className="text-slate-700 dark:text-slate-300">{w.maFilled}</span></span>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-slate-700 pt-3">
+                       {wMentor && (
+                         <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(wMentor)}>
+                           <div className="flex items-center gap-3">
+                              <img src={wMentor.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(wMentor.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              <div>
+                                 <p className="text-xs font-bold">{wMentor.user?.name}</p>
+                                 <p className="text-[10px] text-blue-500 font-bold">Mentor</p>
+                              </div>
+                           </div>
+                         </div>
+                       )}
+                       {wAwardees.length > 0 ? (
+                         wAwardees.map(a => (
+                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(a)}>
+                             <div className="flex items-center gap-3">
+                                <img src={a.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
+                                <div>
+                                   <p className="text-xs font-bold">{a.user?.name}</p>
+                                   <p className="text-[10px] text-slate-500">{a.university || a.school}</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <span className="text-xs font-black">{a.elix != null ? a.elix.toFixed(1) : '—'}</span>
+                             </div>
+                           </div>
+                         ))
+                       ) : (
+                         <p className="text-[10px] text-slate-400 italic">Belum ada awardee di wilayah ini.</p>
+                       )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 flex-wrap text-[10px] font-bold text-slate-500">
-                  <span>Awardee: <span className="text-slate-700 dark:text-slate-300">{w.awardeeCount}</span></span>
-                  <span>·</span>
-                  <span>SA: <span className="text-slate-700 dark:text-slate-300">{w.saFilled}</span></span>
-                  <span>·</span>
-                  <span>MA: <span className="text-slate-700 dark:text-slate-300">{w.maFilled}</span></span>
-                  <span>·</span>
-                  <span>Mentor: <span className="text-slate-700 dark:text-slate-300">{w.mentor?.name || '—'}</span></span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      <ProfileModal profile={viewingProfile} onClose={() => setViewingProfile(null)} darkMode={darkMode} />
     </div>
   );
 }

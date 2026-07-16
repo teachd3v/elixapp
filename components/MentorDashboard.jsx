@@ -136,11 +136,24 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   return (
     <div className="space-y-6">
       <div className={`border rounded-3xl p-6 ${card}`}>
-        <p className="text-xs font-bold text-slate-400">Dashboard Mentor</p>
-        <h2 className="text-xl font-black">{dbUser?.name}</h2>
-        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 mt-2">
-          <MapPin className="w-3 h-3" /> Wilayah {wilayah?.name || '—'}
-        </span>
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center border border-amber-500 shadow-sm">
+            {dbUser?.avatarUrl ? (
+              <img src={dbUser.avatarUrl} alt={dbUser.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-bold text-slate-400">{dbUser?.name?.charAt(0) || 'M'}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-400 mb-1">Dashboard Mentor</p>
+            <h2 className="text-xl font-black truncate">{dbUser?.name}</h2>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600">
+                <MapPin className="w-3 h-3" /> Wilayah {wilayah?.name || '—'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

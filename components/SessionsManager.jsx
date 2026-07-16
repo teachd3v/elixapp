@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, MapPin, Plus, Edit, Trash2, X, AlertCircle, ClipboardCheck, CheckCircle2, XCircle, Users, FileText } from 'lucide-react';
+import { useDialog } from './DialogProvider';
 import AttendanceModal from './AttendanceModal';
 import AttendanceReview from './AttendanceReview';
 import ExcuseModal from './ExcuseModal';
@@ -38,6 +39,7 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const [form, setForm] = useState({ title: '', date: '', time: '' });
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const { confirm } = useDialog();
 
   // Attendance state
   const [attendModal, setAttendModal] = useState(null); // { session, existing }
@@ -118,7 +120,8 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   };
 
   const remove = async (s) => {
-    if (!window.confirm(`Hapus sesi "${s.title}"? Absensi yang terkait juga ikut terhapus.`)) return;
+    const isConfirmed = await confirm(`Hapus sesi "${s.title}"? Absensi yang terkait juga ikut terhapus.`);
+    if (!isConfirmed) return;
     setBusyId(s.id);
     try {
       await fetchJson(`/api/sessions/${s.id}`, { method: 'DELETE' });
@@ -256,8 +259,8 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
         </div>
         {canCreate && !formOpen && (
           <button onClick={openNew}
-            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs rounded-xl flex items-center gap-1 shrink-0 shadow-md shadow-indigo-500/20">
-            <Plus className="w-4 h-4" /> Tambah Sesi
+            className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
+            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Tambah Sesi</span>
           </button>
         )}
       </div>
@@ -269,38 +272,40 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
       )}
 
       {formOpen && (
-        <form onSubmit={save} className={`border rounded-3xl p-5 space-y-4 ${card}`}>
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-black">{editing ? 'Edit Sesi' : `Sesi Baru (${role === 'superadmin' ? 'Nasional' : 'Wilayah'})`}</h4>
-            <button type="button" onClick={closeForm} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-4 h-4" /></button>
-          </div>
-          {error && (
-            <div className="flex items-start gap-2 text-xs font-bold px-4 py-3 rounded-2xl bg-rose-500/10 text-rose-600">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <form onSubmit={save} className={`w-full max-w-md my-8 border rounded-3xl p-5 space-y-4 shadow-2xl ${card}`}>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-black">{editing ? 'Edit Sesi' : `Sesi Baru (${role === 'superadmin' ? 'Nasional' : 'Wilayah'})`}</h4>
+              <button type="button" onClick={closeForm} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-4 h-4" /></button>
             </div>
-          )}
-          <div>
-            <label className="text-xs font-bold text-slate-400 block mb-1">Judul <span className="text-rose-500">*</span></label>
-            <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="mis. Pembinaan Mingguan Quranic Tahfidz" required />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {error && (
+              <div className="flex items-start gap-2 text-xs font-bold px-4 py-3 rounded-2xl bg-rose-500/10 text-rose-600">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+              </div>
+            )}
             <div>
-              <label className="text-xs font-bold text-slate-400 block mb-1">Tanggal <span className="text-rose-500">*</span></label>
-              <input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+              <label className="text-xs font-bold text-slate-400 block mb-1">Judul <span className="text-rose-500">*</span></label>
+              <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="mis. Pembinaan Mingguan Quranic Tahfidz" required />
             </div>
-            <div>
-              <label className="text-xs font-bold text-slate-400 block mb-1">Waktu</label>
-              <input className={inputCls} value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} placeholder="mis. 13:30 - 15:30" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Tanggal <span className="text-rose-500">*</span></label>
+                <input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Waktu</label>
+                <input className={inputCls} value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} placeholder="mis. 13:30 - 15:30" />
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 pt-2">
-            <button type="submit" disabled={saving}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm rounded-xl flex items-center gap-2 shadow-md shadow-indigo-500/20 disabled:opacity-50">
-              {saving ? 'Menyimpan...' : (editing ? 'Simpan Perubahan' : 'Buat Sesi')}
-            </button>
-            <button type="button" onClick={closeForm} className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">Batal</button>
-          </div>
-        </form>
+            <div className="flex items-center gap-2 pt-2">
+              <button type="button" onClick={closeForm} className="flex-1 px-5 py-2.5 rounded-xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">Batal</button>
+              <button type="submit" disabled={saving}
+                className="flex-1 px-5 py-2.5 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
+                {saving ? 'Menyimpan...' : (editing ? 'Simpan' : 'Buat Sesi')}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {!loading && sessions.length === 0 && (

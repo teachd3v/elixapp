@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentDbUser } from '@/lib/auth';
-import { blendedScore, toElixIndex, elixCategory, dimensions } from '@/lib/assessment';
+import { blendedScore, toElixIndex, elixCategory } from '@/lib/assessment';
 
 // GET /api/admin/stats — aggregated data for the SUPERADMIN dashboard &
 // ELIX analysis: totals, per-wilayah rollups, per-awardee ELIX.
@@ -10,21 +10,21 @@ export async function GET() {
   if (!me) return new NextResponse('Unauthorized', { status: 401 });
   if (me.role !== 'SUPERADMIN') return new NextResponse('Forbidden', { status: 403 });
 
-  const [users, wilayahList, awardees, mentors, superadmins] = await Promise.all([
+  const [users, wilayahList, awardees, mentors, superadmins, dimensions] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.wilayah.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
     prisma.awardeeProfile.findMany({
       select: {
-        id: true, wilayahId: true, school: true, generation: true,
+        id: true, wilayahId: true, school: true, generation: true, university: true, major: true, gpa: true, birthInfo: true, gender: true, address: true,
         saScore: true, hasFilledSA: true, saDimensionScores: true,
         maScore: true, hasFilledMA: true, maDimensionScores: true,
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, phone: true } },
       },
     }),
     prisma.mentorProfile.findMany({
       select: {
         id: true, wilayahId: true,
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, phone: true } },
       },
     }),
     prisma.user.findMany({
@@ -32,6 +32,7 @@ export async function GET() {
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, avatarUrl: true },
     }),
+    prisma.dimension.findMany({ orderBy: { order: 'asc' } }),
   ]);
 
   const roleCounts = Object.fromEntries(users.map((u) => [u.role, u._count._all]));
@@ -46,6 +47,12 @@ export async function GET() {
       wilayahId: a.wilayahId,
       school: a.school,
       generation: a.generation,
+      university: a.university,
+      major: a.major,
+      gpa: a.gpa,
+      birthInfo: a.birthInfo,
+      gender: a.gender,
+      address: a.address,
       saScore: a.saScore,
       maScore: a.maScore,
       hasFilledSA: hasSA,

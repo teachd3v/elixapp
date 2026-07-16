@@ -54,8 +54,8 @@ export default function ChangeRoleModal({ darkMode, user, currentRole, meId, onC
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className={`w-full max-w-md my-8 border rounded-3xl shadow-2xl ${card}`}>
+    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className={`w-full max-w-md mt-4 mb-24 md:my-8 border rounded-3xl shadow-2xl ${card}`}>
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
           <div className="min-w-0">
             <h3 className="text-base font-black truncate">Ubah Role</h3>
@@ -111,10 +111,10 @@ export default function ChangeRoleModal({ darkMode, user, currentRole, meId, onC
 
         <div className="p-5 pt-0 flex items-center gap-2">
           <button onClick={save} disabled={saving || !changed}
-            className="flex-1 px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            className="flex-1 px-5 py-3 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-semibold rounded-2xl shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             {saving ? 'Menyimpan...' : <><Save className="w-4 h-4" /> Simpan Perubahan</>}
           </button>
-          <button onClick={onClose} className="px-5 py-3 rounded-2xl font-semibold text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">Batal</button>
+          <button onClick={onClose} className="px-5 py-3 rounded-2xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">Batal</button>
         </div>
       </div>
     </div>

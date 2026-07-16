@@ -11,19 +11,17 @@ const prisma = new PrismaClient({ adapter });
 
 // Program coaching regions (Wilayah). Idempotent — safe to re-run.
 const REGIONS = [
+  'Langkat',
+  'Padang',
+  'Pekanbaru',
   'Bogor',
-  'Jakarta Barat',
-  'Jakarta Timur',
-  'Depok',
-  'Bekasi',
-  'Tangerang',
-  'Bandung',
-  'Surabaya',
-  'Semarang',
   'Yogyakarta',
-  'Malang',
-  'Medan',
-  'Makassar',
+  'Surabaya',
+  'Palembang',
+  'Aceh Utara',
+  'Pidie Jaya',
+  'Dumai',
+  'Sinjai'
 ];
 
 try {

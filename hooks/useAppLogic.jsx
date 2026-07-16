@@ -399,47 +399,48 @@ export function useAppLogic() {
   // MOCK DATA - WILAYAH HIERARCHY FOR SUPERADMIN
   const wilayahData = [
     {
-      id: 'w1', name: 'Bogor', mentorName: 'Dr. Ahmad Fauzi, M.Pd.',
-      mentorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80',
-      mentorEmail: 'ahmad.fauzi@yes.or.id', mentorPhone: '0812-1234-5678',
-      awardees: [
-        { id: 'w1a1', name: 'Yulianti', university: 'SMAN 1 Bogor', gpa: '3.82', saScore: 3.55, maScore: 3.32, hasFilledSA: true, hasFilledMA: true, email: 'yulianti@gmail.com', phone: '0812-9876-5432', birthInfo: 'Bogor, 15 Juli 2008', gender: 'Perempuan', address: 'Jl. Pajajaran No. 25, Kota Bogor, Jawa Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w1a2', name: 'Fulanah Adila', university: 'SMAN 2 Bogor', gpa: '3.65', saScore: 3.80, maScore: 0.00, hasFilledSA: true, hasFilledMA: false, email: 'fulanah@gmail.com', phone: '0856-1111-2222', birthInfo: 'Bogor, 12 Desember 2008', gender: 'Perempuan', address: 'Jl. Pemuda No. 12, Kota Bogor, Jawa Barat', generation: '5', major: 'IPS', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w1a3', name: 'Rian Hidayat', university: 'SMAN 3 Bogor', gpa: '3.41', saScore: 0.00, maScore: 0.00, hasFilledSA: false, hasFilledMA: false, email: 'rian@gmail.com', phone: '0899-3333-4444', birthInfo: 'Bogor, 3 April 2007', gender: 'Laki-laki', address: 'Jl. Merdeka No. 45, Kota Bogor, Jawa Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80' }
-      ]
+      id: 'w1', name: 'Langkat', mentorName: 'Budi Santoso', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w1a1', name: 'Awardee Langkat', university: 'Univ Langkat', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
     },
     {
-      id: 'w2', name: 'Jakarta Barat', mentorName: 'Siti Nurhaliza, S.Pd.',
-      mentorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=100&q=80',
-      mentorEmail: 'siti.nurhaliza@yes.or.id', mentorPhone: '0813-5678-9012',
-      awardees: [
-        { id: 'w2a1', name: 'Aisyah Putri', university: 'SMAN 78 Jakarta', gpa: '3.90', saScore: 3.72, maScore: 3.65, hasFilledSA: true, hasFilledMA: true, email: 'aisyah@gmail.com', phone: '0811-2233-4455', birthInfo: 'Jakarta, 8 Maret 2008', gender: 'Perempuan', address: 'Jl. Kembangan Raya No. 10, Jakarta Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w2a2', name: 'Budi Santoso', university: 'SMAN 112 Jakarta', gpa: '3.55', saScore: 3.40, maScore: 3.10, hasFilledSA: true, hasFilledMA: true, email: 'budi.s@gmail.com', phone: '0822-6677-8899', birthInfo: 'Jakarta, 25 November 2007', gender: 'Laki-laki', address: 'Jl. Pos Pengumben No. 44, Jakarta Barat', generation: '5', major: 'IPS', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w2a3', name: 'Dewi Lestari', university: 'SMA Al-Azhar Syifa Budi', gpa: '3.78', saScore: 3.60, maScore: 3.45, hasFilledSA: true, hasFilledMA: true, email: 'dewi.l@gmail.com', phone: '0877-1122-3344', birthInfo: 'Jakarta, 14 Februari 2008', gender: 'Perempuan', address: 'Jl. Pesanggrahan No. 15, Jakarta Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w2a4', name: 'Farhan Maulana', university: 'SMAN 6 Jakarta', gpa: '3.62', saScore: 3.50, maScore: 3.20, hasFilledSA: true, hasFilledMA: true, email: 'farhan@gmail.com', phone: '0856-9988-7766', birthInfo: 'Tangerang, 5 Juni 2008', gender: 'Laki-laki', address: 'Jl. Meruya Ilir No. 88, Jakarta Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w2a5', name: 'Sari Rahmawati', university: 'SMAN 33 Jakarta', gpa: '3.88', saScore: 3.85, maScore: 3.70, hasFilledSA: true, hasFilledMA: true, email: 'sari.r@gmail.com', phone: '0812-5544-3322', birthInfo: 'Jakarta, 19 September 2008', gender: 'Perempuan', address: 'Jl. Joglo Raya No. 22, Jakarta Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&q=80' }
-      ]
+      id: 'w2', name: 'Padang', mentorName: 'Siti Aminah', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w2a1', name: 'Awardee Padang', university: 'Univ Padang', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
     },
     {
-      id: 'w3', name: 'Surabaya', mentorName: 'Ir. Bambang Widodo, M.T.',
-      mentorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80',
-      mentorEmail: 'bambang.w@yes.or.id', mentorPhone: '0821-7890-1234',
-      awardees: [
-        { id: 'w3a1', name: 'Rizki Pratama', university: 'SMAN 5 Surabaya', gpa: '3.70', saScore: 3.45, maScore: 3.30, hasFilledSA: true, hasFilledMA: true, email: 'rizki.p@gmail.com', phone: '0813-1122-3344', birthInfo: 'Surabaya, 10 Januari 2008', gender: 'Laki-laki', address: 'Jl. Raya Darmo No. 55, Surabaya, Jawa Timur', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w3a2', name: 'Mega Puspita', university: 'SMAN 1 Surabaya', gpa: '3.92', saScore: 3.90, maScore: 3.80, hasFilledSA: true, hasFilledMA: true, email: 'mega.p@gmail.com', phone: '0856-5566-7788', birthInfo: 'Surabaya, 22 April 2008', gender: 'Perempuan', address: 'Jl. Basuki Rahmat No. 100, Surabaya, Jawa Timur', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w3a3', name: 'Hendra Wijaya', university: 'SMA Petra Surabaya', gpa: '3.58', saScore: 3.25, maScore: 3.15, hasFilledSA: true, hasFilledMA: true, email: 'hendra.w@gmail.com', phone: '0899-1234-5678', birthInfo: 'Sidoarjo, 7 Agustus 2007', gender: 'Laki-laki', address: 'Jl. Gubeng No. 30, Surabaya, Jawa Timur', generation: '5', major: 'IPS', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w3a4', name: 'Nur Fitriani', university: 'SMAN 9 Surabaya', gpa: '3.75', saScore: 3.60, maScore: 3.50, hasFilledSA: true, hasFilledMA: true, email: 'nur.f@gmail.com', phone: '0877-9876-5432', birthInfo: 'Surabaya, 30 Mei 2008', gender: 'Perempuan', address: 'Jl. Diponegoro No. 77, Surabaya, Jawa Timur', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=100&q=80' }
-      ]
+      id: 'w3', name: 'Pekanbaru', mentorName: 'Ahmad Fauzi', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w3a1', name: 'Awardee Pekanbaru', university: 'Univ Pekanbaru', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
     },
     {
-      id: 'w4', name: 'Bandung', mentorName: 'Prof. Hasan Basri, Ph.D.',
-      mentorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=100&q=80',
-      mentorEmail: 'hasan.basri@yes.or.id', mentorPhone: '0812-3456-7890',
-      awardees: [
-        { id: 'w4a1', name: 'Alya Zahra', university: 'SMAN 3 Bandung', gpa: '3.85', saScore: 3.70, maScore: 3.55, hasFilledSA: true, hasFilledMA: true, email: 'alya.z@gmail.com', phone: '0822-1234-5678', birthInfo: 'Bandung, 2 Oktober 2008', gender: 'Perempuan', address: 'Jl. Dago No. 125, Bandung, Jawa Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w4a2', name: 'Dimas Arya', university: 'SMAN 5 Bandung', gpa: '3.48', saScore: 3.30, maScore: 3.10, hasFilledSA: true, hasFilledMA: true, email: 'dimas.a@gmail.com', phone: '0813-9876-5432', birthInfo: 'Bandung, 18 Desember 2007', gender: 'Laki-laki', address: 'Jl. Cihampelas No. 50, Bandung, Jawa Barat', generation: '5', major: 'IPS', avatar: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&w=100&q=80' },
-        { id: 'w4a3', name: 'Intan Permata', university: 'SMA BPI 1 Bandung', gpa: '3.95', saScore: 3.88, maScore: 3.75, hasFilledSA: true, hasFilledMA: true, email: 'intan.p@gmail.com', phone: '0856-2233-4455', birthInfo: 'Cimahi, 11 Juni 2008', gender: 'Perempuan', address: 'Jl. Buah Batu No. 88, Bandung, Jawa Barat', generation: '5', major: 'IPA', avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=100&q=80' }
-      ]
+      id: 'w4', name: 'Bogor', mentorName: 'Hasan Basri', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w4a1', name: 'Awardee Bogor', university: 'Univ Bogor', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w5', name: 'Yogyakarta', mentorName: 'Dewi Lestari', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w5a1', name: 'Awardee Jogja', university: 'Univ Jogja', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w6', name: 'Surabaya', mentorName: 'Bambang Widodo', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w6a1', name: 'Awardee SBY', university: 'Univ SBY', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w7', name: 'Palembang', mentorName: 'Reza Rahardian', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w7a1', name: 'Awardee PLB', university: 'Univ PLB', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w8', name: 'Aceh Utara', mentorName: 'Cut Meyriska', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w8a1', name: 'Awardee Aceh', university: 'Univ Aceh', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w9', name: 'Pidie Jaya', mentorName: 'Teuku Wisnu', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w9a1', name: 'Awardee Pidie', university: 'Univ Pidie', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w10', name: 'Dumai', mentorName: 'Fadil Jaidi', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w10a1', name: 'Awardee Dumai', university: 'Univ Dumai', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
+    },
+    {
+      id: 'w11', name: 'Sinjai', mentorName: 'Andi Mallarangeng', mentorAvatar: '', mentorEmail: 'mentor@yes.or.id', mentorPhone: '',
+      awardees: [ { id: 'w11a1', name: 'Awardee Sinjai', university: 'Univ Sinjai', gpa: '3.8', saScore: 3.5, maScore: 3.3, hasFilledSA: true, hasFilledMA: true, email: 'aw@yes', phone: '', birthInfo: '', gender: 'L', address: '', generation: '5', major: 'IPA', avatar: '' } ]
     }
   ];
 
@@ -705,7 +706,7 @@ export function useAppLogic() {
     setStatements(prev => prev.map(s => s.id === id ? (isAwardeeText ? { ...s, text_awardee: text } : { ...s, text_mentor: text }) : s));
   };
 
-  const currentTheme = darkMode ? 'dark bg-[#0b0f19] text-slate-100' : 'light bg-[#f4f7fa] text-[#0f2942]';
+  const currentTheme = darkMode ? 'dark bg-[#0a0a0a] text-slate-100' : 'light bg-[#f4f7fa] text-[#0f2942]';
 
   return {
     dbUser, setDbUser,

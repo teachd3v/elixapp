@@ -68,7 +68,6 @@ model AwardeeProfile {
   kk           String?
   province     String?
   city         String?
-
   // Nilai
   saScore          Float    @default(0.0) // Self Assessment Score (0-4)
   maScore          Float    @default(0.0) // Mentor Assessment Score (0-4)
@@ -88,6 +87,9 @@ model AwardeeProfile {
 
   // Portofolio karya/prestasi awardee
   portfolios   Portfolio[]
+  
+  // Riwayat Penilaian per Periode
+  assessmentRecords AssessmentRecord[]
 }
 
 // Profil Khusus Mentor
@@ -274,4 +276,74 @@ model AnnouncementRead {
   readAt         DateTime @default(now())
 
   @@unique([announcementId, userId])
+}
+
+// Dimensi Penilaian ELIX
+model Dimension {
+  id        String   @id @default(uuid())
+  order     Int      @default(0) // Untuk urutan tampilan
+  name      String
+  weight    Float    // misal 0.25 (25%)
+  color     String   // misal "#0284c7"
+  bg        String   // class tailwind, misal "bg-sky-500/10"
+  text      String   // class tailwind, misal "text-sky-600"
+  
+  statements Statement[]
+}
+
+// Pernyataan / Indikator Penilaian
+model Statement {
+  id          String   @id @default(uuid())
+  order       Int      @default(0) // Untuk urutan tampilan
+  dimensionId String
+  dimension   Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  
+  aspect      String   // misal "Academic Performance"
+  code        String   // misal "AP1"
+  textAwardee String   @db.Text // Teks untuk form Awardee
+  textMentor  String   @db.Text // Teks untuk form Mentor
+}
+
+// ----------------------------------------------------------------------
+// DATA SIKLUS PENILAIAN (PERIOD)
+// ----------------------------------------------------------------------
+
+model AssessmentPeriod {
+  id        String   @id @default(uuid())
+  name      String   // "Baseline", "Mid-Review", "End-Review"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  
+  records   AssessmentRecord[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AssessmentRecord {
+  id               String   @id @default(uuid())
+  awardeeId        String
+  awardee          AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
+  
+  periodId         String
+  period           AssessmentPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  
+  saScore          Float    @default(0.0) // Self Assessment Score (0-4)
+  maScore          Float    @default(0.0) // Mentor Assessment Score (0-4)
+  hasFilledSA      Boolean  @default(false)
+  hasFilledMA      Boolean  @default(false)
+  
+  saResponses      Json?    // { statementId: 1-4 }
+  saDimensionScores Json?   // { dimensionId: avg score }
+  saSubmittedAt    DateTime?
+  
+  maResponses      Json?    // { statementId: 1-4 } — filled by mentor
+  maDimensionScores Json?   // { dimensionId: avg score }
+  maSubmittedAt    DateTime?
+  maById           String?  // User.id of the mentor who assessed
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([awardeeId, periodId])
 }

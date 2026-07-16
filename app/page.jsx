@@ -1,5 +1,5 @@
 "use client";
-import { Show, SignInButton, UserButton } from '@clerk/nextjs';
+import { Show, SignIn, UserButton } from '@clerk/nextjs';
 
 import AlertModal from '../components/modals/AlertModal';
 import DialogModal from '../components/modals/DialogModal';
@@ -252,25 +252,85 @@ function App() {
 return (
     <>
       <Show when="signed-out">
-        <div className={"min-h-screen flex items-center justify-center " + (logic.darkMode ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-800')}>
-          <div className={"max-w-md w-full p-8 rounded-3xl shadow-xl " + (logic.darkMode ? 'bg-slate-800' : 'bg-white')}>
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 transform rotate-3">
-                <Sparkles className="w-8 h-8 text-white" />
+        <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#0a0a0a]">
+          
+          {/* LEFT PANEL - Gradient Blue to Yellow */}
+          <div className="hidden lg:flex w-1/2 flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 p-12">
+            <div className="absolute inset-0 bg-black/10"></div>
+            
+            <div className="relative z-10 flex items-center">
+              <img src="/logo-yes.png" alt="YES Logo" className="h-20 w-auto object-contain brightness-0 invert" />
+            </div>
+
+            <div className="relative z-10 space-y-8 my-auto">
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight text-white tracking-tight">
+                Portal Excellent<br/>Leader
+              </h1>
+              <p className="text-white/80 max-w-md text-lg leading-relaxed">
+                Manage your data and activities with the YES GREAT Edunesia Dompet Dhuafa program
+              </p>
+              
+              <div className="flex gap-4 mt-12">
+                <div className="bg-white text-slate-900 p-5 rounded-2xl w-36 aspect-square flex flex-col justify-between shadow-xl">
+                  <div className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-bold leading-tight">Awardee</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl w-36 aspect-square flex flex-col justify-between text-white">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-bold leading-tight text-white/90">Mentor</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl w-36 aspect-square flex flex-col justify-between text-white">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <Building className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-bold leading-tight text-white/90">Management<br/>Center</p>
+                </div>
               </div>
             </div>
             
-            <h1 className="text-3xl font-bold text-center mb-2">Welcome to Elix</h1>
-            <p className="text-center text-sm mb-8 opacity-70">
-              Platform Evaluasi dan Pembelajaran Interaktif. Silakan login untuk melanjutkan.
-            </p>
-
-            <SignInButton mode="modal" forceRedirectUrl="/">
-              <button className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-2xl cursor-pointer shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02]">
-                Login dengan Akun Google
-              </button>
-            </SignInButton>
+            <div className="relative z-10 text-white/50 text-xs">
+              © {new Date().getFullYear()} Youth Ekselensia Scholarship. All rights reserved.
+            </div>
           </div>
+
+          {/* RIGHT PANEL - Dark Form */}
+          <div className="w-full lg:w-1/2 flex items-center justify-center p-8 min-h-screen relative">
+            <div className="max-w-md w-full z-10">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-white mb-2">Login</h2>
+                <p className="text-sm text-slate-400">Enter your gmail to access the platform.</p>
+              </div>
+              
+              <SignIn 
+                routing="hash" 
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "bg-transparent shadow-none w-full p-0 m-0",
+                    headerTitle: "hidden",
+                    headerSubtitle: "hidden",
+                    socialButtonsBlockButton: "bg-[#171717] border border-[#262626] hover:bg-[#262626] text-white py-3 rounded-xl transition-all",
+                    socialButtonsBlockButtonText: "text-white font-semibold text-sm",
+                    dividerRow: "my-6",
+                    dividerText: "text-slate-500",
+                    dividerLine: "bg-[#262626]",
+                    formFieldLabel: "text-slate-300 text-xs font-bold mb-1.5",
+                    formFieldInput: "bg-[#171717] border-[#262626] text-white focus:border-amber-500 focus:ring-amber-500 rounded-xl py-3 px-4 transition-all",
+                    formButtonPrimary: "bg-white text-black hover:bg-slate-200 font-bold text-sm py-3.5 rounded-xl transition-all",
+                    footerActionText: "text-slate-400 text-xs",
+                    footerActionLink: "text-amber-500 hover:text-amber-400 text-xs font-bold",
+                    identityPreviewText: "text-slate-300",
+                    identityPreviewEditButton: "text-amber-500 hover:text-amber-400"
+                  }
+                }} 
+              />
+            </div>
+          </div>
+
         </div>
       </Show>
 
@@ -290,13 +350,6 @@ return (
           </div>
 
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2.5 rounded-full ${darkMode ? 'bg-slate-900 text-amber-400' : 'bg-slate-100 text-[#0f2942]'} transition-all`}
-            >
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
             {/* Profile Avatar Quick info removed */}
 
             <NotificationsBell darkMode={darkMode} />

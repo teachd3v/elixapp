@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, X, AlertCircle, MapPin, Users, Calendar } from 'lucide-react';
+import { useDialog } from './DialogProvider';
 
 async function fetchJson(url, options) {
   const res = await fetch(url, options);
@@ -30,6 +31,7 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
   const [form, setForm] = useState({ title: '', message: '', targetRole: 'ALL', targetRegion: '' });
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const { confirm } = useDialog();
 
   const isSuper = role === 'superadmin';
 
@@ -76,7 +78,8 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
   };
 
   const remove = async (a) => {
-    if (!window.confirm(`Hapus pengumuman "${a.title}"?`)) return;
+    const isConfirmed = await confirm(`Hapus pengumuman "${a.title}"?`);
+    if (!isConfirmed) return;
     setBusyId(a.id);
     try {
       await fetchJson(`/api/announcements/${a.id}`, { method: 'DELETE' });
@@ -105,8 +108,8 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
         </div>
         {!formOpen && (
           <button onClick={openNew}
-            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs rounded-xl flex items-center gap-1 shrink-0 shadow-md shadow-indigo-500/20">
-            <Plus className="w-4 h-4" /> Kirim Pengumuman
+            className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
+            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Kirim Pengumuman</span>
           </button>
         )}
       </div>
@@ -118,58 +121,60 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
       )}
 
       {formOpen && (
-        <form onSubmit={submit} className={`border rounded-3xl p-5 space-y-4 ${card}`}>
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-black">Pengumuman Baru</h4>
-            <button type="button" onClick={() => setFormOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-4 h-4" /></button>
-          </div>
-          {error && (
-            <div className="flex items-start gap-2 text-xs font-bold px-4 py-3 rounded-2xl bg-rose-500/10 text-rose-600">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <form onSubmit={submit} className={`w-full max-w-md my-8 border rounded-3xl p-5 space-y-4 shadow-2xl ${card}`}>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-black">Pengumuman Baru</h4>
+              <button type="button" onClick={() => setFormOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-4 h-4" /></button>
             </div>
-          )}
-          <div>
-            <label className="text-xs font-bold text-slate-400 block mb-1">Judul <span className="text-rose-500">*</span></label>
-            <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="mis. Perubahan Jadwal Pembinaan" required maxLength={120} />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-400 block mb-1">Pesan <span className="text-rose-500">*</span></label>
-            <textarea className={`${inputCls} resize-none`} rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tulis isi pengumuman..." required />
-          </div>
-
-          {isSuper ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Target Role</label>
-                <select className={`${inputCls} cursor-pointer`} value={form.targetRole} onChange={(e) => setForm({ ...form, targetRole: e.target.value })}>
-                  <option value="ALL">Semua (Awardee + Mentor)</option>
-                  <option value="AWARDEE">Awardee saja</option>
-                  <option value="MENTOR">Mentor saja</option>
-                </select>
+            {error && (
+              <div className="flex items-start gap-2 text-xs font-bold px-4 py-3 rounded-2xl bg-rose-500/10 text-rose-600">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Target Wilayah</label>
-                <select className={`${inputCls} cursor-pointer`} value={form.targetRegion} onChange={(e) => setForm({ ...form, targetRegion: e.target.value })}>
-                  <option value="">Semua wilayah</option>
-                  {wilayahList.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              </div>
+            )}
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">Judul <span className="text-rose-500">*</span></label>
+              <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="mis. Perubahan Jadwal Pembinaan" required maxLength={120} />
             </div>
-          ) : (
-            <p className="text-[11px] text-slate-500 bg-slate-100 dark:bg-slate-800/50 rounded-xl px-3 py-2">
-              <MapPin className="w-3 h-3 inline mr-1" />
-              Pengumuman akan dikirim otomatis ke <b>awardee di wilayahmu</b>.
-            </p>
-          )}
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">Pesan <span className="text-rose-500">*</span></label>
+              <textarea className={`${inputCls} resize-none`} rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tulis isi pengumuman..." required />
+            </div>
 
-          <div className="flex items-center gap-2 pt-2">
-            <button type="submit" disabled={saving}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm rounded-xl flex items-center gap-2 shadow-md shadow-indigo-500/20 disabled:opacity-50">
-              {saving ? 'Mengirim...' : 'Kirim Pengumuman'}
-            </button>
-            <button type="button" onClick={() => setFormOpen(false)} className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">Batal</button>
-          </div>
-        </form>
+            {isSuper ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Target Role</label>
+                  <select className={`${inputCls} cursor-pointer`} value={form.targetRole} onChange={(e) => setForm({ ...form, targetRole: e.target.value })}>
+                    <option value="ALL">Semua (Awardee + Mentor)</option>
+                    <option value="AWARDEE">Awardee saja</option>
+                    <option value="MENTOR">Mentor saja</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Target Wilayah</label>
+                  <select className={`${inputCls} cursor-pointer`} value={form.targetRegion} onChange={(e) => setForm({ ...form, targetRegion: e.target.value })}>
+                    <option value="">Semua wilayah</option>
+                    {wilayahList.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-500 bg-slate-100 dark:bg-slate-800/50 rounded-xl px-3 py-2">
+                <MapPin className="w-3 h-3 inline mr-1" />
+                Pengumuman akan dikirim otomatis ke <b>awardee di wilayahmu</b>.
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 pt-2">
+              <button type="button" onClick={() => setFormOpen(false)} className="flex-1 px-5 py-2.5 rounded-xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">Batal</button>
+              <button type="submit" disabled={saving}
+                className="flex-1 px-5 py-2.5 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
+                {saving ? 'Mengirim...' : 'Kirim'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {!loading && items.length === 0 && (

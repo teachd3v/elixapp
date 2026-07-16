@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FolderHeart, Plus, Edit, Trash2, X, AlertCircle, Calendar, Award, Users, GraduationCap, User, Camera, Image as ImageIcon, Tag, Link as LinkIcon, Download } from 'lucide-react';
 import { fileToCompressedDataUrl } from '../lib/image';
 import { downloadCV } from './CVDocument';
+import { useDialog } from './DialogProvider';
 
 async function fetchJson(url, options) {
   const res = await fetch(url, options);
@@ -72,6 +73,7 @@ export default function PortfolioManager({ darkMode, dbUser, role, canCreate = t
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [preview, setPreview] = useState(null);
+  const { confirm } = useDialog();
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -170,7 +172,8 @@ export default function PortfolioManager({ darkMode, dbUser, role, canCreate = t
   };
 
   const remove = async (p) => {
-    if (!window.confirm(`Hapus "${p.title}" dari portofolio?`)) return;
+    const isConfirmed = await confirm(`Hapus "${p.title}" dari portofolio?`);
+    if (!isConfirmed) return;
     setBusyId(p.id);
     try {
       await fetchJson(`/api/portfolios/${p.id}`, { method: 'DELETE' });

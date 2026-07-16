@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { UserCheck, Save, Edit, CheckCircle2, AlertCircle, Sparkles, Camera, Trash2 } from 'lucide-react';
-import { fileToCompressedDataUrl } from '../lib/image';
+import { fileToDataUrl } from '../lib/image';
+import { useDialog } from './DialogProvider';
+import AvatarCropModal from './AvatarCropModal';
 
 async function fetchJson(url, options) {
   const res = await fetch(url, options);
@@ -21,6 +23,7 @@ const GENDERS = ['Laki-laki', 'Perempuan'];
 // the mock prototype profile entirely — a real user never sees mock data.
 export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
   const isMentor = role === 'mentor';
+  const { confirm } = useDialog();
   const [wilayahList, setWilayahList] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,31 +40,47 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
   // Avatar upload state (available in view mode via camera overlay button).
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState(null);
+  const [cropSrc, setCropSrc] = useState(null); // data URL of the picked file, feeds the crop modal
   const avatarInputRef = useRef(null);
 
-  // Called when user picks a new file from the hidden <input>. Compresses to a
-  // small square avatar-sized JPEG then POSTs — server updates User.avatarUrl,
-  // which naturally OVERWRITES the previous image (no old-blob orphan).
-  const uploadAvatar = async (file) => {
+  // Called when user picks a file — we DON'T upload yet, we open the crop
+  // modal so they can zoom/pan into the round frame first.
+  const onAvatarFilePicked = async (file) => {
     if (!file) return;
+    setAvatarError(null);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setCropSrc(dataUrl);
+    } catch (e) {
+      setAvatarError('Gagal membaca file: ' + e.message);
+    }
+  };
+
+  // Called from AvatarCropModal after user finishes cropping. Posts the
+  // already-cropped/compressed data URL — server UPDATE overwrites the previous
+  // avatar (no old-blob orphan).
+  const uploadCroppedAvatar = async (dataUrl) => {
     setAvatarBusy(true); setAvatarError(null);
     try {
-      const dataUrl = await fileToCompressedDataUrl(file, { maxDim: 400, quality: 0.8 });
       const res = await fetchJson('/api/profile/avatar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatarUrl: dataUrl }),
       });
       if (setDbUser) setDbUser(res.user);
+      setCropSrc(null);
     } catch (e) {
       setAvatarError(e.message);
+      // Leave the modal open so user can retry/cancel.
+      throw e;
     } finally {
       setAvatarBusy(false);
     }
   };
 
   const removeAvatar = async () => {
-    if (!window.confirm('Hapus foto profil? Nanti akan muncul ikon default.')) return;
+    const isConfirmed = await confirm('Hapus foto profil? Nanti akan muncul ikon default.');
+    if (!isConfirmed) return;
     setAvatarBusy(true); setAvatarError(null);
     try {
       const res = await fetchJson('/api/profile/avatar', {
@@ -230,7 +249,7 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => { uploadAvatar(e.target.files?.[0]); e.target.value = ''; }}
+                  onChange={(e) => { onAvatarFilePicked(e.target.files?.[0]); e.target.value = ''; }}
                 />
               </div>
               <div className="min-w-0">
@@ -288,6 +307,15 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
             Profilmu sudah tersimpan. Dashboard mentor dengan data aslimu sedang dibangun dan akan segera hadir di sini.
           </p>
         </div>
+        )}
+
+        {cropSrc && (
+          <AvatarCropModal
+            darkMode={darkMode}
+            imageSrc={cropSrc}
+            onClose={() => setCropSrc(null)}
+            onCropped={uploadCroppedAvatar}
+          />
         )}
       </div>
     );

@@ -10,13 +10,49 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* EXLEAD THEME OVERRIDES */
+  /* Ubah warna dasar gelap agar persis seperti login (pure dark) */
+  --color-slate-950: #0a0a0a;
+  --color-slate-900: #171717;
+  --color-slate-800: #262626;
+  --color-slate-700: #333333;
+
+  /* Ubah indigo menjadi nuansa Amber / Kuning (Aksen utama EXLEAD) */
+  --color-indigo-50: #fffbeb;
+  --color-indigo-100: #fef3c7;
+  --color-indigo-200: #fde68a;
+  --color-indigo-300: #fcd34d;
+  --color-indigo-400: #fbbf24;
+  --color-indigo-500: #f59e0b;
+  --color-indigo-600: #d97706;
+  --color-indigo-700: #b45309;
+  --color-indigo-800: #92400e;
+  --color-indigo-900: #78350f;
+  
+  /* Ubah sky menjadi Deep Blue (Warna Utama EXLEAD) */
+  --color-sky-50: #f4f7fa;
+  --color-sky-100: #e0eaf5;
+  --color-sky-200: #c2d7ed;
+  --color-sky-300: #93bce1;
+  --color-sky-400: #5f9cd2;
+  --color-sky-500: #3b82f6; 
+  --color-sky-600: #0f2942;
+  --color-sky-700: #0a1f33;
+  --color-sky-800: #071522;
+  --color-sky-900: #030a11;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @media (prefers-color-scheme: dark) {
+  /* Commenting out default OS dark mode colors since we control it via React state */
+  /*
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+  */
 }
 
 body {
