@@ -190,9 +190,9 @@ export default function PortfolioManager({ darkMode, dbUser, role, canCreate = t
 
   return (
     <div className="space-y-6">
-      <div className={`border rounded-3xl p-5 flex items-center justify-between gap-3 ${card}`}>
+      <div className={`border rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${card}`}>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-3 rounded-full bg-violet-500/10 text-violet-600"><FolderHeart className="w-5 h-5" /></div>
+          <div className="p-3 rounded-full bg-violet-500/10 text-violet-600"><FolderHeart className="w-5 h-5 shrink-0" /></div>
           <div className="min-w-0">
             <h3 className="text-base font-black">Portofolio</h3>
             <p className="text-xs text-slate-500 truncate">
@@ -200,21 +200,21 @@ export default function PortfolioManager({ darkMode, dbUser, role, canCreate = t
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           {canCreate && items.length > 0 && (
             <button onClick={async () => {
                 setDownloadingCV(true);
                 try { await downloadCV({ dbUser, items }); } catch (e) { setError('Gagal membuat CV: ' + e.message); }
                 finally { setDownloadingCV(false); }
               }} disabled={downloadingCV}
-              className="px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold text-xs rounded-xl flex items-center gap-1 disabled:opacity-50">
-              <Download className="w-4 h-4" /> {downloadingCV ? 'Menyiapkan...' : 'Unduh CV'}
+              className="px-3 md:px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 flex-1 md:flex-none">
+              <Download className="w-4 h-4" /> <span className="hidden sm:inline">{downloadingCV ? 'Menyiapkan...' : 'Unduh CV'}</span>
             </button>
           )}
           {canCreate && !formOpen && (
             <button onClick={openNew}
-              className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-md shadow-indigo-500/20">
-              <Plus className="w-4 h-4" /> Tambah Karya
+              className="p-2 md:px-4 md:py-2 bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-sky-500/20 flex-1 md:flex-none">
+              <Plus className="w-4 h-4 md:w-4 md:h-4" /> <span className="hidden sm:inline">Tambah Karya</span>
             </button>
           )}
         </div>

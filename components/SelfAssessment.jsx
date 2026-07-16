@@ -141,9 +141,13 @@ export default function SelfAssessment({ darkMode, onSaved }) {
           <div className="flex items-center justify-between gap-3 mb-5">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
-              <div>
-                <h3 className="text-base font-black">Self Assessment Selesai</h3>
-                <p className="text-xs text-slate-500">Skor SA: <span className="font-bold">{(existing.saScore || 0).toFixed(2)}</span> / 4.00 • ELIX (dari SA): <span className="font-bold">{elix.toFixed(0)}</span></p>
+              <div className="min-w-0">
+                <h3 className="text-sm md:text-base font-black truncate">Self Assessment Selesai</h3>
+                <div className="text-[10px] text-slate-500 mt-1 flex flex-col sm:flex-row sm:gap-2">
+                  <span>Skor SA: <strong className="font-black text-slate-700 dark:text-slate-300">{(existing.saScore || 0).toFixed(2)}</strong> / 4.00</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span>ELIX: <strong className="font-black text-slate-700 dark:text-slate-300">{elix.toFixed(0)}</strong></span>
+                </div>
               </div>
             </div>
             <button onClick={() => setEditing(true)} className="px-4 py-2 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-xl flex items-center gap-2 font-bold text-xs shrink-0">

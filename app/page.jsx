@@ -344,9 +344,6 @@ return (
         }`}>
           <div className="flex items-center gap-3">
             <img src="/logo-yes.png" alt="YES Logo" className="h-8 w-auto object-contain" />
-            <span className={`text-xs font-bold tracking-wider uppercase hidden sm:inline ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Youth Ekselensia Scholarship
-            </span>
           </div>
 
           <div className="flex items-center gap-3">
