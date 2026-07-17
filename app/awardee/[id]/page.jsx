@@ -83,14 +83,24 @@ export default function AwardeeDetailPage({ params }) {
               <p className="text-slate-500 flex items-center gap-1.5 mt-1"><MapPin className="w-4 h-4"/> {data.wilayah?.name}</p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-slate-600">
-              <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg"><GraduationCap className="w-4 h-4"/> {data.university} - {data.major}</span>
-              <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg"><Target className="w-4 h-4"/> IPK: {data.gpa}</span>
+              <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg"><GraduationCap className="w-4 h-4"/> {data.school || 'Belum diatur'}</span>
             </div>
           </div>
           <div className="shrink-0 bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-center min-w-[120px] w-full md:w-auto mt-4 md:mt-0">
             <div className="text-xs font-bold text-indigo-400 mb-1">Indeks ELIX</div>
-            <div className="text-4xl font-black text-indigo-600">{data.elix ? data.elix.toFixed(0) : '-'}</div>
-            {data.category && <div className="text-xs font-bold mt-1 text-indigo-500">{data.category}</div>}
+            <div className="text-4xl font-black text-indigo-600 mb-1">{data.elix ? data.elix.toFixed(0) : '-'}</div>
+            {data.category && <div className="text-xs font-bold text-indigo-500 mb-3">{data.category}</div>}
+            
+            <div className="flex items-center justify-between gap-4 border-t border-indigo-100 pt-3">
+              <div className="text-center">
+                <div className="text-[10px] font-bold text-slate-400">Skor SA</div>
+                <div className="text-sm font-black text-slate-700">{data.hasFilledSA ? (data.saScore || 0).toFixed(2) : '-'}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] font-bold text-slate-400">Skor MA</div>
+                <div className="text-sm font-black text-slate-700">{data.hasFilledMA ? (data.maScore || 0).toFixed(2) : '-'}</div>
+              </div>
+            </div>
           </div>
         </div>
 
