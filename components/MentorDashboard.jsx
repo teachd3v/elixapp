@@ -222,7 +222,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
             {awardees.map((a) => {
               const elix = elixOf(a);
               return (
-                <div key={a.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                <div key={a.id} onClick={() => window.location.href = `/awardee/${a.id}`} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-indigo-500 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                       {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt={a.user?.name} className="w-full h-full object-cover" /> : <UserCheck className="w-4 h-4 text-slate-400" />}
@@ -236,7 +236,6 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
                     <StatusPill ok={a.hasFilledSA} label={a.hasFilledSA ? `SA ${(a.saScore || 0).toFixed(1)}` : 'SA —'} />
                     <StatusPill ok={a.hasFilledMA} label={a.hasFilledMA ? `MA ${(a.maScore || 0).toFixed(1)}` : 'MA —'} />
                     <span className="text-xs font-black w-8 text-right hidden sm:block">{elix == null ? '—' : elix.toFixed(0)}</span>
-                    <button onClick={() => window.location.href = `/awardee/${a.id}`} className="ml-2 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors">Detail</button>
                   </div>
                 </div>
               );
