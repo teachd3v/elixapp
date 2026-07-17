@@ -55,6 +55,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [cycleFilter, setCycleFilter] = useState('ACTIVE');
+  const [filterAwardee, setFilterAwardee] = useState('ALL');
 
   const load = useCallback(async () => {
     try {
@@ -135,14 +136,39 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
 
   // ---------- elix_analysis tab ----------
   if (activeTab === 'elix_analysis') {
-    const withElix = awardees.map(a => ({ ...a, elix: elixOf(a) })).filter(a => a.elix != null).sort((a, b) => b.elix - a.elix);
-    const avgElix = withElix.length ? (withElix.reduce((s, x) => s + x.elix, 0) / withElix.length) : null;
-    const barData = withElix.map(a => ({ name: a.user?.name || 'Awardee', elix: a.elix }));
+    const { wilayah, awardees, dimensionAverages } = data || {};
+    
+    const filteredAwardees = (awardees || []).filter(a => filterAwardee === 'ALL' || a.id === filterAwardee);
+    const withElix = filteredAwardees.map(a => ({ ...a, elix: elixOf(a) })).filter(a => a.elix !== null);
+    const avgElix = withElix.length ? withElix.reduce((s, a) => s + a.elix, 0) / withElix.length : null;
+    
+    const barData = withElix.map(a => ({ name: a.user?.name || 'Unknown', elix: a.elix }));
+    
+    const radarData = (dimensionAverages || []).map(d => {
+      if (filterAwardee === 'ALL') return { subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 };
+      const values = filteredAwardees.map(a => {
+        const sa = a.hasFilledSA ? a.saDimensionScores?.[d.id] : null;
+        const ma = a.hasFilledMA ? a.maDimensionScores?.[d.id] : null;
+        if (sa != null && ma != null) return 0.4 * sa + 0.6 * ma;
+        if (sa != null) return sa;
+        if (ma != null) return ma;
+        return null;
+      }).filter(v => v != null);
+      const avg = values.length ? values.reduce((s,v)=>s+v,0)/values.length : 0;
+      return { subject: d.name.split(' ')[0], A: Number(avg.toFixed(2)), fullMark: 4 };
+    });
 
     return (
       <div className="space-y-6">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+            <option value="ALL">Semua Awardee</option>
+            {(awardees || []).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
+          </select>
+        </div>
+
         <div className={`border rounded-3xl p-6 ${card}`}>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rata-rata ELIX Wilayah {wilayah?.name}</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{filterAwardee === 'ALL' ? `Rata-rata ELIX Wilayah ${wilayah?.name || ''}` : 'Rata-rata ELIX (Filtered)'}</p>
           <div className="flex items-baseline gap-3 mt-2">
             <span className="text-5xl font-black">{avgElix == null ? '—' : avgElix.toFixed(1)}</span>
             <span className="text-xs text-slate-500">dari {withElix.length} awardee ternilai</span>
@@ -189,7 +215,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
             <div className="w-full h-72">
               {cycleFilter === 'ACTIVE' ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={(data?.dimensionAverages || []).map(d => ({ subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 }))} outerRadius="70%">
+                  <RadarChart data={radarData} outerRadius="70%">
                     <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -208,6 +234,28 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
                   </LineChart>
                 </ResponsiveContainer>
               )}
+            </div>
+          </div>
+        </div>
+
+        <div className={`border rounded-3xl p-6 ${card}`}>
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Kategori Indeks ELIX</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+              <div className="text-rose-500 font-black text-lg mb-1">0 - 45</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Emerging Leader</div>
+            </div>
+            <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800/50">
+              <div className="text-orange-500 font-black text-lg mb-1">46 - 65</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Developing Leader</div>
+            </div>
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+              <div className="text-emerald-500 font-black text-lg mb-1">66 - 85</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Growing Leader</div>
+            </div>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50">
+              <div className="text-blue-500 font-black text-lg mb-1">86 - 100</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Excellent Leader</div>
             </div>
           </div>
         </div>

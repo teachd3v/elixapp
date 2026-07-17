@@ -63,6 +63,8 @@ export async function GET() {
       address: a.address,
       saScore: a.saScore,
       maScore: a.maScore,
+      saDimensionScores: a.saDimensionScores,
+      maDimensionScores: a.maDimensionScores,
       hasFilledSA: hasSA,
       hasFilledMA: hasMA,
       elix,

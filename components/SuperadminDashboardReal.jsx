@@ -115,11 +115,12 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTabLocal, setActiveTabLocal] = useState('users');
-  const [editingUser, setEditingUser] = useState(null);
   const [expandedWilayah, setExpandedWilayah] = useState({});
+  const [editingUser, setEditingUser] = useState(null);
+  const [cycleFilter, setCycleFilter] = useState('ACTIVE');
+  const [filterWilayah, setFilterWilayah] = useState('ALL');
+  const [filterAwardee, setFilterAwardee] = useState('ALL');
   const [viewingProfile, setViewingProfile] = useState(null);
-  const [cycleFilter, setCycleFilter] = useState('ACTIVE'); // 'ACTIVE' | 'ALL'
   const { confirm, alert } = useDialog();
 
   const toggleWilayah = (id) => {
@@ -282,25 +283,61 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   // ---------- ELIX ANALYSIS TAB ----------
   if (activeTab === 'elix_analysis') {
-    const scoredAwardees = awardees.filter((a) => a.elix != null).sort((a, b) => b.elix - a.elix);
-    const radarData = dimensionAverages.map((d) => ({ subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 }));
-    const barData = wilayahRollup.filter((w) => w.avgElix != null).map((w) => ({ name: w.name, elix: w.avgElix }));
+    const filteredAwardees = awardees.filter(a => {
+      const matchW = filterWilayah === 'ALL' || a.wilayahId === filterWilayah;
+      const matchA = filterAwardee === 'ALL' || a.id === filterAwardee;
+      return matchW && matchA;
+    });
+
+    const scoredFiltered = filteredAwardees.filter((a) => a.elix != null).sort((a, b) => b.elix - a.elix);
+    const avgElix = scoredFiltered.length ? (scoredFiltered.reduce((s, a) => s + a.elix, 0) / scoredFiltered.length) : null;
+
+    const radarData = dimensionAverages.map((d) => {
+      if (filterWilayah === 'ALL' && filterAwardee === 'ALL') return { subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 };
+      const values = filteredAwardees.map(a => {
+        const sa = a.hasFilledSA ? a.saDimensionScores?.[d.id] : null;
+        const ma = a.hasFilledMA ? a.maDimensionScores?.[d.id] : null;
+        if (sa != null && ma != null) return 0.4 * sa + 0.6 * ma;
+        if (sa != null) return sa;
+        if (ma != null) return ma;
+        return null;
+      }).filter(v => v != null);
+      const avg = values.length ? values.reduce((s,v)=>s+v,0)/values.length : 0;
+      return { subject: d.name.split(' ')[0], A: Number(avg.toFixed(2)), fullMark: 4 };
+    });
+
+    const barData = filterWilayah === 'ALL' && filterAwardee === 'ALL' 
+      ? wilayahRollup.filter((w) => w.avgElix != null).map((w) => ({ name: w.name, elix: w.avgElix }))
+      : scoredFiltered.map(a => ({ name: a.user?.name || 'Awardee', elix: a.elix }));
 
     return (
       <div className="space-y-6">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <select value={filterWilayah} onChange={e => { setFilterWilayah(e.target.value); setFilterAwardee('ALL'); }} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+            <option value="ALL">Semua Wilayah</option>
+            {wilayahRollup.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+          {filterWilayah !== 'ALL' && (
+            <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+              <option value="ALL">Semua Awardee</option>
+              {awardees.filter(a => a.wilayahId === filterWilayah).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
+            </select>
+          )}
+        </div>
+
         <div className={`border rounded-3xl p-6 ${card}`}>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rata-rata ELIX Nasional</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{filterWilayah === 'ALL' && filterAwardee === 'ALL' ? 'Rata-rata ELIX Nasional' : 'Rata-rata ELIX (Filtered)'}</p>
           <div className="flex items-baseline gap-3 mt-2">
-            <span className="text-5xl font-black">{nationalElix == null ? '—' : nationalElix.toFixed(1)}</span>
-            <span className="text-xs text-slate-500">dari {scoredAwardees.length} awardee ternilai</span>
+            <span className="text-5xl font-black">{avgElix == null ? '—' : avgElix.toFixed(1)}</span>
+            <span className="text-xs text-slate-500">dari {scoredFiltered.length} awardee ternilai</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className={`border rounded-3xl p-5 ${card}`}>
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">Perbandingan ELIX per Wilayah</h3>
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">{filterWilayah === 'ALL' && filterAwardee === 'ALL' ? 'Perbandingan ELIX per Wilayah' : 'Perbandingan ELIX antar Awardee'}</h3>
             {barData.length === 0 ? (
-              <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada wilayah dengan awardee ternilai.</p>
+              <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada data ternilai.</p>
             ) : (
               <div className="w-full h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -309,7 +346,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                     <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                    <Bar dataKey="elix" radius={[8,8,0,0]}>
+                    <Bar dataKey="elix" radius={[8,8,0,0]} label={{ position: 'top', fill: '#1e293b', fontSize: 12, fontWeight: 'bold' }}>
                       {barData.map((_, i) => <Cell key={i} fill="#6366f1" />)}
                     </Bar>
                   </BarChart>
@@ -340,7 +377,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                     <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} />
+                    <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
                     <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -351,10 +388,32 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                    <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                    <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
+            </div>
+          </div>
+        </div>
+
+        <div className={`border rounded-3xl p-6 ${card}`}>
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Kategori Indeks ELIX</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+              <div className="text-rose-500 font-black text-lg mb-1">0 - 45</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Emerging Leader</div>
+            </div>
+            <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800/50">
+              <div className="text-orange-500 font-black text-lg mb-1">46 - 65</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Developing Leader</div>
+            </div>
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+              <div className="text-emerald-500 font-black text-lg mb-1">66 - 85</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Growing Leader</div>
+            </div>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50">
+              <div className="text-blue-500 font-black text-lg mb-1">86 - 100</div>
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">Excellent Leader</div>
             </div>
           </div>
         </div>

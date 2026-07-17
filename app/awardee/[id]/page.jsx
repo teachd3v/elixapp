@@ -3,11 +3,12 @@ import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User, MapPin, GraduationCap, FileText, Download,
-  CheckCircle2, XCircle, LayoutDashboard, LineChart, Target
+  CheckCircle2, XCircle, LayoutDashboard, LineChart, Target, BarChart3
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+  LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, Cell
 } from 'recharts';
 
 const ELIX_DESCRIPTIONS = {
@@ -50,23 +51,20 @@ export default function AwardeeDetailPage({ params }) {
   const historyData = data.history.map(r => ({
     name: r.period?.name || 'Unknown',
     elix: r.elix || 0,
-    sa: r.saScore || 0,
-    ma: r.maScore || 0
+    sa: r.saScore ? Number((r.saScore * 25).toFixed(0)) : 0,
+    ma: r.maScore ? Number((r.maScore * 25).toFixed(0)) : 0
   }));
 
-  // Render Radar Chart for current active period or latest
+  // Render Horizontal Bar Chart for current active period or latest
   const dimData = dimensions.map(d => {
     const sa = data.hasFilledSA ? (data.saDimensionScores?.[d.id] || 0) : 0;
     const ma = data.hasFilledMA ? (data.maDimensionScores?.[d.id] || 0) : 0;
-    let blended = 0;
-    if (data.hasFilledSA && data.hasFilledMA) blended = 0.4 * sa + 0.6 * ma;
-    else if (data.hasFilledSA) blended = sa;
-    else if (data.hasFilledMA) blended = ma;
     
     return {
-      subject: d.name,
-      Skor: Number(blended.toFixed(2)),
-      fullMark: 4,
+      subject: d.name.split(' ')[0], // short name
+      full_name: d.name,
+      sa: Number((sa * 25).toFixed(0)),
+      ma: Number((ma * 25).toFixed(0)),
     };
   });
 
@@ -132,43 +130,47 @@ export default function AwardeeDetailPage({ params }) {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Radar Chart */}
+          {/* Horizontal Bar Chart */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-            <h3 className="font-black mb-4 flex items-center gap-2"><Radar className="w-5 h-5 text-sky-500"/> Sebaran Dimensi</h3>
-            {dimData.some(d => d.Skor > 0) ? (
-              <div className="h-64 w-full">
+            <h3 className="font-black mb-4 flex items-center gap-2"><BarChart3 className="w-5 h-5 text-sky-500"/> Sebaran Dimensi</h3>
+            {dimData.some(d => d.sa > 0 || d.ma > 0) ? (
+              <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={dimData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 4]} tick={false} axisLine={false} />
-                    <Radar name="Skor" dataKey="Skor" stroke="#0284c7" fill="#38bdf8" fillOpacity={0.4} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                  </RadarChart>
+                  <BarChart data={dimData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" domain={[0, 100]} hide />
+                    <YAxis dataKey="subject" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10, fontWeight: 'bold'}} width={70} />
+                    <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12, fontWeight: 'bold', color: '#64748b' }} />
+                    <Bar dataKey="sa" name="Skor SA" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={12} label={{ position: 'right', fill: '#1e293b', fontSize: 10, fontWeight: 'bold' }} />
+                    <Bar dataKey="ma" name="Skor MA" fill="#1e3a8a" radius={[0, 4, 4, 0]} barSize={12} label={{ position: 'right', fill: '#1e293b', fontSize: 10, fontWeight: 'bold' }} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-sm text-slate-400 font-bold bg-slate-50 rounded-2xl">Belum ada data penilaian aktif</div>
+              <div className="h-72 flex items-center justify-center text-sm text-slate-400 font-bold bg-slate-50 rounded-2xl">Belum ada data penilaian aktif</div>
             )}
           </div>
 
           {/* Line Chart History */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-            <h3 className="font-black mb-4 flex items-center gap-2"><LineChart className="w-5 h-5 text-emerald-500"/> Historis ELIX</h3>
+            <h3 className="font-black mb-4 flex items-center gap-2"><LineChart className="w-5 h-5 text-emerald-500"/> Tren ELIX</h3>
             {historyData.length > 0 ? (
-              <div className="h-64 w-full">
+              <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ReLineChart data={historyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} />
                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} domain={[0, 100]} />
                     <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                    <Line type="monotone" dataKey="elix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12, fontWeight: 'bold', color: '#64748b' }} />
+                    <Line type="monotone" dataKey="sa" name="Skor SA" stroke="#3b82f6" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#3b82f6', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
+                    <Line type="monotone" dataKey="ma" name="Skor MA" stroke="#1e3a8a" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#1e3a8a', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
                   </ReLineChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-sm text-slate-400 font-bold bg-slate-50 rounded-2xl">Belum ada riwayat siklus</div>
+              <div className="h-72 flex items-center justify-center text-sm text-slate-400 font-bold bg-slate-50 rounded-2xl">Belum ada riwayat siklus</div>
             )}
           </div>
         </div>
