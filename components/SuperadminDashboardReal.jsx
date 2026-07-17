@@ -320,7 +320,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
               return null;
             }).filter(v => v != null);
             const avg = values.length ? values.reduce((s,v)=>s+v,0)/values.length : 0;
-            dimScores[d.name.split(' ')[0]] = Number((avg * 5).toFixed(1));
+            dimScores[d.name.split(' ')[0]] = Number((avg * 25).toFixed(1));
           });
           return { name: w.name, elix: w.avgElix, ...dimScores };
         })
@@ -333,7 +333,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             if (sa != null && ma != null) val = 0.4 * sa + 0.6 * ma;
             else if (sa != null) val = sa;
             else if (ma != null) val = ma;
-            dimScores[d.name.split(' ')[0]] = Number((val * 5).toFixed(1));
+            dimScores[d.name.split(' ')[0]] = Number((val * 25).toFixed(1));
           });
           return { name: a.user?.name || 'Awardee', elix: a.elix, ...dimScores };
         });
@@ -354,14 +354,42 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
         </div>
 
         <div className={`border rounded-3xl p-6 ${card}`}>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{filterWilayah === 'ALL' && filterAwardee === 'ALL' ? 'Rata-rata ELIX Nasional' : 'Rata-rata ELIX (Filtered)'}</p>
-          <div className="flex items-baseline gap-3 mt-2">
-            <span className="text-5xl font-black">{avgElix == null ? '—' : avgElix.toFixed(1)}</span>
-            <span className="text-xs text-slate-500">dari {scoredFiltered.length} awardee ternilai</span>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">{filterWilayah === 'ALL' && filterAwardee === 'ALL' ? 'Rata-rata ELIX Nasional' : 'Rata-rata ELIX (Filtered)'}</p>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-center">
+            <div className="flex flex-col md:border-r border-slate-200 dark:border-slate-700 md:pr-4">
+              <span className="text-4xl font-black">{avgElix == null ? '—' : avgElix.toFixed(1)}</span>
+              <span className="text-[10px] text-slate-500 mt-1">dari {scoredFiltered.length} awardee ternilai</span>
+            </div>
+            {dimensionAverages.map((d, i) => {
+              const radarDim = radarData.find(r => r.subject === d.name.split(' ')[0]);
+              const dimScore = radarDim ? (radarDim.A * 25).toFixed(1) : '—';
+              const colors = ['text-blue-500', 'text-emerald-500', 'text-amber-500', 'text-purple-500', 'text-pink-500'];
+              return (
+                <div key={d.id} className="flex flex-col">
+                  <span className={`text-xl font-black ${colors[i % colors.length]}`}>{dimScore}</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight mt-1">{d.name}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className={`border rounded-3xl p-5 ${card}`}>
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">Tren Siklus ELIX</h3>
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data?.trend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#1e293b' : '#f1f5f9'} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
+                  <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
           <div className={`border rounded-3xl p-5 ${card}`}>
             <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">{filterWilayah === 'ALL' && filterAwardee === 'ALL' ? 'Perbandingan ELIX per Wilayah' : 'Perbandingan ELIX antar Awardee'}</h3>
             {barData.length === 0 ? (
@@ -369,7 +397,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             ) : (
               <div className="w-full h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={barData}>
+                  <BarChart data={barData}>
                     <CartesianGrid stroke={darkMode ? '#1e293b' : '#f1f5f9'} vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -379,54 +407,13 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                       const dimName = d.name.split(' ')[0];
                       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
                       return (
-                        <Bar key={dimName} dataKey={dimName} name={dimName} stackId="a" fill={colors[i % colors.length]} />
+                        <Bar key={dimName} dataKey={dimName} name={dimName} fill={colors[i % colors.length]} radius={[4,4,0,0]} />
                       )
                     })}
-                    <Line dataKey="elix" name="Total ELIX" stroke="transparent" dot={false} activeDot={false} label={{ position: 'top', fill: darkMode ? '#f8fafc' : '#1e293b', fontSize: 12, fontWeight: 'bold' }} />
-                  </ComposedChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
-          </div>
-
-          <div className={`border rounded-3xl p-5 ${card}`}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Rata-rata Penilaian</h3>
-              <select
-                value={cycleFilter}
-                onChange={(e) => setCycleFilter(e.target.value)}
-                className={`text-xs font-bold px-3 py-1 rounded-full outline-none border transition-colors cursor-pointer ${
-                  darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-                }`}
-              >
-                <option value="ACTIVE">Siklus Aktif</option>
-                <option value="ALL">Semua Siklus (Tren)</option>
-              </select>
-            </div>
-            
-            <div className="w-full h-72">
-              {cycleFilter === 'ACTIVE' ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData} outerRadius="70%">
-                    <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
-                    <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
-                    <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data?.trend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#1e293b' : '#f1f5f9'} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                    <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#1e293b', fontSize: 12, fontWeight: 'bold', position: 'top' }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
           </div>
         </div>
 
