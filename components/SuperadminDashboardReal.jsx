@@ -420,11 +420,11 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
         <div className={`border rounded-3xl p-5 ${card}`}>
           <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Peringkat Awardee</h3>
-          {scoredAwardees.length === 0 ? (
+          {scoredFiltered.length === 0 ? (
             <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada awardee dengan skor.</p>
           ) : (
             <div className="space-y-2">
-              {scoredAwardees.map((a, i) => (
+              {scoredFiltered.map((a, i) => (
                 <div key={a.id} className={`flex items-center gap-3 p-3 rounded-2xl border ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-white border-slate-100'}`}>
                   <span className="text-xs font-black w-6 text-slate-400">#{i + 1}</span>
                   <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
