@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { ShieldAlert, Clock, RefreshCw } from 'lucide-react';
 
@@ -8,6 +8,25 @@ import { ShieldAlert, Clock, RefreshCw } from 'lucide-react';
 export default function UnverifiedView({ darkMode }) {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress;
+
+  useEffect(() => {
+    // Auto-polling tiap 5 detik untuk cek apakah admin sudah meng-approve.
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/auth/sync');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.role && data.role !== 'UNVERIFIED') {
+            window.location.reload();
+          }
+        }
+      } catch (err) {
+        // Ignore network errors during polling
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex items-center justify-center py-10">

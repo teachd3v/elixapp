@@ -27,7 +27,7 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
   const [wilayahList, setWilayahList] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!dbUser?.isProfileComplete);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
