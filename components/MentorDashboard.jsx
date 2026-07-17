@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Users, ClipboardCheck, Megaphone, Calendar, UserCheck, MapPin,
-  TrendingUp, CheckCircle2, ChevronRight,
+  TrendingUp, CheckCircle2, ChevronRight, BarChart3
 } from 'lucide-react';
+import {
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+} from 'recharts';
 import RealProfile from './RealProfile';
 import MentorAssessment from './MentorAssessment';
 import SessionsManager from './SessionsManager';
@@ -50,6 +54,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [cycleFilter, setCycleFilter] = useState('ACTIVE');
 
   const load = useCallback(async () => {
     try {
@@ -169,6 +174,46 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
       </div>
 
       <div className={`border rounded-3xl p-5 ${card}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Rata-rata Penilaian</h3>
+          <select
+            value={cycleFilter}
+            onChange={(e) => setCycleFilter(e.target.value)}
+            className={`text-xs font-bold px-3 py-1 rounded-full outline-none border transition-colors cursor-pointer ${
+              darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+            }`}
+          >
+            <option value="ACTIVE">Siklus Aktif</option>
+            <option value="ALL">Semua Siklus (Tren)</option>
+          </select>
+        </div>
+        
+        <div className="w-full h-72">
+          {cycleFilter === 'ACTIVE' ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={(data?.dimensionAverages || []).map(d => ({ subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 }))} outerRadius="70%">
+                <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
+                <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} />
+                <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data?.trend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#1e293b' : '#f1f5f9'} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
+                <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      <div className={`border rounded-3xl p-5 ${card}`}>
         <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Daftar Awardee Bimbingan</h3>
         {awardees.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-6">Belum ada awardee di wilayahmu.</p>
@@ -190,7 +235,8 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
                   <div className="flex items-center gap-2 shrink-0">
                     <StatusPill ok={a.hasFilledSA} label={a.hasFilledSA ? `SA ${(a.saScore || 0).toFixed(1)}` : 'SA —'} />
                     <StatusPill ok={a.hasFilledMA} label={a.hasFilledMA ? `MA ${(a.maScore || 0).toFixed(1)}` : 'MA —'} />
-                    <span className="text-xs font-black w-10 text-right">{elix == null ? '—' : elix.toFixed(0)}</span>
+                    <span className="text-xs font-black w-8 text-right hidden sm:block">{elix == null ? '—' : elix.toFixed(0)}</span>
+                    <button onClick={() => window.open(`/awardee/${a.id}`, '_blank')} className="ml-2 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors">Detail</button>
                   </div>
                 </div>
               );

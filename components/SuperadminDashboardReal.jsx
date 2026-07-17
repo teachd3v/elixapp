@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
+  LineChart, Line, Legend
 } from 'recharts';
 import {
   Users, MapPin, ClipboardCheck, SlidersHorizontal, Megaphone,
@@ -110,16 +111,15 @@ function ProfileModal({ profile, onClose, darkMode }) {
 }
 
 // Real, DB-backed Superadmin experience. Replaces the mock SuperadminView.
-// Wired tabs: dashboard, users (PendingApprovals + real directory), elix_analysis.
-// The remaining tabs (attendance/instruments/pengumuman) are honest EmptyStates
-// until those features have a real backend.
 export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, role }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingUser, setEditingUser] = useState(null); // { user, currentRole }
+  const [activeTabLocal, setActiveTabLocal] = useState('users');
+  const [editingUser, setEditingUser] = useState(null);
   const [expandedWilayah, setExpandedWilayah] = useState({});
   const [viewingProfile, setViewingProfile] = useState(null);
+  const [cycleFilter, setCycleFilter] = useState('ACTIVE'); // 'ACTIVE' | 'ALL'
   const { confirm, alert } = useDialog();
 
   const toggleWilayah = (id) => {
@@ -314,16 +314,42 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           </div>
 
           <div className={`border rounded-3xl p-5 ${card}`}>
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">Rata-rata per Dimensi (Nasional)</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Rata-rata Penilaian</h3>
+              <select
+                value={cycleFilter}
+                onChange={(e) => setCycleFilter(e.target.value)}
+                className={`text-xs font-bold px-3 py-1 rounded-full outline-none border transition-colors cursor-pointer ${
+                  darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                }`}
+              >
+                <option value="ACTIVE">Siklus Aktif</option>
+                <option value="ALL">Semua Siklus (Tren)</option>
+              </select>
+            </div>
+            
             <div className="w-full h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData} outerRadius="70%">
-                  <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
-                  <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} />
-                </RadarChart>
-              </ResponsiveContainer>
+              {cycleFilter === 'ACTIVE' ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} outerRadius="70%">
+                    <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
+                    <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                    <Radar dataKey="A" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} />
+                    <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data?.trend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#1e293b' : '#f1f5f9'} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
+                    <Line type="monotone" dataKey="avgElix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
@@ -435,7 +461,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                        )}
                        {wAwardees.length > 0 ? (
                          wAwardees.map(a => (
-                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(a)}>
+                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => window.open(`/awardee/${a.id}`, '_blank')}>
                              <div className="flex items-center gap-3">
                                 <img src={a.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
                                 <div>

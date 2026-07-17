@@ -10,7 +10,7 @@ export async function GET() {
   if (!me) return new NextResponse('Unauthorized', { status: 401 });
   if (me.role !== 'SUPERADMIN') return new NextResponse('Forbidden', { status: 403 });
 
-  const [users, wilayahList, awardees, mentors, superadmins, dimensions] = await Promise.all([
+  const [users, wilayahList, awardees, mentors, superadmins, dimensions, periods] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.wilayah.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
     prisma.awardeeProfile.findMany({
@@ -33,6 +33,14 @@ export async function GET() {
       select: { id: true, name: true, email: true, avatarUrl: true },
     }),
     prisma.dimension.findMany({ orderBy: { order: 'asc' } }),
+    prisma.assessmentPeriod.findMany({
+      orderBy: { startDate: 'asc' },
+      include: {
+        records: {
+          select: { saScore: true, maScore: true, hasFilledSA: true, hasFilledMA: true }
+        }
+      }
+    })
   ]);
 
   const roleCounts = Object.fromEntries(users.map((u) => [u.role, u._count._all]));
@@ -101,6 +109,22 @@ export async function GET() {
     };
   });
 
+  // Calculate historical trend
+  const trend = periods.map(p => {
+    const scored = p.records.map(r => {
+      const hasSA = !!r.hasFilledSA;
+      const hasMA = !!r.hasFilledMA;
+      const raw = blendedScore(r.saScore || 0, r.maScore || 0, hasSA, hasMA);
+      return (hasSA || hasMA) ? toElixIndex(raw) : null;
+    }).filter(e => e != null);
+    
+    return {
+      periodId: p.id,
+      name: p.name,
+      avgElix: scored.length ? parseFloat((scored.reduce((s, v) => s + v, 0) / scored.length).toFixed(1)) : 0
+    };
+  });
+
   return NextResponse.json({
     roleCounts,
     totals: {
@@ -112,6 +136,7 @@ export async function GET() {
       maFilled: enrichedAwardees.filter((a) => a.hasFilledMA).length,
     },
     nationalElix,
+    trend,
     wilayahRollup,
     dimensionAverages,
     awardees: enrichedAwardees,
