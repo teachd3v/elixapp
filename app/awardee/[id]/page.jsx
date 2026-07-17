@@ -65,7 +65,7 @@ export default function AwardeeDetailPage({ params }) {
     
     return {
       subject: d.name,
-      Skor: blended,
+      Skor: Number(blended.toFixed(2)),
       fullMark: 4,
     };
   });
@@ -142,7 +142,7 @@ export default function AwardeeDetailPage({ params }) {
                     <PolarGrid stroke="#e2e8f0" />
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                     <PolarRadiusAxis angle={30} domain={[0, 4]} tick={false} axisLine={false} />
-                    <Radar name="Skor" dataKey="Skor" stroke="#0284c7" fill="#38bdf8" fillOpacity={0.4} />
+                    <Radar name="Skor" dataKey="Skor" stroke="#0284c7" fill="#38bdf8" fillOpacity={0.4} label={{ fill: '#0284c7', fontSize: 10, fontWeight: 'black', position: 'top' }} />
                     <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -163,7 +163,7 @@ export default function AwardeeDetailPage({ params }) {
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} />
                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} domain={[0, 100]} />
                     <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                    <Line type="monotone" dataKey="elix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                    <Line type="monotone" dataKey="elix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} label={{ fill: '#10b981', fontSize: 10, fontWeight: 'black', position: 'top' }} />
                   </ReLineChart>
                 </ResponsiveContainer>
               </div>
