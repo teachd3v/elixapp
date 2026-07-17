@@ -373,7 +373,12 @@ return (
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-6 space-y-6">
-        
+        {!dbUser ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <>
         {/* Navigation Tabs */}
             {showNav && (
             <DesktopNav
@@ -406,7 +411,8 @@ return (
         {role === 'superadmin' && (
           <SuperadminDashboardReal darkMode={darkMode} activeTab={activeTab} dbUser={dbUser} role={role} />
         )}
-
+          </>
+        )}
       </main>
 
       {/* Floating Bottom Nav Bar for Hape / Mobile
