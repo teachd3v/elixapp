@@ -13,3 +13,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
   2. Stop the dev server (`npm run dev`).
   3. Delete the `.next` folder entirely (`Remove-Item -Recurse -Force .next` on Windows, or `rm -rf .next` on Unix).
   4. Restart the dev server to force a clean build and reload the new Prisma Client in memory.
+
+# Prisma Database & Query Practices
+- **Nested Relation Filtering**: When querying nested relations in Prisma (e.g., fetching `AssessmentRecord` but filtering by `awardee.wilayahId`), avoid using deep `include: { relation: { where: ... } }` as it may silently fail and return empty arrays. Instead, include the necessary relation fields and filter the array in JavaScript memory.
+
+# ELIX Domain Logic
+- **Assessment Data (Live vs Historical)**: Assessment data lives in two places depending on the cycle state. 
+  1. **Live Data**: The currently active `AssessmentPeriod` (`isActive: true`) has its scores stored in `AwardeeProfile` (`saScore`, `maScore`, `elix`, etc.).
+  2. **Historical Data**: Closed/inactive `AssessmentPeriod`s have their frozen scores stored in `AssessmentRecord`.
+  When calculating or charting trends (e.g. Tren Siklus ELIX), you MUST dynamically check if the period `isActive`. If active, pull values from the live `AwardeeProfile`. If inactive, pull from `AssessmentRecord`. Do NOT create dummy "Saat Ini" periods for live data.
