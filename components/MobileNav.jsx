@@ -16,8 +16,9 @@ const MENU_CONFIG = {
     { id: 'dashboard', label: 'Dashboard', icon: Compass },
     { id: 'assessment', label: 'Nilai MA', icon: UserCheck },
     { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck },
-    { id: 'pengumuman', label: 'Info', icon: Megaphone },
-    { id: 'profile', label: 'Profil', icon: User },
+    { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone },
+    { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3 },
+    { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   superadmin: [
     { id: 'dashboard', label: 'Dashboard', icon: Compass },
