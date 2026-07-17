@@ -144,15 +144,20 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     const avgElix = withElix.length ? withElix.reduce((s, a) => s + a.elix, 0) / withElix.length : null;
 
     const dynamicTrend = (data?.periods || []).map(p => {
-      const values = filteredAwardees.map(a => {
-         const rec = a.assessmentRecords?.find(r => r.periodId === p.id);
-         if (!rec) return null;
-         const hasSA = !!rec.hasFilledSA;
-         const hasMA = !!rec.hasFilledMA;
-         if (!hasSA && !hasMA) return null;
-         const raw = blendedScore(rec.saScore || 0, rec.maScore || 0, hasSA, hasMA);
-         return toElixIndex(raw);
-      }).filter(v => v != null);
+      let values;
+      if (p.isActive) {
+         values = filteredAwardees.map(a => a.elix).filter(v => v != null);
+      } else {
+         values = filteredAwardees.map(a => {
+            const rec = a.assessmentRecords?.find(r => r.periodId === p.id);
+            if (!rec) return null;
+            const hasSA = !!rec.hasFilledSA;
+            const hasMA = !!rec.hasFilledMA;
+            if (!hasSA && !hasMA) return null;
+            const raw = blendedScore(rec.saScore || 0, rec.maScore || 0, hasSA, hasMA);
+            return toElixIndex(raw);
+         }).filter(v => v != null);
+      }
       return {
          name: p.name,
          avgElix: values.length ? parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(1)) : 0

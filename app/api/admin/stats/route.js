@@ -141,7 +141,7 @@ export async function GET() {
     },
     nationalElix,
     trend,
-    periods: periods.map(p => ({ id: p.id, name: p.name })),
+    periods: periods.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })),
     wilayahRollup,
     dimensionAverages,
     awardees: enrichedAwardees,

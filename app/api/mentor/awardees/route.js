@@ -84,7 +84,7 @@ export async function GET() {
     wilayah,
     awardees,
     trend,
-    periods: periods.map(p => ({ id: p.id, name: p.name })),
+    periods: periods.map(p => ({ id: p.id, name: p.name, isActive: p.isActive })),
     dimensionAverages
   });
 }
