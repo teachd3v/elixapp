@@ -146,7 +146,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     const dynamicTrend = (data?.periods || []).map(p => {
       let values;
       if (p.isActive) {
-         values = filteredAwardees.map(a => a.elix).filter(v => v != null);
+         values = filteredAwardees.map(a => elixOf(a)).filter(v => v != null);
       } else {
          values = filteredAwardees.map(a => {
             const rec = a.assessmentRecords?.find(r => r.periodId === p.id);
