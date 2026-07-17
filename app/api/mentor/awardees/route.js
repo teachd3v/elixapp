@@ -30,6 +30,7 @@ export async function GET() {
         saDimensionScores: true,
         maDimensionScores: true,
         user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        assessmentRecords: { select: { periodId: true, saScore: true, maScore: true, hasFilledSA: true, hasFilledMA: true } },
       },
       orderBy: { user: { name: 'asc' } },
     }),
@@ -79,6 +80,12 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json({ wilayah, awardees, trend, dimensionAverages });
+  return NextResponse.json({
+    wilayah,
+    awardees,
+    trend,
+    periods: periods.map(p => ({ id: p.id, name: p.name })),
+    dimensionAverages
+  });
 }
 

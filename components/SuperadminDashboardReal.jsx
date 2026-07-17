@@ -16,6 +16,7 @@ import ChangeRoleModal from './ChangeRoleModal';
 import { Edit } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
 import { useDialog } from './DialogProvider';
+import { blendedScore, toElixIndex } from '../lib/assessment';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -292,6 +293,22 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     const scoredFiltered = filteredAwardees.filter((a) => a.elix != null).sort((a, b) => b.elix - a.elix);
     const avgElix = scoredFiltered.length ? (scoredFiltered.reduce((s, a) => s + a.elix, 0) / scoredFiltered.length) : null;
 
+    const dynamicTrend = (data?.periods || []).map(p => {
+      const values = filteredAwardees.map(a => {
+         const rec = a.assessmentRecords?.find(r => r.periodId === p.id);
+         if (!rec) return null;
+         const hasSA = !!rec.hasFilledSA;
+         const hasMA = !!rec.hasFilledMA;
+         if (!hasSA && !hasMA) return null;
+         const raw = blendedScore(rec.saScore || 0, rec.maScore || 0, hasSA, hasMA);
+         return toElixIndex(raw);
+      }).filter(v => v != null);
+      return {
+         name: p.name,
+         avgElix: values.length ? parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(1)) : 0
+      };
+    });
+
     const radarData = dimensionAverages.map((d) => {
       if (filterWilayah === 'ALL' && filterAwardee === 'ALL') return { subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 };
       const values = filteredAwardees.map(a => {
@@ -379,7 +396,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">Tren Siklus ELIX</h3>
             <div className="w-full h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data?.trend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <LineChart data={dynamicTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#1e293b' : '#f1f5f9'} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />

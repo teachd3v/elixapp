@@ -19,6 +19,7 @@ export async function GET() {
         saScore: true, hasFilledSA: true, saDimensionScores: true,
         maScore: true, hasFilledMA: true, maDimensionScores: true,
         user: { select: { id: true, name: true, email: true, avatarUrl: true, phone: true } },
+        assessmentRecords: { select: { periodId: true, saScore: true, maScore: true, hasFilledSA: true, hasFilledMA: true } },
       },
     }),
     prisma.mentorProfile.findMany({
@@ -70,6 +71,7 @@ export async function GET() {
       elix,
       category: elix == null ? null : elixCategory(elix),
       user: a.user,
+      assessmentRecords: a.assessmentRecords,
     };
   });
 
@@ -139,6 +141,7 @@ export async function GET() {
     },
     nationalElix,
     trend,
+    periods: periods.map(p => ({ id: p.id, name: p.name })),
     wilayahRollup,
     dimensionAverages,
     awardees: enrichedAwardees,
