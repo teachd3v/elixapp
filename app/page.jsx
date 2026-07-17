@@ -1,5 +1,5 @@
 "use client";
-import { SignedIn, SignedOut, ClerkLoading, SignIn, UserButton } from '@clerk/nextjs';
+import { Show, ClerkLoading, SignIn, UserButton } from '@clerk/nextjs';
 
 import AlertModal from '../components/modals/AlertModal';
 import DialogModal from '../components/modals/DialogModal';
@@ -257,7 +257,7 @@ return (
         </div>
       </ClerkLoading>
 
-      <SignedOut>
+      <Show when="signed-out">
         <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#0a0a0a]">
           
           {/* LEFT PANEL - Gradient Blue to Yellow */}
@@ -338,9 +338,9 @@ return (
           </div>
 
         </div>
-      </SignedOut>
+      </Show>
 
-      <SignedIn>
+      <Show when="signed-in">
         
     <div className={`min-h-screen ${currentTheme} flex flex-col transition-colors duration-300 pb-24 md:pb-0`}>
       {/* Floating Header / Navbar */}
@@ -1297,7 +1297,7 @@ return (
 
     </div>
   
-      </SignedIn>
+      </Show>
     </>
   );
 }
