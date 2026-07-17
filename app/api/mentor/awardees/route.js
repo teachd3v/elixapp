@@ -60,6 +60,22 @@ export async function GET() {
     };
   });
 
+  // Append current un-finalized cycle data
+  const currentScored = awardees.map(a => {
+    const hasSA = !!a.hasFilledSA;
+    const hasMA = !!a.hasFilledMA;
+    const raw = blendedScore(a.saScore || 0, a.maScore || 0, hasSA, hasMA);
+    return (hasSA || hasMA) ? toElixIndex(raw) : null;
+  }).filter(e => e != null);
+  
+  if (currentScored.length > 0 || trend.length === 0) {
+    trend.push({
+      periodId: 'current',
+      name: 'Saat Ini',
+      avgElix: currentScored.length ? parseFloat((currentScored.reduce((s, v) => s + v, 0) / currentScored.length).toFixed(1)) : 0
+    });
+  }
+
   const dimensionAverages = dimensions.map((dim) => {
     const values = awardees.map((a) => {
       const sa = a.hasFilledSA ? a.saScore && a.saDimensionScores?.[dim.id] : null;
