@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
-  LineChart, Line, Legend
+  LineChart, Line, Legend, ComposedChart
 } from 'recharts';
 import {
   Users, MapPin, ClipboardCheck, SlidersHorizontal, Megaphone,
@@ -307,8 +307,36 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     });
 
     const barData = filterWilayah === 'ALL' && filterAwardee === 'ALL' 
-      ? wilayahRollup.filter((w) => w.avgElix != null).map((w) => ({ name: w.name, elix: w.avgElix }))
-      : scoredFiltered.map(a => ({ name: a.user?.name || 'Awardee', elix: a.elix }));
+      ? wilayahRollup.filter((w) => w.avgElix != null).map((w) => {
+          const wAwardees = filteredAwardees.filter(a => a.wilayahId === w.id && a.elix != null);
+          const dimScores = {};
+          dimensionAverages.forEach(d => {
+            const values = wAwardees.map(a => {
+              const sa = a.hasFilledSA ? a.saDimensionScores?.[d.id] : null;
+              const ma = a.hasFilledMA ? a.maDimensionScores?.[d.id] : null;
+              if (sa != null && ma != null) return 0.4 * sa + 0.6 * ma;
+              if (sa != null) return sa;
+              if (ma != null) return ma;
+              return null;
+            }).filter(v => v != null);
+            const avg = values.length ? values.reduce((s,v)=>s+v,0)/values.length : 0;
+            dimScores[d.name.split(' ')[0]] = Number((avg * 5).toFixed(1));
+          });
+          return { name: w.name, elix: w.avgElix, ...dimScores };
+        })
+      : scoredFiltered.map(a => {
+          const dimScores = {};
+          dimensionAverages.forEach(d => {
+            const sa = a.hasFilledSA ? a.saDimensionScores?.[d.id] : null;
+            const ma = a.hasFilledMA ? a.maDimensionScores?.[d.id] : null;
+            let val = 0;
+            if (sa != null && ma != null) val = 0.4 * sa + 0.6 * ma;
+            else if (sa != null) val = sa;
+            else if (ma != null) val = ma;
+            dimScores[d.name.split(' ')[0]] = Number((val * 5).toFixed(1));
+          });
+          return { name: a.user?.name || 'Awardee', elix: a.elix, ...dimScores };
+        });
 
     return (
       <div className="space-y-6">
@@ -341,15 +369,21 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             ) : (
               <div className="w-full h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData}>
+                  <ComposedChart data={barData}>
                     <CartesianGrid stroke={darkMode ? '#1e293b' : '#f1f5f9'} vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                     <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                    <Bar dataKey="elix" radius={[8,8,0,0]} label={{ position: 'top', fill: '#1e293b', fontSize: 12, fontWeight: 'bold' }}>
-                      {barData.map((_, i) => <Cell key={i} fill="#6366f1" />)}
-                    </Bar>
-                  </BarChart>
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 10, fontWeight: 'bold', paddingTop: '10px' }} />
+                    {dimensionAverages.map((d, i) => {
+                      const dimName = d.name.split(' ')[0];
+                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+                      return (
+                        <Bar key={dimName} dataKey={dimName} name={dimName} stackId="a" fill={colors[i % colors.length]} />
+                      )
+                    })}
+                    <Line dataKey="elix" name="Total ELIX" stroke="transparent" dot={false} activeDot={false} label={{ position: 'top', fill: darkMode ? '#f8fafc' : '#1e293b', fontSize: 12, fontWeight: 'bold' }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             )}

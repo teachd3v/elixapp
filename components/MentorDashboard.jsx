@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
+  LineChart, Line, Legend, ComposedChart
 } from 'recharts';
 import RealProfile from './RealProfile';
 import MentorAssessment from './MentorAssessment';
@@ -142,7 +143,19 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     const withElix = filteredAwardees.map(a => ({ ...a, elix: elixOf(a) })).filter(a => a.elix !== null);
     const avgElix = withElix.length ? withElix.reduce((s, a) => s + a.elix, 0) / withElix.length : null;
     
-    const barData = withElix.map(a => ({ name: a.user?.name || 'Unknown', elix: a.elix }));
+    const barData = withElix.map(a => {
+      const dimScores = {};
+      (dimensionAverages || []).forEach(d => {
+        const sa = a.hasFilledSA ? a.saDimensionScores?.[d.id] : null;
+        const ma = a.hasFilledMA ? a.maDimensionScores?.[d.id] : null;
+        let val = 0;
+        if (sa != null && ma != null) val = 0.4 * sa + 0.6 * ma;
+        else if (sa != null) val = sa;
+        else if (ma != null) val = ma;
+        dimScores[d.name.split(' ')[0]] = Number((val * 5).toFixed(1));
+      });
+      return { name: a.user?.name || 'Unknown', elix: a.elix, ...dimScores };
+    });
     
     const radarData = (dimensionAverages || []).map(d => {
       if (filterAwardee === 'ALL') return { subject: d.name.split(' ')[0], A: d.avg, fullMark: 4 };
@@ -183,15 +196,21 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
             ) : (
               <div className="w-full h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData}>
+                  <ComposedChart data={barData}>
                     <CartesianGrid stroke={darkMode ? '#1e293b' : '#f1f5f9'} vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: darkMode ? '#cbd5e1' : '#475569' }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                     <Tooltip contentStyle={{ background: darkMode ? '#0f172a' : '#fff', border: '1px solid #64748b', borderRadius: 12, fontSize: 12 }} />
-                    <Bar dataKey="elix" radius={[8,8,0,0]} label={{ position: 'top', fill: '#1e293b', fontSize: 12, fontWeight: 'bold' }}>
-                      {barData.map((_, i) => <Cell key={i} fill="#6366f1" />)}
-                    </Bar>
-                  </BarChart>
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 10, fontWeight: 'bold', paddingTop: '10px' }} />
+                    {(dimensionAverages || []).map((d, i) => {
+                      const dimName = d.name.split(' ')[0];
+                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+                      return (
+                        <Bar key={dimName} dataKey={dimName} name={dimName} stackId="a" fill={colors[i % colors.length]} />
+                      )
+                    })}
+                    <Line dataKey="elix" name="Total ELIX" stroke="transparent" dot={false} activeDot={false} label={{ position: 'top', fill: darkMode ? '#f8fafc' : '#1e293b', fontSize: 12, fontWeight: 'bold' }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             )}
