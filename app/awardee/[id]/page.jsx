@@ -31,7 +31,7 @@ export default function AwardeeDetailPage({ params }) {
         if (!r.ok) throw new Error('Gagal memuat profil awardee');
         return r.json();
       }),
-      fetch('/api/admin/dimensions').then(r => r.ok ? r.json() : [])
+      fetch('/api/instruments').then(r => r.ok ? r.json() : [])
     ]).then(([awardeeData, dimData]) => {
       setData(awardeeData);
       setDimensions(dimData);
