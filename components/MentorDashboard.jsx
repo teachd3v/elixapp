@@ -67,7 +67,12 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    // Silent background polling every 5 seconds for real-time sync
+    const intervalId = setInterval(load, 5000);
+    return () => clearInterval(intervalId);
+  }, [load]);
 
   if (activeTab === 'profile') {
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;

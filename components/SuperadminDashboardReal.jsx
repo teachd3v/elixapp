@@ -137,7 +137,12 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Silent background polling every 5 seconds for real-time sync
+    const intervalId = setInterval(load, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const resetAssessment = async (userId, type, userName) => {
     const isConfirmed = await confirm(`Yakin ingin mereset data penilaian ${type} untuk ${userName}? Data yang dihapus tidak bisa dikembalikan.`);
