@@ -127,16 +127,6 @@ export async function GET() {
     };
   });
 
-  // Append current un-finalized cycle data
-  const currentScored = enrichedAwardees.filter((a) => a.elix != null);
-  if (currentScored.length > 0 || trend.length === 0) {
-    trend.push({
-      periodId: 'current',
-      name: 'Saat Ini',
-      avgElix: currentScored.length ? parseFloat((currentScored.reduce((s, a) => s + a.elix, 0) / currentScored.length).toFixed(1)) : 0
-    });
-  }
-
   return NextResponse.json({
     roleCounts,
     totals: {
