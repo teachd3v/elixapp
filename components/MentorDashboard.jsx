@@ -236,7 +236,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
                     <StatusPill ok={a.hasFilledSA} label={a.hasFilledSA ? `SA ${(a.saScore || 0).toFixed(1)}` : 'SA —'} />
                     <StatusPill ok={a.hasFilledMA} label={a.hasFilledMA ? `MA ${(a.maScore || 0).toFixed(1)}` : 'MA —'} />
                     <span className="text-xs font-black w-8 text-right hidden sm:block">{elix == null ? '—' : elix.toFixed(0)}</span>
-                    <button onClick={() => window.open(`/awardee/${a.id}`, '_blank')} className="ml-2 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors">Detail</button>
+                    <button onClick={() => window.location.href = `/awardee/${a.id}`} className="ml-2 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors">Detail</button>
                   </div>
                 </div>
               );

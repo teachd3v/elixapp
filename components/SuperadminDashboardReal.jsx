@@ -461,7 +461,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                        )}
                        {wAwardees.length > 0 ? (
                          wAwardees.map(a => (
-                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => window.open(`/awardee/${a.id}`, '_blank')}>
+                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => window.location.href = `/awardee/${a.id}`}>
                              <div className="flex items-center gap-3">
                                 <img src={a.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
                                 <div>
