@@ -10,6 +10,13 @@ import {
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
 
+const ELIX_DESCRIPTIONS = {
+  'Emerging Leader': "Awardee masih berada pada tahap awal pengembangan diri dan belum menunjukkan kompetensi yang diharapkan pada sebagian besar dimensi. Kesiapan akademik masih rendah, internalisasi nilai-nilai Islam dan kedekatan dengan Al-Qur'an belum konsisten, kemampuan mengelola diri dan emosi masih terbatas, serta belum menunjukkan inisiatif dan kepemimpinan sosial yang nyata. Awardee memerlukan pendampingan intensif, penguatan karakter, dan stimulasi yang berkelanjutan untuk mengembangkan potensinya.",
+  'Developing Leader': "Awardee mulai menunjukkan perkembangan positif pada kelima dimensi, seperti motivasi belajar yang meningkat, perilaku Islami yang mulai terbentuk, kebiasaan berinteraksi dengan Al-Qur'an yang mulai berkembang, kemampuan mengenali diri dan mengelola emosi yang mulai muncul, serta kepedulian sosial yang mulai terlihat. Namun, implementasi berbagai kompetensi tersebut masih belum konsisten dan masih memerlukan arahan, pembinaan, serta penguatan secara berkelanjutan.",
+  'Growing Leader': "Awardee menunjukkan kompetensi yang cukup matang pada sebagian besar dimensi. Memiliki kesiapan akademik yang baik, menunjukkan karakter Islami secara konsisten, menjadikan Al-Qur'an sebagai bagian dari proses pengembangan diri, mampu mengelola potensi dan tantangan diri secara efektif, serta aktif berkontribusi dalam lingkungan sosial. Awardee mulai menunjukkan kapasitas kepemimpinan, kemampuan memengaruhi orang lain secara positif, dan kesiapan untuk mengambil peran yang lebih besar dalam menciptakan perubahan.",
+  'Excellent Leader': "Awardee menunjukkan keunggulan dan konsistensi pada seluruh dimensi pengembangan. Memiliki kesiapan akademik yang tinggi dan berorientasi pada prestasi, menginternalisasi nilai-nilai Islam sebagai landasan perilaku dan pengambilan keputusan, menjadikan Al-Qur'an sebagai pedoman hidup, menunjukkan penguasaan diri yang matang melalui disiplin, integritas, dan resiliensi, serta mampu menginisiasi dan memimpin aksi-aksi yang memberikan dampak positif dan berkelanjutan bagi masyarakat. Awardee tidak hanya berkembang secara personal, tetapi juga menjadi teladan, penggerak, dan inspirasi bagi lingkungan sekitarnya."
+};
+
 export default function AwardeeDetailPage({ params }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -88,26 +95,41 @@ export default function AwardeeDetailPage({ params }) {
           </div>
           <div className="shrink-0 flex items-center gap-4 mt-4 md:mt-0 w-full md:w-auto bg-slate-50 border border-slate-100 p-4 rounded-2xl">
             <div className="text-center px-4">
-              <div className="text-[10px] font-bold text-blue-400 mb-1">SKOR SA</div>
-              <div className="text-2xl font-black text-blue-500">{data.hasFilledSA ? (data.saScore || 0).toFixed(2) : '-'}</div>
+              <div className="text-[10px] font-bold text-blue-500 mb-1">SKOR SA</div>
+              <div className="text-2xl font-black text-slate-800">{data.hasFilledSA ? ((data.saScore || 0) * 25).toFixed(0) : '-'}</div>
             </div>
             
             <div className="w-px h-10 bg-slate-200 hidden sm:block"></div>
             
             <div className="text-center px-4">
-              <div className="text-[10px] font-bold text-indigo-400 mb-1">SKOR MA</div>
-              <div className="text-2xl font-black text-indigo-700">{data.hasFilledMA ? (data.maScore || 0).toFixed(2) : '-'}</div>
+              <div className="text-[10px] font-bold text-indigo-500 mb-1">SKOR MA</div>
+              <div className="text-2xl font-black text-slate-800">{data.hasFilledMA ? ((data.maScore || 0) * 25).toFixed(0) : '-'}</div>
             </div>
             
             <div className="w-px h-10 bg-slate-200 hidden sm:block"></div>
             
             <div className="text-center px-4 bg-amber-50 rounded-xl py-2 border border-amber-100">
               <div className="text-[10px] font-bold text-amber-500 mb-1">INDEKS ELIX</div>
-              <div className="text-3xl font-black text-amber-500">{data.elix ? data.elix.toFixed(0) : '-'}</div>
-              {data.category && <div className="text-[9px] font-bold text-amber-600 mt-1 uppercase">{data.category}</div>}
+              <div className="text-3xl font-black text-slate-800">{data.elix ? data.elix.toFixed(0) : '-'}</div>
             </div>
           </div>
         </div>
+
+        {/* ELIX Category Description */}
+        {data.category && (
+          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="shrink-0">
+                <div className="inline-flex items-center justify-center bg-amber-500 text-white font-black px-4 py-2 rounded-xl text-lg shadow-sm">
+                  {data.category}
+                </div>
+              </div>
+              <div className="text-sm text-amber-900/80 leading-relaxed">
+                {ELIX_DESCRIPTIONS[data.category] || "Kategori indeks ELIX."}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Radar Chart */}
