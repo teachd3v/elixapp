@@ -1,31 +1,25 @@
 import React from 'react';
 import {
   Compass, BookOpen, ClipboardCheck, FolderHeart, User,
-  UserCheck, Megaphone, Calendar, Users, SlidersHorizontal, BarChart3
+  UserCheck, Megaphone, Users, SlidersHorizontal, BarChart3
 } from 'lucide-react';
 
 const MENU_CONFIG = {
   awardee: [
-    { id: 'dashboard', label: 'Dashboard', icon: Compass },
-    { id: 'assessment', label: 'Isi SA', icon: BookOpen },
+    { id: 'dashboard', label: 'Home', icon: Compass },
+    { id: 'assessment', label: 'SA', icon: BookOpen },
     { id: 'attendance', label: 'Absen', icon: ClipboardCheck },
     { id: 'portfolio', label: 'Karya', icon: FolderHeart },
     { id: 'profile', label: 'Profil', icon: User },
   ],
   mentor: [
-    { id: 'dashboard', label: 'Dashboard', icon: Compass },
-    { id: 'assessment', label: 'Nilai MA', icon: UserCheck },
-    { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck },
-    { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone },
-    { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3 },
+    { id: 'dashboard', label: 'Home', icon: Compass },
+    { id: 'assessment', label: 'MA', icon: UserCheck },
     { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   superadmin: [
-    { id: 'dashboard', label: 'Dashboard', icon: Compass },
+    { id: 'dashboard', label: 'Home', icon: Compass },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'attendance', label: 'Absen', icon: ClipboardCheck },
-    { id: 'pengumuman', label: 'Info', icon: Megaphone },
-    { id: 'instruments', label: 'Formula', icon: SlidersHorizontal },
     { id: 'elix_analysis', label: 'Analisis', icon: BarChart3 },
   ],
 };
@@ -53,7 +47,7 @@ export default function MobileNav({ darkMode, role, activeTab, setActiveTab }) {
           }`}
         >
           <Icon className="w-5 h-5" />
-          <span className="text-[9px] font-bold">{label}</span>
+          <span className="text-[8px] font-bold">{label}</span>
         </button>
       ))}
     </div>

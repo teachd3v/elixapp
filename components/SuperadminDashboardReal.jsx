@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
-  LineChart, Line, Legend, ComposedChart
+import { ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  LineChart, Line, Legend
 } from 'recharts';
 import {
-  Users, MapPin, ClipboardCheck, SlidersHorizontal, Megaphone,
-  TrendingUp, UserCheck, CheckCircle2, BarChart3, Shield, Loader2, RotateCcw,
-  ChevronDown, ChevronUp, X
+  Users, MapPin, UserCheck, CheckCircle2, BarChart3, Shield, Loader2, RotateCcw,
+  ChevronDown, ChevronUp, X, ChevronLeft, ClipboardCheck, Megaphone, SlidersHorizontal
 } from 'lucide-react';
 import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
@@ -17,6 +15,8 @@ import { Edit } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
 import { useDialog } from './DialogProvider';
 import { blendedScore, toElixIndex } from '../lib/assessment';
+import SuperadminPDF from './pdf/SuperadminPDF';
+import PDFDownloadButton from './pdf/PDFDownloadButton';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -112,13 +112,14 @@ function ProfileModal({ profile, onClose, darkMode }) {
 }
 
 // Real, DB-backed Superadmin experience. Replaces the mock SuperadminView.
-export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, role }) {
+export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, role, setActiveTab }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedWilayah, setExpandedWilayah] = useState({});
+  const [expandedAwardee, setExpandedAwardee] = useState({});
   const [editingUser, setEditingUser] = useState(null);
-  const [cycleFilter, setCycleFilter] = useState('ACTIVE');
+  const [cycleFilter, setCycleFilter] = useState('ALL');
   const [filterWilayah, setFilterWilayah] = useState('ALL');
   const [filterAwardee, setFilterAwardee] = useState('ALL');
   const [viewingProfile, setViewingProfile] = useState(null);
@@ -126,6 +127,10 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   const toggleWilayah = (id) => {
     setExpandedWilayah(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleAwardee = (id) => {
+    setExpandedAwardee(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const load = async () => {
@@ -162,15 +167,34 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (activeTab === 'attendance') {
-    // Fase 6a: superadmin mengelola sesi Nasional (dan melihat semua sesi wilayah).
-    // Fitur monitoring absensi lintas wilayah menyusul di Fase 6b.
-    return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
+    return (
+      <div className={`border rounded-3xl p-5 ${card}`}>
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />
+      </div>
+    );
   }
   if (activeTab === 'instruments') {
-    return <InstrumentEditor darkMode={darkMode} />;
+    return (
+      <div className={`border rounded-3xl p-5 ${card}`}>
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <InstrumentEditor darkMode={darkMode} />
+      </div>
+    );
   }
   if (activeTab === 'pengumuman') {
-    return <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />;
+    return (
+      <div className={`border rounded-3xl p-5 ${card}`}>
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />
+      </div>
+    );
   }
 
   if (loading) {
@@ -204,11 +228,11 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           <h3 className="text-base font-black mb-1">Direktori User</h3>
           <p className="text-xs text-slate-500 mb-4">Data live dari database.</p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-4 gap-2 mb-6">
             {['SUPERADMIN','MENTOR','AWARDEE','UNVERIFIED'].map((r) => (
-              <div key={r} className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{r}</p>
-                <p className="text-xl font-black mt-1">{roleCounts[r] || 0}</p>
+              <div key={r} className={`p-3 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                <p className="text-lg font-black leading-none">{roleCounts[r] || 0}</p>
+                <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400 mt-1">{r}</p>
               </div>
             ))}
           </div>
@@ -284,13 +308,37 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   // ---------- ELIX ANALYSIS TAB ----------
   if (activeTab === 'elix_analysis') {
+    const periods = data?.periods || [];
+    const activePeriod = periods.find(p => p.isActive);
+    const activePeriodName = activePeriod?.name || 'Siklus Aktif';
+
+    // Cycle-aware filtering: 'ALL' = semua siklus (live data),
+    // 'ACTIVE' = siklus aktif saja, specific periodId = historical.
+    const isAllCycles = cycleFilter === 'ALL';
+    const isLiveCycle = cycleFilter === 'ACTIVE' || isAllCycles;
+    const selectedPeriod = (!isLiveCycle) ? periods.find(p => p.id === cycleFilter) : null;
+
     const filteredAwardees = awardees.filter(a => {
       const matchW = filterWilayah === 'ALL' || a.wilayahId === filterWilayah;
       const matchA = filterAwardee === 'ALL' || a.id === filterAwardee;
       return matchW && matchA;
     });
 
-    const scoredFiltered = filteredAwardees.filter((a) => a.elix != null).sort((a, b) => b.elix - a.elix);
+    // Build scored list depending on cycle selection
+    const scoredFiltered = (isLiveCycle
+      ? filteredAwardees.filter(a => a.elix != null).map(a => ({ ...a, _cycleName: isAllCycles ? '' : activePeriodName }))
+      : filteredAwardees.map(a => {
+          const rec = a.assessmentRecords?.find(r => r.periodId === cycleFilter);
+          if (!rec) return null;
+          const hasSA = !!rec.hasFilledSA;
+          const hasMA = !!rec.hasFilledMA;
+          if (!hasSA && !hasMA) return null;
+          const raw = blendedScore(rec.saScore || 0, rec.maScore || 0, hasSA, hasMA);
+          const elix = toElixIndex(raw);
+          const category = elix >= 86 ? 'Excellent Leader' : elix >= 66 ? 'Growing Leader' : elix >= 46 ? 'Developing Leader' : 'Emerging Leader';
+          return { ...a, elix, category, _cycleName: selectedPeriod?.name || '' };
+        }).filter(Boolean)
+    ).sort((a, b) => b.elix - a.elix);
     const avgElix = scoredFiltered.length ? (scoredFiltered.reduce((s, a) => s + a.elix, 0) / scoredFiltered.length) : null;
 
     const dynamicTrend = (data?.periods || []).map(p => {
@@ -362,16 +410,31 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
     return (
       <div className="space-y-6">
-        <div className="flex flex-wrap gap-4 mb-6">
-          <select value={filterWilayah} onChange={e => { setFilterWilayah(e.target.value); setFilterAwardee('ALL'); }} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-            <option value="ALL">Semua Wilayah</option>
-            {wilayahRollup.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </select>
-          {filterWilayah !== 'ALL' && (
-            <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-              <option value="ALL">Semua Awardee</option>
-              {awardees.filter(a => a.wilayahId === filterWilayah).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
+        <div className="flex items-center justify-between gap-3 mb-6 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+            <select value={cycleFilter} onChange={e => setCycleFilter(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+              <option value="ALL">Semua Siklus</option>
+              <option value="ACTIVE">{activePeriodName}</option>
+              {periods.filter(p => !p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
+            <select value={filterWilayah} onChange={e => { setFilterWilayah(e.target.value); setFilterAwardee('ALL'); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+              <option value="ALL">Semua Wilayah</option>
+              {wilayahRollup.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+            {filterWilayah !== 'ALL' && (
+              <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                <option value="ALL">Semua Awardee</option>
+                {awardees.filter(a => a.wilayahId === filterWilayah).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
+              </select>
+            )}
+          </div>
+          {scoredFiltered.length > 0 && (
+            <PDFDownloadButton 
+              document={<SuperadminPDF superadmin={dbUser} wilayahRollup={wilayahRollup.map(w => ({ ...w, elix: w.avgElix }))} scoredAwardees={scoredFiltered} avgElix={avgElix} activePeriodName={cycleFilter === 'ACTIVE' ? 'Siklus Aktif' : (cycleFilter === 'ALL' ? 'Semua Siklus' : (periods.find(p=>p.id===cycleFilter)?.name || 'Siklus Aktif'))} dynamicTrend={dynamicTrend} barData={barData} dimensionAverages={dimensionAverages} filterWilayah={filterWilayah} filterAwardee={filterAwardee} />}
+              fileName={`Laporan_Konsolidasi_${cycleFilter}.pdf`}
+              iconOnly={true}
+              className="shrink-0"
+            />
           )}
         </div>
 
@@ -467,20 +530,65 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada awardee dengan skor.</p>
           ) : (
             <div className="space-y-2">
-              {scoredFiltered.map((a, i) => (
-                <div key={a.id} className={`flex items-center gap-3 p-3 rounded-2xl border ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-white border-slate-100'}`}>
-                  <span className="text-xs font-black w-6 text-slate-400">#{i + 1}</span>
-                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                    {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt={a.user?.name} className="w-full h-full object-cover" /> : <UserCheck className="w-4 h-4 text-slate-400" />}
+              {scoredFiltered.map((a, i) => {
+                const catColor = a.elix >= 86 ? 'bg-blue-500/10 text-blue-600' : a.elix >= 66 ? 'bg-emerald-500/10 text-emerald-600' : a.elix >= 46 ? 'bg-orange-500/10 text-orange-600' : 'bg-rose-500/10 text-rose-600';
+                const isExpanded = expandedAwardee[a.id];
+                return (
+                  <div key={a.id} className={`rounded-2xl border transition-colors ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-white border-slate-100'}`}>
+                    <div 
+                      className={`flex items-center gap-3 p-3 ${isAllCycles ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl' : ''}`}
+                      onClick={() => isAllCycles && toggleAwardee(a.id)}
+                    >
+                      <span className="text-xs font-black w-5 text-slate-400 shrink-0">#{i + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                        {a.user?.avatarUrl ? <img src={a.user.avatarUrl} alt={a.user?.name} className="w-full h-full object-cover" /> : <UserCheck className="w-4 h-4 text-slate-400" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-xs block">{a.user?.name}</span>
+                        <span className="text-[10px] text-slate-500">{wilayahRollup.find((w) => w.id === a.wilayahId)?.name || '—'}</span>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-black">{a.elix.toFixed(0)}</span>
+                          {isAllCycles && (
+                            isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${catColor}`}>{a.category}</span>
+                          {a._cycleName && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-500">{a._cycleName}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {isAllCycles && isExpanded && (
+                      <div className="px-4 pb-4 pt-1 space-y-2 border-t border-slate-100 dark:border-slate-800 mt-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Skor per Siklus</p>
+                        {periods.map(p => {
+                          let cycleScore = null;
+                          if (p.isActive) {
+                             cycleScore = a.elix;
+                          } else {
+                             const rec = a.assessmentRecords?.find(r => r.periodId === p.id);
+                             if (rec) {
+                                const hasSA = !!rec.hasFilledSA;
+                                const hasMA = !!rec.hasFilledMA;
+                                if (hasSA || hasMA) {
+                                   cycleScore = toElixIndex(blendedScore(rec.saScore || 0, rec.maScore || 0, hasSA, hasMA));
+                                }
+                             }
+                          }
+                          return (
+                            <div key={p.id} className="flex justify-between items-center text-xs">
+                              <span className="text-slate-600 dark:text-slate-300">{p.name} {p.isActive && '(Aktif)'}</span>
+                              <span className="font-bold">{cycleScore != null ? cycleScore.toFixed(1) : '—'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-bold text-xs block truncate">{a.user?.name}</span>
-                    <span className="text-[10px] text-slate-500">{wilayahRollup.find((w) => w.id === a.wilayahId)?.name || '—'}</span>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500">{a.category}</span>
-                  <span className="text-sm font-black w-10 text-right">{a.elix.toFixed(0)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -490,32 +598,66 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   // ---------- DASHBOARD TAB ----------
   const stats = [
-    { label: 'Total Awardee', value: totals.awardees || 0, icon: Users, tone: 'text-sky-500' },
-    { label: 'Total Mentor', value: totals.mentors || 0, icon: UserCheck, tone: 'text-amber-500' },
-    { label: 'SA Terisi', value: totals.saFilled || 0, icon: CheckCircle2, tone: 'text-emerald-500' },
-    { label: 'MA Terisi', value: totals.maFilled || 0, icon: BarChart3, tone: 'text-violet-500' },
+    { label: 'Awardee', value: totals.awardees || 0, icon: Users, tone: 'text-sky-500' },
+    { label: 'Mentor', value: totals.mentors || 0, icon: UserCheck, tone: 'text-amber-500' },
+    { label: 'SA', value: totals.saFilled || 0, icon: CheckCircle2, tone: 'text-emerald-500' },
+    { label: 'MA', value: totals.maFilled || 0, icon: BarChart3, tone: 'text-violet-500' },
   ];
 
   return (
     <div className="space-y-6">
       <div className={`border rounded-3xl p-6 ${card}`}>
-        <p className="text-xs font-bold text-slate-400">Dashboard Konsolidasi</p>
-        <h2 className="text-xl font-black">{dbUser?.name}</h2>
-        <div className="flex items-baseline gap-3 mt-3">
-          <span className="text-4xl font-black">{nationalElix == null ? '—' : nationalElix.toFixed(1)}</span>
-          <span className="text-xs text-slate-500">rata-rata ELIX nasional</span>
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center border border-indigo-500 shadow-sm">
+            {dbUser?.avatarUrl ? (
+              <img src={dbUser.avatarUrl} alt={dbUser.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-bold text-slate-400">{dbUser?.name?.charAt(0) || 'S'}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-slate-400 mb-1">Dashboard Superadmin</p>
+            <h2 className="text-xl font-black truncate">{dbUser?.name}</h2>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-500">
+                <Shield className="w-3 h-3" /> SUPERADMIN
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-2">
         {stats.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className={`border rounded-3xl p-5 ${card}`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</span>
-              <Icon className={`w-4 h-4 ${tone}`} />
-            </div>
-            <p className="text-2xl font-black">{value}</p>
+          <div key={label} className={`border rounded-2xl p-3 ${card}`}>
+            <Icon className={`w-3.5 h-3.5 ${tone} mb-1.5`} />
+            <p className="text-lg font-black leading-none">{value}</p>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-tight mt-1 block">{label}</span>
           </div>
+        ))}
+      </div>
+
+      {/* Quick-access shortcut cards for hidden menu items */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { id: 'attendance', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
+          { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
+          { id: 'instruments', label: 'Instrumen & Formula', icon: SlidersHorizontal, gradient: 'from-purple-500 to-violet-600' },
+        ].map(({ id, label, icon: Icon, gradient }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 ${
+              darkMode
+                ? 'bg-slate-900 border-slate-800 hover:border-slate-600'
+                : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
+            }`}
+          >
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm`}>
+              <Icon className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 text-center leading-tight">{label}</span>
+          </button>
         ))}
       </div>
 

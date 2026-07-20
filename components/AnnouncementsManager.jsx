@@ -47,7 +47,7 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [role]);
+  useEffect(() => { load();   }, [role]);
 
   const openNew = () => {
     setForm({ title: '', message: '', targetRole: 'ALL', targetRegion: '' });

@@ -1,18 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Users, ClipboardCheck, Megaphone, Calendar, UserCheck, MapPin,
-  TrendingUp, CheckCircle2, ChevronRight, BarChart3
+  Users, ClipboardCheck, UserCheck, MapPin,
+  TrendingUp, CheckCircle2, ChevronRight, Megaphone, ChevronLeft, BarChart3
 } from 'lucide-react';
-import {
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
-  LineChart, Line, Legend, ComposedChart
+import { ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  LineChart, Line, Legend
 } from 'recharts';
 import RealProfile from './RealProfile';
 import MentorAssessment from './MentorAssessment';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
 import { blendedScore, toElixIndex } from '../lib/assessment';
+import MentorPDF from './pdf/MentorPDF';
+import PDFDownloadButton from './pdf/PDFDownloadButton';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -51,11 +52,11 @@ function StatusPill({ ok, label }) {
 // Real, DB-backed Mentor dashboard. Lists the awardees in the mentor's region
 // and lets the mentor submit MA (Mentor Assessment) for each — which fills
 // maScore and completes the awardee's ELIX (SA+MA blend).
-export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, activeTab }) {
+export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, activeTab, setActiveTab }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [cycleFilter, setCycleFilter] = useState('ACTIVE');
+  const [cycleFilter, setCycleFilter] = useState('ALL');
   const [filterAwardee, setFilterAwardee] = useState('ALL');
 
   const load = useCallback(async () => {
@@ -76,17 +77,32 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     return () => clearInterval(intervalId);
   }, [load]);
 
+  const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
+
   if (activeTab === 'profile') {
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;
   }
   if (activeTab === 'pengumuman') {
-    return <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />;
+    return (
+      <div className={`border rounded-3xl p-5 ${card}`}>
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />
+      </div>
+    );
   }
   if (activeTab === 'sessions') {
-    return <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
+    return (
+      <div className={`border rounded-3xl p-5 ${card}`}>
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />
+      </div>
+    );
   }
 
-  const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (loading) {
     return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat data wilayah...</p></div>;
@@ -138,6 +154,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   // ---------- elix_analysis tab ----------
   if (activeTab === 'elix_analysis') {
     const { wilayah, awardees, dimensionAverages } = data || {};
+    const activePeriodName = data?.periods?.find(p => p.isActive)?.name || 'Siklus Aktif';
     
     const filteredAwardees = (awardees || []).filter(a => filterAwardee === 'ALL' || a.id === filterAwardee);
     const withElix = filteredAwardees.map(a => ({ ...a, elix: elixOf(a) })).filter(a => a.elix !== null);
@@ -192,13 +209,36 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
       return { subject: d.name.split(' ')[0], A: Number(avg.toFixed(2)), fullMark: 4 };
     });
 
+    // Back button for elix_analysis sub-page
+    const backButton = (
+      <button onClick={() => setActiveTab('dashboard')} className="flex items-center text-slate-400 hover:text-slate-600 shrink-0">
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+    );
+
     return (
       <div className="space-y-6">
-        <div className="flex flex-wrap gap-4 mb-6">
-          <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-            <option value="ALL">Semua Awardee</option>
-            {(awardees || []).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
-          </select>
+        <div className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+            {backButton}
+            <select value={cycleFilter} onChange={e => setCycleFilter(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+              <option value="ALL">Semua Siklus</option>
+              <option value="ACTIVE">{activePeriodName}</option>
+              {(data?.periods || []).filter(p => !p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <select value={filterAwardee} onChange={e => setFilterAwardee(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+              <option value="ALL">Semua Awardee</option>
+              {(awardees || []).map(a => <option key={a.id} value={a.id}>{a.user?.name}</option>)}
+            </select>
+          </div>
+          {awardees.length > 0 && awardees.every(a => a.hasFilledMA) && (
+            <PDFDownloadButton 
+              document={<MentorPDF dbUser={dbUser} wilayah={wilayah} awardees={awardees.map(a => ({ ...a, elix: (a.hasFilledSA || a.hasFilledMA) ? toElixIndex(blendedScore(a.saScore || 0, a.maScore || 0, !!a.hasFilledSA, !!a.hasFilledMA)) : null }))} avgElix={avgElix} activePeriodName={cycleFilter === 'ACTIVE' ? 'Siklus Aktif' : (cycleFilter === 'ALL' ? 'Semua Siklus' : (data?.periods?.find(p=>p.id===cycleFilter)?.name || 'Siklus Aktif'))} dynamicTrend={dynamicTrend} barData={barData} dimensionAverages={dimensionAverages} />}
+              fileName={`Laporan_Wilayah_${wilayah?.name?.replace(/\s+/g, '_') || 'ELIX'}.pdf`}
+              iconOnly={true}
+              className="shrink-0"
+            />
+          )}
         </div>
 
         <div className={`border rounded-3xl p-6 ${card}`}>
@@ -295,10 +335,10 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   const withElix = awardees.map(elixOf).filter((x) => x != null);
   const avgElix = withElix.length ? (withElix.reduce((s, x) => s + x, 0) / withElix.length) : null;
   const stats = [
-    { label: 'Total Awardee', value: awardees.length, icon: Users, tone: 'text-sky-500' },
-    { label: 'Sudah isi SA', value: awardees.filter((a) => a.hasFilledSA).length, icon: CheckCircle2, tone: 'text-emerald-500' },
-    { label: 'Sudah dinilai MA', value: awardees.filter((a) => a.hasFilledMA).length, icon: ClipboardCheck, tone: 'text-amber-500' },
-    { label: 'Rata-rata ELIX', value: avgElix == null ? '—' : avgElix.toFixed(0), icon: TrendingUp, tone: 'text-indigo-500' },
+    { label: 'Awardee', value: awardees.length, icon: Users, tone: 'text-sky-500' },
+    { label: 'SA', value: awardees.filter((a) => a.hasFilledSA).length, icon: CheckCircle2, tone: 'text-emerald-500' },
+    { label: 'MA', value: awardees.filter((a) => a.hasFilledMA).length, icon: ClipboardCheck, tone: 'text-amber-500' },
+    { label: 'ELIX', value: avgElix == null ? '—' : avgElix.toFixed(0), icon: TrendingUp, tone: 'text-indigo-500' },
   ];
 
   return (
@@ -321,21 +361,42 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
               </span>
             </div>
           </div>
-        </div>
       </div>
+    </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-2">
         {stats.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className={`border rounded-3xl p-5 ${card}`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</span>
-              <Icon className={`w-4 h-4 ${tone}`} />
-            </div>
-            <p className="text-2xl font-black">{value}</p>
+          <div key={label} className={`border rounded-2xl p-3 ${card}`}>
+            <Icon className={`w-3.5 h-3.5 ${tone} mb-1.5`} />
+            <p className="text-lg font-black leading-none">{value}</p>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 leading-tight mt-1 block">{label}</span>
           </div>
         ))}
       </div>
-
+        {/* Quick-access shortcut cards for hidden menu items */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
+            { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
+            { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3, gradient: 'from-emerald-500 to-teal-600' },
+          ].map(({ id, label, icon: Icon, gradient }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 ${
+                darkMode
+                  ? 'bg-slate-900 border-slate-800 hover:border-slate-600'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm`}>
+                <Icon className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 text-center leading-tight">{label}</span>
+            </button>
+          ))}
+        </div>
+        
       <div className={`border rounded-3xl p-5 ${card}`}>
         <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Daftar Awardee Bimbingan</h3>
         {awardees.length === 0 ? (

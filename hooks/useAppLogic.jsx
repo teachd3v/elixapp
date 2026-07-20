@@ -1,22 +1,8 @@
-import AlertModal from '../components/modals/AlertModal';
-import DialogModal from '../components/modals/DialogModal';
-import DesktopNav from '../components/DesktopNav';
-import MobileNav from '../components/MobileNav';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { defaultDimensionsList, defaultStatements } from '../data/constants';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
-} from 'recharts';
-import { 
-  TrendingUp, TrendingDown, User, Users, ShieldAlert, CheckCircle, 
-  HelpCircle, LogOut, Award, Sparkles, Phone, Video, MessageSquare, 
-  Info, Calendar, Clock, ChevronRight, ChevronLeft, Sun, Moon, Bell, 
-  ArrowRight, Search, SlidersHorizontal, BookOpen, Compass, ClipboardCheck, 
-  UserCheck, MapPin, Building, GraduationCap, Edit, Plus, Trash2, Shield, FolderHeart,
-  FileText, Send, UploadCloud, ChevronDown, ChevronUp, BarChart3, Megaphone, CheckCircle2
-} from 'lucide-react';
+
+
 
 // Fetch + normalize a wilayah (region) list. Guards res.ok so a missing static
 // file (Next serves an HTML 404 page) throws a clear error instead of a cryptic
@@ -41,7 +27,18 @@ export function useAppLogic() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState('unverified'); // 'unverified' | 'awardee' | 'mentor' | 'superadmin'
   const [dbUser, setDbUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('activeTab') || 'dashboard';
+    }
+    return 'dashboard';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeTab', activeTab);
+    }
+  }, [activeTab]);
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -214,12 +211,26 @@ export function useAppLogic() {
   const [mentorRegencies, setMentorRegencies] = useState([]);
   const [loadingMentorRegencies, setLoadingMentorRegencies] = useState(false);
 
+  // MOCK DATA - MENTOR PROFILE
+  const [mentorProfile, setMentorProfile] = useState({
+    name: 'Kak Huda Rohman',
+    region: 'Bogor',
+    totalBimbingan: 8,
+    phone: '0812-3456-7890',
+    email: 'huda@yes.org',
+    gender: 'Laki-laki',
+    birthInfo: 'Bandung, 10 Mei 1995',
+    address: 'Jl. Pemuda No. 12, RT 02/RW 04',
+    city: 'Kota Bogor',
+    province: 'Jawa Barat'
+  });
+
   // Fetch mentor regencies initially if province is pre-populated
   React.useEffect(() => {
     if (provinces.length > 0 && mentorProfile?.province) {
       const matchedProv = provinces.find(p => p.name.toLowerCase() === mentorProfile.province.toLowerCase());
       if (matchedProv) {
-        setLoadingMentorRegencies(true);
+        setTimeout(() => setLoadingMentorRegencies(true), 0);
         fetchWilayah(`/api-wilayah/regencies/${matchedProv.code}.json`)
           .then(list => {
             setMentorRegencies(list);
@@ -253,20 +264,6 @@ export function useAppLogic() {
         });
     }
   };
-
-  // MOCK DATA - MENTOR PROFILE
-  const [mentorProfile, setMentorProfile] = useState({
-    name: 'Kak Huda Rohman',
-    region: 'Bogor',
-    totalBimbingan: 8,
-    phone: '0812-3456-7890',
-    email: 'huda@yes.org',
-    gender: 'Laki-laki',
-    birthInfo: 'Bandung, 10 Mei 1995',
-    address: 'Jl. Pemuda No. 12, RT 02/RW 04',
-    city: 'Kota Bogor',
-    province: 'Jawa Barat'
-  });
 
   // MOCK DATA - REGIONAL AWARDEES FOR MENTOR
   const [regionalAwardees, setRegionalAwardees] = useState([
@@ -613,8 +610,8 @@ export function useAppLogic() {
 
     const elixIndex = ((overall / 4.00) * 100).toFixed(2);
     
-    const baseline = Math.max(0, elixIndex - (10 + Math.random() * 5));
-    const mid = Math.max(0, elixIndex - (3 + Math.random() * 5));
+    const baseline = Math.max(0, elixIndex - 12.5);
+    const mid = Math.max(0, elixIndex - 5.2);
     
     const trend = [
       { siklus: 'Baseline', score: parseFloat(baseline.toFixed(2)) },

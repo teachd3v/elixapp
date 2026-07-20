@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CheckCircle2, AlertCircle, RefreshCw, ClipboardCheck, TrendingUp } from 'lucide-react';
+import AwardeePDF from './pdf/AwardeePDF';
+import { elixCategory, blendedScore, toElixIndex } from '../lib/assessment';
+import PDFDownloadButton from './pdf/PDFDownloadButton';
 
 const SCALE = [
   { v: 1, label: 'Sangat Kurang', emoji: '😞', color: 'from-rose-500 to-red-500 text-white' },
@@ -20,7 +23,7 @@ async function fetchJson(url, options) {
 
 // Real Self Assessment: statements across weighted dimensions, rated 1-4.
 // Score is computed server-side; this only collects and displays.
-export default function SelfAssessment({ darkMode, onSaved }) {
+export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
   const [responses, setResponses] = useState({});
   const [existing, setExisting] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,9 +31,11 @@ export default function SelfAssessment({ darkMode, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [cycleFilter, setCycleFilter] = useState('ALL');
   const containerRef = useRef(null);
 
   const [dimensions, setDimensions] = useState([]);
+  const [showFullDesc, setShowFullDesc] = useState(false);
   const [statements, setStatements] = useState([]);
 
   const goToStep = (stepIndex) => {
@@ -134,39 +139,169 @@ export default function SelfAssessment({ darkMode, onSaved }) {
   // ---------- RESULT VIEW ----------
   if (!editing && existing?.hasFilledSA) {
     const dimScores = existing.saDimensionScores || {};
-    const elix = ((existing.saScore || 0) / 4) * 100;
+    const maDimScores = existing.maDimensionScores || {};
+    
+    // Calculate blended ELIX if MA is available, else use SA
+    const saScore = existing.saScore || 0;
+    const maScore = existing.maScore || 0;
+    const hasMA = !!existing.hasFilledMA;
+    
+    // Using simple average if both exist, otherwise SA. (Can be adjusted to use weighted from constants)
+    let overall = saScore;
+    if (hasMA) overall = (saScore * 0.4) + (maScore * 0.6); // Assuming standard 40-60 weight
+    
+    const elix = (overall / 4) * 100;
+    
+    const getElixCategory = (score) => {
+      if (score <= 45) return { 
+        label: 'Emerging Leader', 
+        desc: "Awardee masih berada pada tahap awal pengembangan diri dan belum menunjukkan kompetensi yang diharapkan pada sebagian besar dimensi. Kesiapan akademik masih rendah, internalisasi nilai-nilai Islam dan kedekatan dengan Al-Qur'an belum konsisten, kemampuan mengelola diri dan emosi masih terbatas, serta belum menunjukkan inisiatif dan kepemimpinan sosial yang nyata. Awardee memerlukan pendampingan intensif, penguatan karakter, dan stimulasi yang berkelanjutan untuk mengembangkan potensinya." 
+      };
+      if (score <= 65) return { 
+        label: 'Developing Leader', 
+        desc: "Awardee mulai menunjukkan perkembangan positif pada kelima dimensi, seperti motivasi belajar yang meningkat, perilaku Islami yang mulai terbentuk, kebiasaan berinteraksi dengan Al-Qur'an yang mulai berkembang, kemampuan mengenali diri dan mengelola emosi yang mulai muncul, serta kepedulian sosial yang mulai terlihat. Namun, implementasi berbagai kompetensi tersebut masih belum konsisten dan masih memerlukan arahan, pembinaan, serta penguatan secara berkelanjutan." 
+      };
+      if (score <= 85) return { 
+        label: 'Growing Leader', 
+        desc: "Awardee menunjukkan kompetensi yang cukup matang pada sebagian besar dimensi. Memiliki kesiapan akademik yang baik, menunjukkan karakter Islami secara konsisten, menjadikan Al-Qur'an sebagai bagian dari proses pengembangan diri, mampu mengelola potensi dan tantangan diri secara efektif, serta aktif berkontribusi dalam lingkungan sosial. Awardee mulai menunjukkan kapasitas kepemimpinan, kemampuan memengaruhi orang lain secara positif, dan kesiapan untuk mengambil peran yang lebih besar dalam menciptakan perubahan." 
+      };
+      return { 
+        label: 'Excellent Leader', 
+        desc: "Awardee menunjukkan keunggulan dan konsistensi pada seluruh dimensi pengembangan. Memiliki kesiapan akademik yang tinggi dan berorientasi pada prestasi, menginternalisasi nilai-nilai Islam sebagai landasan perilaku dan pengambilan keputusan, menjadikan Al-Qur'an sebagai pedoman hidup, menunjukkan penguasaan diri yang matang melalui disiplin, integritas, dan resiliensi, serta mampu menginisiasi dan memimpin aksi-aksi yang memberikan dampak positif dan berkelanjutan bagi masyarakat. Awardee tidak hanya berkembang secara personal, tetapi juga menjadi teladan, penggerak, dan inspirasi bagi lingkungan sekitarnya." 
+      };
+    };
+    
+    const category = getElixCategory(elix);
+
+    const periods = profile?.assessmentRecords?.map(r => r.period) || [];
+    // Ensure active period is included if it exists in periods
+    
+    // Calculate dynamicTrend for Awardee PDF
+    const dynamicTrend = (periods || []).sort((a,b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)).map(p => {
+      const rec = profile.assessmentRecords.find(r => r.periodId === p.id);
+      let avgElix = null;
+      if (rec && rec.hasFilledSA && rec.hasFilledMA) {
+        const raw = blendedScore(rec.saScore || 0, rec.maScore || 0, true, true);
+        avgElix = toElixIndex(raw);
+      }
+      return {
+        name: p.name,
+        avgElix
+      };
+    });
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
         <div className={`border rounded-3xl p-6 ${card}`}>
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
-              <div className="min-w-0">
-                <h3 className="text-sm md:text-base font-black truncate">Self Assessment Selesai</h3>
-                <div className="text-[10px] text-slate-500 mt-1 flex flex-col sm:flex-row sm:gap-2">
-                  <span>Skor SA: <strong className="font-black text-slate-700 dark:text-slate-300">{(existing.saScore || 0).toFixed(2)}</strong> / 4.00</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>ELIX: <strong className="font-black text-slate-700 dark:text-slate-300">{elix.toFixed(0)}</strong></span>
+          <div className="flex items-center justify-between gap-3 mb-5 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+              <div className="flex flex-col gap-1 shrink-0 px-2">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-[10px] font-bold text-slate-500">SA <strong className="text-slate-700 dark:text-slate-300">{saScore.toFixed(2)}</strong></span>
                 </div>
+                {hasMA && (
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-[10px] font-bold text-slate-500">MA <strong className="text-amber-600 dark:text-amber-400">{maScore.toFixed(2)}</strong></span>
+                  </div>
+                )}
               </div>
+              
+              {hasMA && profile && (
+                <>
+                  <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0"></div>
+                  <select value={cycleFilter} onChange={e => setCycleFilter(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                    <option value="ALL">Semua Siklus</option>
+                    <option value="ACTIVE">{existing?.periodName || 'Siklus Aktif'}</option>
+                    {periods.filter(p => !p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </>
+              )}
             </div>
-            <button onClick={() => setEditing(true)} className="px-4 py-2 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-xl flex items-center gap-2 font-bold text-xs shrink-0">
-              <RefreshCw className="w-4 h-4" /> Isi Ulang
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => setEditing(true)} className="p-2 sm:p-2.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-2xl flex items-center justify-center font-bold transition-colors" aria-label="Isi Ulang">
+                <RefreshCw className="w-5 h-5" />
+              </button>
+              {hasMA && profile && (
+                <PDFDownloadButton 
+                  document={<AwardeePDF profile={profile} dbUser={dbUser} dimensions={dimensions} activePeriodName={cycleFilter === 'ACTIVE' ? (existing?.periodName || 'Siklus Aktif') : (cycleFilter === 'ALL' ? 'Semua Siklus' : (periods.find(p=>p.id===cycleFilter)?.name || 'Siklus Aktif'))} dynamicTrend={dynamicTrend} />}
+                  fileName={`Laporan_ELIX_${dbUser?.name?.replace(/\s+/g, '_')}.pdf`}
+                  iconOnly={true}
+                />
+              )}
+            </div>
+          </div>
+          
+          {/* Expandable description */}
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-indigo-500">Kategori Indeks ELIX</span>
+              <span className="text-3xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400">{elix.toFixed(0)}</span>
+            </div>
+            <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white mb-1">{category.label}</h4>
+            {/* Show truncated or full description */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              {showFullDesc
+                ? category.desc
+                : `${category.desc.split(' ').slice(0,10).join(' ')}...`}
+            </p>
+            <button onClick={() => setShowFullDesc(!showFullDesc)}
+                    className="mt-2 text-sm font-medium text-indigo-600 hover:underline">
+              {showFullDesc ? 'Lihat lebih singkat' : 'Lihat selengkapnya'}
             </button>
           </div>
-          <div className="space-y-3">
+          
+          {/* Category grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: 'Emerging Leader', range: '0 - 45', bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-600' },
+              { label: 'Developing Leader', range: '46 - 65', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-600' },
+              { label: 'Growing Leader', range: '66 - 85', bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-600' },
+              { label: 'Excellent Leader', range: '86 - 100', bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-600' },
+            ].map((c) => (
+              <div key={c.label}
+                   className={`p-3 rounded-xl ${c.bg} ${c.border} text-center`}> 
+                <span className="block text-base font-bold text-slate-500">{c.range}</span>
+                <span className={`text-xs font-bold ${c.text}`}>{c.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
             {dimensions.map((dim) => {
-              const score = dimScores[dim.id] || 0;
-              const pct = (score / 4) * 100;
+              const saVal = dimScores[dim.id] || 0;
+              const maVal = maDimScores[dim.id] || 0;
+              const saPct = (saVal / 4) * 100;
+              const maPct = (maVal / 4) * 100;
               return (
                 <div key={dim.id}>
                   <div className="flex justify-between text-xs font-bold mb-1">
                     <span>{dim.name}</span>
-                    <span>{score.toFixed(2)}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: dim.color }} />
+                  {hasMA ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs mb-1">
+                      <span className="text-sky-500">SA</span>
+                      <span className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-sky-500" style={{ width: `${saPct}%` }} />
+                      </span>
+                      <span className="text-slate-500">{saVal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-amber-500">MA</span>
+                      <span className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-amber-500" style={{ width: `${maPct}%` }} />
+                      </span>
+                      <span className="text-slate-500">{maVal.toFixed(2)}</span>
+                    </div>
                   </div>
+                ) : (
+                    <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${saPct}%`, backgroundColor: dim.color }} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -178,7 +313,7 @@ export default function SelfAssessment({ darkMode, onSaved }) {
 
   // ---------- FORM ----------
   return (
-    <div className="space-y-6 scroll-mt-6" ref={containerRef}>
+    <div className="space-y-6 scroll-mt-6 pb-32" ref={containerRef}>
       <div className={`border rounded-3xl p-5 ${card}`}>
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-full bg-sky-500/10 text-sky-600"><ClipboardCheck className="w-5 h-5" /></div>
@@ -271,7 +406,8 @@ export default function SelfAssessment({ darkMode, onSaved }) {
         );
       })()}
 
-      <div className={`sticky bottom-4 border rounded-3xl p-4 flex items-center justify-between gap-3 backdrop-blur shadow-xl ${darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'}`}>
+      {/* Make it fixed at the bottom with enough spacing for mobile nav */}
+      <div className={`fixed bottom-24 left-4 right-4 z-40 border rounded-3xl p-4 flex items-center justify-between gap-3 backdrop-blur shadow-xl ${darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'}`}>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => goToStep(currentStep - 1)}

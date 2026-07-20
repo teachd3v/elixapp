@@ -1,22 +1,15 @@
 "use client";
-import { Show, ClerkLoading, SignIn, UserButton } from '@clerk/nextjs';
+import { Show, ClerkLoading, SignIn } from '@clerk/nextjs';
 
 import AlertModal from '../components/modals/AlertModal';
 import DialogModal from '../components/modals/DialogModal';
 import DesktopNav from '../components/DesktopNav';
 import MobileNav from '../components/MobileNav';
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
-} from 'recharts';
-import { 
-  TrendingUp, TrendingDown, User, Users, ShieldAlert, CheckCircle, 
-  HelpCircle, LogOut, Award, Sparkles, Phone, Video, MessageSquare, 
-  Info, Calendar, Clock, ChevronRight, ChevronLeft, Sun, Moon, Bell, 
-  ArrowRight, Search, SlidersHorizontal, BookOpen, Compass, ClipboardCheck, 
-  UserCheck, MapPin, Building, GraduationCap, Edit, Plus, Trash2, Shield, FolderHeart,
-  FileText, Send, UploadCloud, ChevronDown, ChevronUp, BarChart3, Megaphone, CheckCircle2
+import React from 'react';
+
+import { ShieldAlert, CheckCircle, LogOut, Calendar, ClipboardCheck, 
+  UserCheck, Building, GraduationCap,
+  FileText, Send, UploadCloud
 } from 'lucide-react';
 
 import { useAppLogic } from '../hooks/useAppLogic';
@@ -402,7 +395,7 @@ return (
           <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />
         )}
         {role === 'awardee' && profileComplete && (
-          <AwardeeDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} />
+          <AwardeeDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
 
         {/* ---------- MENTOR: complete profile first, then real dashboard ---------- */}
@@ -410,12 +403,12 @@ return (
           <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />
         )}
         {role === 'mentor' && profileComplete && (
-          <MentorDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} />
+          <MentorDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
 
         {/* ---------------- SUPERADMIN (real, DB-backed) ---------------- */}
         {role === 'superadmin' && (
-          <SuperadminDashboardReal darkMode={darkMode} activeTab={activeTab} dbUser={dbUser} role={role} />
+          <SuperadminDashboardReal darkMode={darkMode} activeTab={activeTab} dbUser={dbUser} role={role} setActiveTab={setActiveTab} />
         )}
           </>
         )}

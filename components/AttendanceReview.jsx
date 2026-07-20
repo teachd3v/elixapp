@@ -41,7 +41,7 @@ export default function AttendanceReview({ darkMode, session, onBack }) {
     catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [session.id]);
+  useEffect(() => { load();   }, [session.id]);
 
   const setStatus = async (row, status) => {
     setBusyId(row.id); setError(null);

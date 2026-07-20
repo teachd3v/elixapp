@@ -39,6 +39,9 @@ export async function GET() {
       saDimensionScores: true,
       saResponses: true,
       saSubmittedAt: true,
+      hasFilledMA: true,
+      maScore: true,
+      maDimensionScores: true,
     },
   });
   
@@ -92,7 +95,15 @@ export async function POST(request) {
       hasFilledSA: true,
       saSubmittedAt: new Date(),
     },
-    select: { hasFilledSA: true, saScore: true, saDimensionScores: true, saSubmittedAt: true },
+    select: { 
+      hasFilledSA: true, 
+      saScore: true, 
+      saDimensionScores: true, 
+      saSubmittedAt: true,
+      hasFilledMA: true,
+      maScore: true,
+      maDimensionScores: true, 
+    },
   });
 
   return NextResponse.json(updated);

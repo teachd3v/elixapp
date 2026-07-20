@@ -2,13 +2,11 @@
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, User, MapPin, GraduationCap, FileText, Download,
-  CheckCircle2, XCircle, LayoutDashboard, LineChart, Target, BarChart3
+  ArrowLeft, MapPin, GraduationCap, FileText, LayoutDashboard, LineChart, BarChart3
 } from 'lucide-react';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
+import { ResponsiveContainer,
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  BarChart, Bar, Cell
+  BarChart, Bar
 } from 'recharts';
 
 const ELIX_DESCRIPTIONS = {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, UploadCloud, X, AlertCircle, Camera } from 'lucide-react';
+import { FileText, X, AlertCircle, Camera } from 'lucide-react';
 import { fileToCompressedDataUrl } from '../lib/image';
 
 const CATEGORIES = [

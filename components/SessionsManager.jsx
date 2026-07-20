@@ -74,7 +74,7 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
     catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [role]);
+  useEffect(() => { load();   }, [role]);
 
   const canMutate = (s) => role === 'superadmin' || s.createdById === dbUser?.id;
 

@@ -6,9 +6,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # UI/UX Best Practices
 - **No Native Browser Dialogs**: NEVER use native browser dialogs like `window.prompt`, `window.alert`, or `window.confirm` when building features or UI elements. Always build and use custom React modal components (e.g., using state and proper styling) to ensure a modern, professional, and seamless user experience.
-
+- **Mobile Nav Clearances (Sticky Elements)**: When adding `fixed` or `sticky` action buttons at the bottom of a mobile screen, always place them above the main MobileNav to avoid overlapping. Use `bottom-24` (or similar) for the button, and ensure the main scrollable container has at least `pb-32` padding so content isn't obscured.
 # Next.js Turbopack & Prisma Caching Troubleshooting
-- **Prisma Client Cache Invalidation**: If the Next.js app (using Turbopack) fails to recognize newly added Prisma models or schema changes after running `npx prisma db push`, it is highly likely due to aggressive caching in the `.next` directory. To resolve this:
+- **Turbopack Panics & Cache Invalidation**: If the Next.js app (using Turbopack) fails to recognize newly added Prisma models, OR if Turbopack throws a Rust panic (e.g., `thread 'tokio-runtime-worker' panicked`) / browser hangs on a white screen after mass file changes (like ESLint auto-fix), it is due to a corrupt or aggressive cache in the `.next` directory. To resolve this:
   1. Run `npx prisma generate` to ensure the client is generated.
   2. Stop the dev server (`npm run dev`).
   3. Delete the `.next` folder entirely (`Remove-Item -Recurse -Force .next` on Windows, or `rm -rf .next` on Unix).

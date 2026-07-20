@@ -3,14 +3,16 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts';
 import {
-  BookOpen, ClipboardCheck, FolderHeart, Award, MapPin,
-  GraduationCap, UserCheck, TrendingUp, CalendarDays, Loader2
+  BookOpen, Award, MapPin,
+  GraduationCap, UserCheck, TrendingUp, CalendarDays, Loader2, Settings
 } from 'lucide-react';
 import RealProfile from './RealProfile';
 import SelfAssessment from './SelfAssessment';
 import SessionsManager from './SessionsManager';
 import PortfolioManager from './PortfolioManager';
 import { toElixIndex, elixCategory, blendedScore } from '../lib/assessment';
+import AwardeePDF from './pdf/AwardeePDF';
+import PDFDownloadButton from './pdf/PDFDownloadButton';
 // Force Turbopack reload
 
 async function fetchJson(url) {
@@ -36,7 +38,7 @@ function EmptyState({ icon: Icon, title, desc, darkMode }) {
 
 // Real, DB-backed Awardee dashboard. Data comes from /api/profile; scores come
 // from the real Self Assessment. New awardees see honest empty/zero states.
-export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, activeTab }) {
+export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, activeTab, setActiveTab }) {
   const [data, setData] = useState(null);
   const [dimensions, setDimensions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +60,12 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
 
   useEffect(() => { load(); }, [load]);
 
+  const profile = data?.profile;
   if (activeTab === 'profile') {
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;
   }
   if (activeTab === 'assessment') {
-    return <SelfAssessment darkMode={darkMode} onSaved={load} />;
+    return <SelfAssessment darkMode={darkMode} onSaved={load} dbUser={dbUser} profile={profile} />;
   }
   if (activeTab === 'attendance') {
     // Fase 6a: awardee bisa lihat daftar sesi (mendatang & riwayat).
@@ -85,7 +88,6 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
     );
   }
 
-  const profile = data?.profile;
   const saScore = profile?.saScore ?? 0;
   const hasSA = !!profile?.hasFilledSA;
   const maScore = profile?.maScore ?? 0;
@@ -122,9 +124,16 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
               ? <img src={dbUser.avatarUrl} alt={dbUser.name} className="w-full h-full object-cover" />
               : <UserCheck className="w-7 h-7 text-slate-400" />}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-400">Selamat datang,</p>
-            <h2 className="text-xl font-black truncate">{dbUser?.name}</h2>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-400">Selamat datang,</p>
+                <h2 className="text-xl font-black truncate">{dbUser?.name}</h2>
+              </div>
+              <button onClick={() => setActiveTab && setActiveTab('profile')} className={`p-2 rounded-full shrink-0 transition-colors ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {chips.map(({ icon: Icon, text }, i) => (
                 <span key={i} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
@@ -155,26 +164,26 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
       </div>
 
       {/* Radar (real SA dimension scores) or empty prompt */}
-      {hasSA ? (
-        <div className={`border rounded-3xl p-6 ${card}`}>
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-2">Profil Dimensi (Self Assessment)</h3>
-          <div className="w-full h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="70%">
-                <PolarGrid stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: darkMode ? '#cbd5e1' : '#475569' }} />
-                <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <Radar name="SA" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      ) : (
+      {/* Removed Radar Chart per request */}
+      {!hasSA && (
         <div className={`border rounded-3xl p-5 flex items-center gap-3 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20 text-indigo-300' : 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
           <TrendingUp className="w-5 h-5 shrink-0" />
           <p className="text-xs font-semibold leading-relaxed">
-            Kamu belum mengisi Self Assessment. Buka tab <b>Self Assessment (SA)</b> untuk menilai dirimu — ELIX Index dan profil dimensimu akan langsung terhitung.
+            Kamu belum mengisi Self Assessment. Buka tab <b>SA</b> untuk menilai dirimu — ELIX Index akan langsung terhitung.
           </p>
+        </div>
+      )}
+
+      {hasSA && hasMA && (
+        <div className={`border rounded-3xl p-5 flex items-center justify-between gap-4 ${card}`}>
+          <div>
+            <h3 className="text-sm font-black mb-1">Laporan Hasil ELIX</h3>
+            <p className="text-xs text-slate-500">Unduh hasil evaluasi individu secara lengkap.</p>
+          </div>
+          <PDFDownloadButton 
+            document={<AwardeePDF profile={profile} dbUser={dbUser} dimensions={dimensions} activePeriodName="Siklus Aktif" />}
+            fileName={`Laporan_ELIX_${dbUser?.name.replace(/\s+/g, '_')}.pdf`}
+          />
         </div>
       )}
     </div>

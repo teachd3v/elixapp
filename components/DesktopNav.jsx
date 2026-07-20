@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Compass, BookOpen, ClipboardCheck, UserCheck, FolderHeart,
-  Megaphone, Calendar, Users, SlidersHorizontal, BarChart3
+  Megaphone, Users, SlidersHorizontal, BarChart3
 } from 'lucide-react';
 
 const MENU_CONFIG = {

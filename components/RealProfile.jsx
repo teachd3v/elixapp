@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { UserCheck, Save, Edit, CheckCircle2, AlertCircle, Sparkles, Camera, Trash2 } from 'lucide-react';
+import { UserCheck, Save, Edit, AlertCircle, Sparkles, Camera, Trash2 } from 'lucide-react';
 import { fileToDataUrl } from '../lib/image';
 import { useDialog } from './DialogProvider';
 import AvatarCropModal from './AvatarCropModal';

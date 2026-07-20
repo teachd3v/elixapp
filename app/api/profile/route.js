@@ -12,7 +12,20 @@ export async function GET() {
   if (me.role === 'AWARDEE') {
     const profile = await prisma.awardeeProfile.findUnique({
       where: { userId: me.id },
-      include: { wilayah: { select: { id: true, name: true } } },
+      include: { 
+        wilayah: { 
+          select: { 
+            id: true, 
+            name: true, 
+            mentorProfile: { include: { user: { select: { name: true } } } } 
+          } 
+        },
+        assessmentRecords: {
+          include: {
+            period: { select: { name: true, isActive: true } }
+          }
+        }
+      },
     });
     return NextResponse.json({ user: publicUser(me), profile });
   }
