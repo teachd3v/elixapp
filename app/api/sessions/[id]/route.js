@@ -29,19 +29,41 @@ export async function PATCH(request, { params }) {
   }
   if (body.date !== undefined) {
     const d = new Date(body.date);
-    if (Number.isNaN(d.getTime())) return NextResponse.json({ error: 'Tanggal tidak valid.' }, { status: 400 });
+    if (Number.isNaN(d.getTime())) return NextResponse.json({ error: 'Waktu mulai tidak valid.' }, { status: 400 });
     data.date = d;
   }
-  if (body.time !== undefined) {
-    data.time = body.time?.trim() || null;
+  
+  // We allow changing category
+  if (body.category !== undefined) {
+    data.category = body.category;
+  }
+  const finalCategory = data.category || session.category;
+
+  if (finalCategory === 'KLASIKAL') {
+    data.time = null; // Legacy cleanup
+    data.awardeeId = null;
+    if (body.endDate !== undefined) {
+      const dEnd = new Date(body.endDate);
+      if (!Number.isNaN(dEnd.getTime())) data.endDate = dEnd;
+    }
+  } else if (finalCategory === 'INDIVIDU') {
+    data.time = null; // Legacy cleanup
+    if (body.endDate !== undefined) {
+      const dEnd = new Date(body.endDate);
+      if (!Number.isNaN(dEnd.getTime())) data.endDate = dEnd;
+    }
+    if (body.awardeeId !== undefined) {
+      data.awardeeId = body.awardeeId;
+    }
   }
 
   const updated = await prisma.session.update({
     where: { id },
     data,
     select: {
-      id: true, title: true, date: true, time: true, scope: true, createdById: true,
+      id: true, title: true, date: true, time: true, scope: true, category: true, endDate: true, awardeeId: true, createdById: true,
       wilayah: { select: { id: true, name: true } },
+      awardee: { select: { id: true, user: { select: { name: true } } } },
     },
   });
   return NextResponse.json(updated);

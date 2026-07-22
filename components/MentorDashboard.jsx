@@ -62,6 +62,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   const load = useCallback(async () => {
     try {
       const d = await fetchJson('/api/mentor/awardees');
+      console.log('MENTOR DASHBOARD FETCHED DATA:', d);
       setData(d);
     } catch {
       /* handled by empty defaults */
@@ -92,20 +93,18 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
       </div>
     );
   }
+  if (loading) {
+    return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat data wilayah...</p></div>;
+  }
   if (activeTab === 'sessions') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
         <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />
+        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate awardees={data?.awardees || []} />
       </div>
     );
-  }
-
-
-  if (loading) {
-    return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat data wilayah...</p></div>;
   }
 
   const wilayah = data?.wilayah;

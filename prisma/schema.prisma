@@ -85,6 +85,9 @@ model AwardeeProfile {
   attendances  Attendance[]
   excuses      Excuse[]
 
+  // Sesi Individu (1-on-1 dengan mentor)
+  individualSessions Session[] @relation("AwardeeIndividualSessions")
+
   // Portofolio karya/prestasi awardee
   portfolios   Portfolio[]
   
@@ -120,17 +123,30 @@ enum SessionScope {
   NASIONAL
 }
 
+// Kategori sesi: KLASIKAL (group/umum) atau INDIVIDU (1-on-1 rentang waktu).
+enum SessionCategory {
+  KLASIKAL
+  INDIVIDU
+}
+
 // Sesi Pembinaan
 model Session {
   id          String   @id @default(uuid())
   title       String
   date        DateTime
-  time        String?  // e.g. "13:30 - 15:30"
+  time        String?  // e.g. "13:30 - 15:30" (Untuk KLASIKAL)
+  endDate     DateTime? // Tanggal akhir batas janjian (Untuk INDIVIDU)
+  
   scope       SessionScope @default(WILAYAH)
+  category    SessionCategory @default(KLASIKAL)
 
   // Siapa pun (mentor / superadmin) yang membuat sesi ini
   createdById String
   createdBy   User @relation("SessionCreator", fields: [createdById], references: [id])
+
+  // Target spesifik (Hanya diisi jika category = INDIVIDU)
+  awardeeId   String?
+  awardee     AwardeeProfile? @relation("AwardeeIndividualSessions", fields: [awardeeId], references: [id])
 
   // Hanya diisi untuk sesi WILAYAH
   mentorId    String?

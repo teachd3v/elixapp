@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, MapPin, Plus, Edit, Trash2, X, AlertCircle, ClipboardCheck, CheckCircle2, XCircle, Users, FileText } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Edit, Trash2, X, AlertCircle, ClipboardCheck, CheckCircle2, XCircle, Users, User, FileText } from 'lucide-react';
 import { useDialog } from './DialogProvider';
 import AttendanceModal from './AttendanceModal';
 import AttendanceReview from './AttendanceReview';
@@ -24,19 +24,33 @@ function fmtDate(iso) {
 function toDateInput(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toISOString().slice(0, 10);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function toDateTimeLocalInput(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fmtTime(iso) {
+  try { return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+  catch { return ''; }
 }
 
 // Manages Sesi Pembinaan for the current user. Read-only for AWARDEE;
 // CRUD for MENTOR (WILAYAH sessions) and SUPERADMIN (NASIONAL sessions).
 // The server enforces scope + authorization; this UI just reflects it.
-export default function SessionsManager({ darkMode, dbUser, role, canCreate = false }) {
+export default function SessionsManager({ darkMode, dbUser, role, canCreate = false, awardees = [] }) {
+  console.log('SESSIONS MANAGER RENDER:', { role, awardeeCount: awardees.length });
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState({ title: '', date: '', time: '', category: 'KLASIKAL', endDate: '', awardeeId: '', awardeeIds: [] });
   const [editing, setEditing] = useState(null); // session object or null (new)
-  const [form, setForm] = useState({ title: '', date: '', time: '' });
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const { confirm } = useDialog();
@@ -80,13 +94,20 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: '', date: '', time: '' });
+    setForm({ title: '', date: '', time: '', category: 'KLASIKAL', endDate: '', awardeeId: '', awardeeIds: [] });
     setError(null);
     setFormOpen(true);
   };
   const openEdit = (s) => {
     setEditing(s);
-    setForm({ title: s.title, date: toDateInput(s.date), time: s.time || '' });
+    setForm({ 
+      title: s.title, 
+      date: s.category === 'KLASIKAL' ? toDateTimeLocalInput(s.date) : toDateInput(s.date), 
+      category: s.category || 'KLASIKAL', 
+      endDate: s.category === 'KLASIKAL' ? (s.endDate ? toDateTimeLocalInput(s.endDate) : toDateTimeLocalInput(s.date)) : (s.endDate ? toDateInput(s.endDate) : ''), 
+      awardeeId: s.awardeeId || '',
+      awardeeIds: s.awardeeId ? [s.awardeeId] : []
+    });
     setError(null);
     setFormOpen(true);
   };
@@ -95,19 +116,32 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const save = async (e) => {
     e.preventDefault();
     if (!form.title.trim() || !form.date) { setError('Judul dan tanggal wajib diisi.'); return; }
+    if (form.category === 'INDIVIDU' && (!form.endDate || (form.awardeeIds.length === 0 && !form.awardeeId))) { setError('Tanggal akhir dan Awardee wajib diisi untuk sesi individu.'); return; }
+    if (form.category === 'KLASIKAL' && !form.endDate) { setError('Waktu selesai wajib diisi.'); return; }
     setSaving(true); setError(null);
+    
+    // Parse form dates in local timezone to ISO string (UTC)
+    const payload = { ...form };
+    if (payload.category === 'KLASIKAL') {
+      payload.date = new Date(form.date).toISOString();
+      payload.endDate = new Date(form.endDate).toISOString();
+    } else {
+      payload.date = new Date(form.date + "T00:00:00").toISOString();
+      payload.endDate = new Date(form.endDate + "T23:59:59").toISOString();
+      if (form.awardeeIds.length > 0) payload.awardeeId = form.awardeeIds[0];
+    }
     try {
       if (editing) {
         await fetchJson(`/api/sessions/${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       } else {
         await fetchJson('/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       }
       closeForm();
@@ -156,10 +190,10 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${s.scope === 'NASIONAL' ? 'bg-violet-500/10 text-violet-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
-              {s.scope === 'NASIONAL' ? 'Nasional' : 'Wilayah'}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${s.category === 'INDIVIDU' ? 'bg-fuchsia-500/10 text-fuchsia-600' : (s.scope === 'NASIONAL' ? 'bg-violet-500/10 text-violet-600' : 'bg-emerald-500/10 text-emerald-600')}`}>
+              {s.category === 'INDIVIDU' ? 'Individu' : (s.scope === 'NASIONAL' ? 'Nasional' : 'Wilayah')}
             </span>
-            {s.wilayah?.name && (
+            {s.wilayah?.name && s.category === 'KLASIKAL' && (
               <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
                 <MapPin className="w-3 h-3" /> {s.wilayah.name}
               </span>
@@ -178,8 +212,12 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
           </div>
           <p className="font-bold text-sm mb-1">{s.title}</p>
           <div className="flex items-center gap-3 text-[11px] text-slate-500">
-            <span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{fmtDate(s.date)}</span>
-            {s.time && <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{s.time}</span>}
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {s.category === 'INDIVIDU' ? `${fmtDate(s.date)} - ${fmtDate(s.endDate)}` : fmtDate(s.date)}
+            </span>
+            {s.category === 'KLASIKAL' && s.endDate && <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{fmtTime(s.date)} - {fmtTime(s.endDate)}</span>}
+            {s.category === 'INDIVIDU' && s.awardee && <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{s.awardee.user?.name}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -245,6 +283,9 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
     return <AttendanceReview darkMode={darkMode} session={reviewSession} onBack={() => { setReviewSession(null); load(); }} />;
   }
 
+  const bookedAwardeeIds = new Set(sessions.filter(s => s.category === 'INDIVIDU').map(s => s.awardeeId));
+  const availableAwardees = awardees.filter(a => !bookedAwardeeIds.has(a.id) || (editing && form.awardeeIds.includes(a.id)));
+
   return (
     <div className="space-y-6">
       <div className={`border rounded-3xl p-5 flex items-center justify-between gap-3 ${card}`}>
@@ -287,16 +328,63 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
               <label className="text-xs font-bold text-slate-400 block mb-1">Judul <span className="text-rose-500">*</span></label>
               <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="mis. Pembinaan Mingguan Quranic Tahfidz" required />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Tanggal <span className="text-rose-500">*</span></label>
-                <input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Waktu</label>
-                <input className={inputCls} value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} placeholder="mis. 13:30 - 15:30" />
-              </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1">Kategori Sesi <span className="text-rose-500">*</span></label>
+              <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} disabled={editing}>
+                <option value="KLASIKAL">Klasikal (Group)</option>
+                {role?.toLowerCase() === 'mentor' && awardees?.length > 0 && <option value="INDIVIDU">Individu (1-on-1)</option>}
+              </select>
             </div>
+            
+            {form.category === 'KLASIKAL' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Waktu Mulai <span className="text-rose-500">*</span></label>
+                  <input type="datetime-local" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Waktu Selesai <span className="text-rose-500">*</span></label>
+                  <input type="datetime-local" className={inputCls} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} required />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Tanggal Mulai <span className="text-rose-500">*</span></label>
+                    <input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Tanggal Berakhir <span className="text-rose-500">*</span></label>
+                    <input type="date" className={inputCls} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} required />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="text-xs font-bold text-slate-400 block mb-2">Pilih Awardee <span className="text-rose-500">*</span></label>
+                  {availableAwardees.length === 0 ? (
+                    <div className="text-sm text-slate-500 italic p-3 border rounded-xl border-dashed dark:border-slate-700">Semua awardee sudah memiliki sesi individu.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded-xl dark:border-slate-700">
+                      {availableAwardees.map(a => (
+                        <label key={a.id} className={`flex items-center gap-3 text-sm p-3 rounded-xl transition-all cursor-pointer border ${form.awardeeIds.includes(a.id) ? 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-800' : 'hover:bg-slate-50 border-transparent dark:hover:bg-slate-800'}`}>
+                          <input type="checkbox" className="w-4 h-4 rounded text-sky-500 focus:ring-sky-500 dark:bg-slate-800 dark:border-slate-600" 
+                            checked={form.awardeeIds.includes(a.id)}
+                            onChange={(e) => {
+                              const ids = new Set(form.awardeeIds);
+                              if (e.target.checked) ids.add(a.id);
+                              else ids.delete(a.id);
+                              setForm({ ...form, awardeeIds: Array.from(ids) });
+                            }} 
+                            disabled={editing !== null && form.awardeeIds.length === 1 && !form.awardeeIds.includes(a.id)}
+                          />
+                          <span className="truncate font-medium">{a.user?.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             <div className="flex items-center gap-2 pt-2">
               <button type="button" onClick={closeForm} className="flex-1 px-5 py-2.5 rounded-xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">Batal</button>
               <button type="submit" disabled={saving}
