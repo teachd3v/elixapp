@@ -22,10 +22,25 @@ export async function GET(request) {
     const name = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || 'Unknown';
     const avatarUrl = user.imageUrl;
 
-    // Cek apakah user sudah ada di database Neon
+    // Cek apakah user sudah ada di database Neon berdasarkan clerkId
     let dbUser = await prisma.user.findUnique({
       where: { clerkId: userId }
     });
+
+    if (!dbUser && email) {
+      // Jika tidak ketemu pakai clerkId, coba cari pakai email (kasus migrasi dari dev ke prod Clerk)
+      const existingEmailUser = await prisma.user.findUnique({
+        where: { email: email }
+      });
+      
+      if (existingEmailUser) {
+        // Kalau emailnya udah ada di DB, kita update aja clerkId-nya dengan yang baru dari Production
+        dbUser = await prisma.user.update({
+          where: { id: existingEmailUser.id },
+          data: { clerkId: userId }
+        });
+      }
+    }
 
     if (!dbUser) {
       // Jika belum ada, buat baru
