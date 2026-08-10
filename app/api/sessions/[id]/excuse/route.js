@@ -4,7 +4,7 @@ import { getCurrentDbUser } from '@/lib/auth';
 import { isExcuseOpen, excuseStatusText } from '@/lib/attendance-window';
 
 const CATEGORIES = ['SAKIT', 'AGENDA_KELUARGA', 'AGENDA_ORGANISASI', 'AGENDA_PRIBADI', 'LAINNYA'];
-const MAX_PHOTO_BYTES = 500 * 1024;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 function b64Size(s) {
   if (typeof s !== 'string' || !s.startsWith('data:')) return -1;
   const b64 = s.split(',')[1] || '';
@@ -50,7 +50,7 @@ export async function POST(request, { params }) {
   const size = b64Size(excusePhoto);
   if (size < 0) return NextResponse.json({ error: 'Foto bukti tidak valid.' }, { status: 400 });
   if (size === 0) return NextResponse.json({ error: 'Foto bukti wajib diunggah.' }, { status: 400 });
-  if (size > MAX_PHOTO_BYTES) return NextResponse.json({ error: 'Foto bukti terlalu besar (>500 KB).' }, { status: 400 });
+  if (size > MAX_PHOTO_BYTES) return NextResponse.json({ error: 'Foto bukti terlalu besar (>2 MB).' }, { status: 400 });
 
   const row = await prisma.attendance.upsert({
     where: { sessionId_awardeeId: { sessionId, awardeeId: ap.id } },

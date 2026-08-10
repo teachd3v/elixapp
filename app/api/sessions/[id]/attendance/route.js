@@ -4,7 +4,7 @@ import { getCurrentDbUser } from '@/lib/auth';
 import { isAttendanceOpen, attendanceStatusText } from '@/lib/attendance-window';
 
 // Cap client photo size so we don't fill the DB with an accidental 10 MB PNG.
-const MAX_PHOTO_BYTES = 500 * 1024; // 500 KB after base64
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024; // 2 MB after base64
 function b64Size(s) {
   if (typeof s !== 'string' || !s.startsWith('data:')) return -1;
   const b64 = s.split(',')[1] || '';
@@ -96,7 +96,7 @@ export async function POST(request, { params }) {
     const size = b64Size(p);
     if (size < 0) return NextResponse.json({ error: `Foto ${label} tidak valid.` }, { status: 400 });
     if (size === 0) return NextResponse.json({ error: `Foto ${label} wajib diunggah.` }, { status: 400 });
-    if (size > MAX_PHOTO_BYTES) return NextResponse.json({ error: `Foto ${label} terlalu besar (>500 KB).` }, { status: 400 });
+    if (size > MAX_PHOTO_BYTES) return NextResponse.json({ error: `Foto ${label} terlalu besar (>2 MB).` }, { status: 400 });
   }
 
   const existing = await prisma.attendance.findUnique({
