@@ -11,7 +11,7 @@ import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
 import ChangeRoleModal from './ChangeRoleModal';
-import { Edit } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
 import { useDialog } from './DialogProvider';
 import { blendedScore, toElixIndex } from '../lib/assessment';
@@ -164,6 +164,29 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
     }
   };
 
+  const deleteUser = async (user) => {
+    if (user.id === dbUser?.id) {
+      await alert('Anda tidak dapat menghapus akun Anda sendiri.');
+      return;
+    }
+    const isConfirmed = await confirm(`PERINGATAN: Yakin ingin menghapus permanen akun ${user.name} (${user.email})? Semua data profil, presensi, portofolio, dan riwayat yang terkait akan dihapus secara permanen.`);
+    if (!isConfirmed) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}`, { method: 'DELETE' });
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(resData.error || 'Gagal menghapus user');
+      }
+      await load();
+      await alert(`Akun ${user.name} berhasil dihapus.`);
+    } catch (e) {
+      await alert(`Gagal menghapus akun: ${e.message}`, 'Gagal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
 
   if (activeTab === 'attendance') {
@@ -282,6 +305,15 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                           >
                             <Edit className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Ubah Role</span>
                           </button>
+                          {user.id !== dbUser?.id && (
+                            <button
+                              onClick={() => deleteUser(user)}
+                              className="p-2 md:px-3 md:py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
+                              title="Hapus akun permanen"
+                            >
+                              <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Hapus</span>
+                            </button>
+                          )}
                         </div>
                       );
                     })}

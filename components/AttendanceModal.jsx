@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, UploadCloud, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Camera, Image as ImageIcon, UploadCloud, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { fileToCompressedDataUrl } from '../lib/image';
 
 // Awardee attendance submission modal. Two photos (selfie + suasana) + optional
@@ -67,18 +67,52 @@ export default function AttendanceModal({ darkMode, session, existing, onClose, 
           </button>
         </div>
       ) : (
-        <label className={`h-40 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed cursor-pointer transition-colors ${darkMode ? 'border-slate-700 hover:border-indigo-500 bg-slate-800/40' : 'border-slate-300 hover:border-indigo-400 bg-slate-50'}`}>
-          <input type="file" accept="image/*" capture={capture} className="hidden"
-            onChange={(e) => handleFile(which, e.target.files?.[0])} disabled={processing === which} />
+        <div className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-colors ${darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-300 bg-slate-50'}`}>
           {processing === which ? (
-            <p className="text-xs font-bold text-slate-500">Memproses...</p>
+            <div className="py-6 flex flex-col items-center gap-2">
+              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs font-bold text-slate-500">Memproses & mengompres foto...</p>
+            </div>
           ) : (
             <>
-              <Camera className="w-6 h-6 text-slate-400" />
-              <p className="text-xs font-bold text-slate-500">Ambil / Pilih Foto</p>
+              <p className="text-xs font-bold text-slate-500">Pilih metode pengambilan:</p>
+              <div className="flex flex-wrap items-center justify-center gap-2 w-full">
+                <label className="flex-1 min-w-[120px] py-2.5 px-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
+                  <Camera className="w-4 h-4" />
+                  <span>Kamera</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture={capture}
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = '';
+                      handleFile(which, f);
+                    }}
+                    disabled={processing === which}
+                  />
+                </label>
+                <label className="flex-1 min-w-[120px] py-2.5 px-3 bg-slate-200/70 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Galeri / File</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = '';
+                      handleFile(which, f);
+                    }}
+                    disabled={processing === which}
+                  />
+                </label>
+              </div>
+              <span className="text-[10px] text-slate-400 text-center">Tips: Jika kamera HP langsung menutup/freeze, gunakan opsi Galeri.</span>
             </>
           )}
-        </label>
+        </div>
       )}
     </div>
   );

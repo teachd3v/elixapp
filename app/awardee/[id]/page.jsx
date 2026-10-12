@@ -2,12 +2,15 @@
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, MapPin, GraduationCap, FileText, LayoutDashboard, LineChart, BarChart3
+  ArrowLeft, MapPin, GraduationCap, FileText, LayoutDashboard, LineChart, BarChart3, Eye
 } from 'lucide-react';
 import { ResponsiveContainer,
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar
 } from 'recharts';
+import PDFDownloadButton from '../../../components/pdf/PDFDownloadButton';
+import AwardeeComprehensivePDF from '../../../components/pdf/AwardeeComprehensivePDF';
+import ElixDetailModal from '../../../components/modals/ElixDetailModal';
 
 const ELIX_DESCRIPTIONS = {
   'Emerging Leader': "Awardee masih berada pada tahap awal pengembangan diri dan belum menunjukkan kompetensi yang diharapkan pada sebagian besar dimensi. Kesiapan akademik masih rendah, internalisasi nilai-nilai Islam dan kedekatan dengan Al-Qur'an belum konsisten, kemampuan mengelola diri dan emosi masih terbatas, serta belum menunjukkan inisiatif dan kepemimpinan sosial yang nyata. Awardee memerlukan pendampingan intensif, penguatan karakter, dan stimulasi yang berkelanjutan untuk mengembangkan potensinya.",
@@ -23,6 +26,7 @@ export default function AwardeeDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dimensions, setDimensions] = useState([]);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -70,11 +74,25 @@ export default function AwardeeDetailPage({ params }) {
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm self-start">
             <ArrowLeft className="w-5 h-5" /> Kembali
           </button>
-          <h1 className="text-xl font-black text-slate-800 hidden sm:block">Detail Awardee</h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setShowDetailModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs rounded-xl border border-indigo-200 shadow-sm transition-colors"
+              title="Lihat rincian lengkap butir pertanyaan dan jawaban ELIX"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Detail Data ELIX</span>
+            </button>
+            <PDFDownloadButton
+              document={<AwardeeComprehensivePDF awardee={data} dimensions={dimensions} />}
+              fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+              label="Export PDF Lengkap"
+            />
+          </div>
         </div>
 
         {/* Profile Card */}
@@ -104,8 +122,15 @@ export default function AwardeeDetailPage({ params }) {
             
             <div className="w-px h-10 bg-slate-200 hidden sm:block"></div>
             
-            <div className="text-center px-4 bg-amber-50 rounded-xl py-2 border border-amber-100">
-              <div className="text-[10px] font-bold text-amber-500 mb-1">INDEKS ELIX</div>
+            <div
+              onClick={() => setShowDetailModal(true)}
+              className="text-center px-4 bg-amber-50 hover:bg-amber-100/70 cursor-pointer rounded-xl py-2 border border-amber-100 transition-colors group"
+              title="Klik untuk melihat rincian detail data ELIX"
+            >
+              <div className="text-[10px] font-bold text-amber-500 mb-1 flex items-center justify-center gap-1">
+                <span>INDEKS ELIX</span>
+                <Eye className="w-3 h-3 text-amber-600 opacity-70 group-hover:opacity-100" />
+              </div>
               <div className="text-3xl font-black text-slate-800">{data.elix ? data.elix.toFixed(0) : '-'}</div>
             </div>
           </div>
@@ -221,6 +246,13 @@ export default function AwardeeDetailPage({ params }) {
           </div>
         </div>
 
+        {/* Modal Detail Data ELIX */}
+        <ElixDetailModal
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          data={data}
+          dimensions={dimensions}
+        />
       </div>
     </div>
   );

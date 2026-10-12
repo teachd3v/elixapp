@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, UserCheck, CheckCircle2, XCircle, Clock, RefreshCw, AlertCircle, Image as ImageIcon, FileText } from 'lucide-react';
+import { ArrowLeft, UserCheck, CheckCircle2, XCircle, Clock, RefreshCw, AlertCircle, Image as ImageIcon, FileText, FileSpreadsheet } from 'lucide-react';
+import { exportSingleSessionAttendance } from '../lib/exportExcel';
 
 const EXCUSE_LABEL = {
   SAKIT: 'Sakit',
@@ -67,8 +68,22 @@ export default function AttendanceReview({ darkMode, session, onBack }) {
         <button onClick={onBack} className="text-xs font-bold text-sky-500 hover:text-sky-600 flex items-center gap-1 mb-2">
           <ArrowLeft className="w-4 h-4" /> Kembali ke daftar sesi
         </button>
-        <h3 className="text-base font-black">Verifikasi Absensi</h3>
-        <p className="text-xs text-slate-500 truncate">{session.title}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-black">Verifikasi Absensi</h3>
+            <p className="text-xs text-slate-500 truncate">{session.title}</p>
+          </div>
+          {rows.length > 0 && (
+            <button
+              onClick={() => exportSingleSessionAttendance({ session, attendances: rows })}
+              className="px-3.5 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
+              title="Download Data Presensi ke File Excel"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Export Excel</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

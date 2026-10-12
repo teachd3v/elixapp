@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { UserCheck, Clock, CheckCircle2, RefreshCw, AlertCircle } from 'lucide-react';
+import { UserCheck, Clock, CheckCircle2, RefreshCw, AlertCircle, X } from 'lucide-react';
+import { useDialog } from './DialogProvider';
 
 const APPROVE_ROLES = [
   { value: 'AWARDEE', label: 'Awardee' },
@@ -28,6 +29,7 @@ export default function PendingApprovals({ darkMode }) {
   const [error, setError] = useState(null);
   const [selectedRole, setSelectedRole] = useState({}); // userId -> role
   const [submittingId, setSubmittingId] = useState(null);
+  const { confirm } = useDialog();
 
   const load = async () => {
     setLoading(true);
@@ -58,6 +60,20 @@ export default function PendingApprovals({ darkMode }) {
       setPending(prev => prev.filter(u => u.id !== user.id));
     } catch (err) {
       setError(`Gagal menyetujui ${user.email}: ${err.message}`);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
+  const reject = async (user) => {
+    const ok = await confirm(`Yakin ingin menolak pendaftaran akun ${user.name} (${user.email})? Akun ini akan dihapus dari antrean persetujuan.`);
+    if (!ok) return;
+    setSubmittingId(user.id);
+    try {
+      await fetchJson(`/api/users/${user.id}`, { method: 'DELETE' });
+      setPending(prev => prev.filter(u => u.id !== user.id));
+    } catch (err) {
+      setError(`Gagal menolak ${user.email}: ${err.message}`);
     } finally {
       setSubmittingId(null);
     }
@@ -128,10 +144,20 @@ export default function PendingApprovals({ darkMode }) {
                 <button
                   onClick={() => approve(user)}
                   disabled={submittingId === user.id}
-                  className="px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl flex items-center gap-2 font-bold text-xs transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition-colors disabled:opacity-50"
+                  title="Setujui akun ini"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  {submittingId === user.id ? 'Memproses...' : 'Setujui'}
+                  <span>{submittingId === user.id ? '...' : 'Setujui'}</span>
+                </button>
+                <button
+                  onClick={() => reject(user)}
+                  disabled={submittingId === user.id}
+                  className="px-3 py-2 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition-colors disabled:opacity-50"
+                  title="Tolak pendaftaran akun ini"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Tolak</span>
                 </button>
               </div>
             </div>

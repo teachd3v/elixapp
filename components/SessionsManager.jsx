@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, MapPin, Plus, Edit, Trash2, X, AlertCircle, ClipboardCheck, CheckCircle2, XCircle, Users, User, FileText } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Edit, Trash2, X, AlertCircle, ClipboardCheck, CheckCircle2, XCircle, Users, User, FileText, ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
 import { useDialog } from './DialogProvider';
 import AttendanceModal from './AttendanceModal';
 import AttendanceReview from './AttendanceReview';
 import ExcuseModal from './ExcuseModal';
 import { isAttendanceOpen, isExcuseOpen, attendanceStatusText, excuseStatusText } from '../lib/attendance-window';
+import { exportSessionsAttendanceList } from '../lib/exportExcel';
 
 async function fetchJson(url, options) {
   const res = await fetch(url, options);
@@ -53,7 +54,26 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const [editing, setEditing] = useState(null); // session object or null (new)
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
-  const { confirm } = useDialog();
+  const { confirm, alert } = useDialog();
+
+  // Wilayah accordion collapse state & Excel export state
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [exportingAll, setExportingAll] = useState(false);
+
+  const toggleWilayahGroup = (section, wilayah) => {
+    const id = `${section}-${wilayah}`;
+    setCollapsedGroups(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const groupSessionsByWilayah = (list) => {
+    const groups = {};
+    for (const s of list) {
+      const key = s.scope === 'NASIONAL' ? 'Nasional' : (s.wilayah?.name || 'Wilayah Lainnya');
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(s);
+    }
+    return groups;
+  };
 
   // Attendance state
   const [attendModal, setAttendModal] = useState(null); // { session, existing }
@@ -69,6 +89,21 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
 
   const isAwardee = role === 'awardee';
   const canReview = role === 'mentor' || role === 'superadmin';
+
+  const handleExportAll = async () => {
+    if (sessions.length === 0) return;
+    setExportingAll(true);
+    try {
+      await exportSessionsAttendanceList({
+        sessions,
+        filename: `Rekap_Presensi_Semua_Sesi_${new Date().toISOString().slice(0, 10)}.xlsx`
+      });
+    } catch (err) {
+      await alert(err.message || 'Gagal mengekspor data', 'Gagal');
+    } finally {
+      setExportingAll(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -298,12 +333,25 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
             </p>
           </div>
         </div>
-        {canCreate && !formOpen && (
-          <button onClick={openNew}
-            className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
-            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Tambah Sesi</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canReview && sessions.length > 0 && (
+            <button
+              onClick={handleExportAll}
+              disabled={exportingAll}
+              className="p-2.5 md:px-3.5 md:py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
+              title="Export Semua Data Presensi ke Excel"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden md:inline">{exportingAll ? 'Mengekspor...' : 'Export Excel Presensi'}</span>
+            </button>
+          )}
+          {canCreate && !formOpen && (
+            <button onClick={openNew}
+              className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
+              <Plus className="w-4 h-4" /> <span className="hidden md:inline">Tambah Sesi</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {error && !formOpen && (
@@ -404,18 +452,87 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
         </div>
       )}
 
-      {upcoming.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Mendatang</p>
-          {upcoming.map((s) => <SessionRow key={s.id} s={s} />)}
-        </div>
-      )}
-      {past.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Riwayat</p>
-          {past.map((s) => <SessionRow key={s.id} s={s} />)}
-        </div>
-      )}
+      {/* Helper to render sessions grouped by wilayah with collapsible accordion */}
+      {(() => {
+        const renderWilayahAccordion = (list, sectionName) => {
+          const grouped = groupSessionsByWilayah(list);
+          const keys = Object.keys(grouped);
+
+          return (
+            <div className="space-y-3">
+              {keys.map((wilayah) => {
+                const groupSessions = grouped[wilayah];
+                const groupId = `${sectionName}-${wilayah}`;
+                const isCollapsed = !!collapsedGroups[groupId];
+
+                return (
+                  <div key={groupId} className={`border rounded-2xl overflow-hidden transition-colors ${darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                    <div
+                      onClick={() => toggleWilayahGroup(sectionName, wilayah)}
+                      className={`p-3.5 flex items-center justify-between cursor-pointer select-none transition-colors ${darkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`p-1.5 rounded-lg ${wilayah === 'Nasional' ? 'bg-violet-500/10 text-violet-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <span className="font-bold text-xs truncate text-slate-800 dark:text-white">{wilayah}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                          {groupSessions.length} sesi
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {canReview && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportSessionsAttendanceList({
+                                sessions: groupSessions,
+                                filename: `Presensi_${wilayah.replace(/[^a-zA-Z0-9]/g, '_')}_${sectionName}.xlsx`
+                              }).catch((err) => alert(err.message || 'Gagal export data', 'Gagal'));
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-[10px] flex items-center gap-1 transition-colors"
+                            title={`Export presensi wilayah ${wilayah} ke Excel`}
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Excel</span>
+                          </button>
+                        )}
+                        {isCollapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
+                      </div>
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="p-3 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 mt-1">
+                        {groupSessions.map((s) => (
+                          <SessionRow key={s.id} s={s} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        };
+
+        return (
+          <>
+            {upcoming.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Mendatang ({upcoming.length})</p>
+                {renderWilayahAccordion(upcoming, 'upcoming')}
+              </div>
+            )}
+            {past.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Riwayat ({past.length})</p>
+                {renderWilayahAccordion(past, 'past')}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {attendModal && (
         <AttendanceModal
