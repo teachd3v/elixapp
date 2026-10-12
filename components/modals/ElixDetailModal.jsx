@@ -8,59 +8,94 @@ const SCORE_BADGES = {
   4: { label: '4 - Sangat Baik', cls: 'bg-emerald-50 text-emerald-600 border border-emerald-200' },
 };
 
-export default function ElixDetailModal({ isOpen, onClose, data, dimensions = [] }) {
+export default function ElixDetailModal({ isOpen, onClose, data, dimensions = [], initialPeriodId = null }) {
   if (!isOpen || !data) return null;
 
   const [activeTab, setActiveTab] = useState('questions'); // 'dimensions' | 'questions'
   const [collapsedDim, setCollapsedDim] = useState({});
 
+  const cycles = data.cycles || data.history || [];
+  const activeCycle = cycles.find(c => c.isLive || c.period?.isActive) || cycles[0];
+  const [selectedCycleId, setSelectedCycleId] = useState(initialPeriodId || activeCycle?.periodId || '');
+
+  React.useEffect(() => {
+    if (initialPeriodId) {
+      setSelectedCycleId(initialPeriodId);
+    } else if (activeCycle?.periodId && !selectedCycleId) {
+      setSelectedCycleId(activeCycle.periodId);
+    }
+  }, [initialPeriodId, activeCycle?.periodId]);
+
+  const target = (cycles.length > 0 && selectedCycleId)
+    ? (cycles.find(c => c.periodId === selectedCycleId) || activeCycle || data)
+    : data;
+
   const toggleDim = (dimId) => {
     setCollapsedDim(prev => ({ ...prev, [dimId]: !prev[dimId] }));
   };
 
-  const saResponses = data.saResponses || {};
-  const maResponses = data.maResponses || {};
-  const saDim = data.saDimensionScores || {};
-  const maDim = data.maDimensionScores || {};
+  const saResponses = target.saResponses || {};
+  const maResponses = target.maResponses || {};
+  const saDim = target.saDimensionScores || {};
+  const maDim = target.maDimensionScores || {};
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
       <div className="w-full max-w-4xl my-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-slate-800/40">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1 mr-4">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="p-1 rounded-lg bg-indigo-500/10 text-indigo-500"><Award className="w-4 h-4" /></span>
               <h3 className="text-base font-black text-slate-800 dark:text-white truncate">Rincian Detail Evaluasi ELIX</h3>
             </div>
             <p className="text-xs text-slate-500 truncate">{data.user?.name} · {data.wilayah?.name || '—'}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
-            <X className="w-5 h-5 text-slate-400" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {cycles.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-400 hidden sm:inline">Siklus:</span>
+                <select
+                  value={target.periodId || selectedCycleId}
+                  onChange={(e) => setSelectedCycleId(e.target.value)}
+                  className="px-2.5 py-1 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none cursor-pointer"
+                >
+                  {cycles.map(c => (
+                    <option key={c.periodId || c.id} value={c.periodId}>
+                      {c.period?.name || 'Siklus'} {c.isLive ? '(Aktif)' : '(Riwayat)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+          </div>
         </div>
 
         {/* Skor Overview Bar */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white dark:bg-slate-900 shrink-0">
           <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 text-center">
             <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Indeks ELIX</span>
-            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{data.elix != null ? data.elix.toFixed(1) : '—'}</span>
-            <span className="text-[10px] font-bold text-amber-600 block mt-0.5">{data.category || 'Belum ada kategori'}</span>
+            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{target.elix != null ? target.elix.toFixed(1) : '—'}</span>
+            <span className="text-[10px] font-bold text-amber-600 block mt-0.5">{target.category || 'Belum ada kategori'}</span>
           </div>
           <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 text-center">
             <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Skor SA (40%)</span>
-            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{data.hasFilledSA ? ((data.saScore || 0) * 25).toFixed(1) : '—'}</span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{data.hasFilledSA ? `${(data.saScore || 0).toFixed(2)} / 4.00` : 'Belum diisi'}</span>
+            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{target.hasFilledSA ? ((target.saScore || 0) * 25).toFixed(1) : '—'}</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{target.hasFilledSA ? `${(target.saScore || 0).toFixed(2)} / 4.00` : 'Belum diisi'}</span>
           </div>
           <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/40 text-center">
             <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">Skor MA (60%)</span>
-            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{data.hasFilledMA ? ((data.maScore || 0) * 25).toFixed(1) : '—'}</span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{data.hasFilledMA ? `${(data.maScore || 0).toFixed(2)} / 4.00` : 'Belum dinilai'}</span>
+            <span className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{target.hasFilledMA ? ((target.maScore || 0) * 25).toFixed(1) : '—'}</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{target.hasFilledMA ? `${(target.maScore || 0).toFixed(2)} / 4.00` : 'Belum dinilai'}</span>
           </div>
           <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status Pengisian</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mt-1">SA: {data.hasFilledSA ? '✓ Lengkap' : '—'}</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">MA: {data.hasFilledMA ? '✓ Lengkap' : '—'}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status ({target.period?.name || 'Siklus'})</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mt-1">SA: {target.hasFilledSA ? '✓ Lengkap' : '✗ Belum'}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">MA: {target.hasFilledMA ? '✓ Lengkap' : '✗ Belum'}</span>
           </div>
         </div>
 

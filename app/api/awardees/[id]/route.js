@@ -42,30 +42,93 @@ export async function GET(request, { params }) {
       }
     }
 
-    // Hitung elix saat ini
+    // Ambil seluruh master periode penilaian
+    const allPeriods = await prisma.assessmentPeriod.findMany({
+      orderBy: { startDate: 'asc' }
+    });
+
+    // Hitung elix siklus aktif saat ini
     const hasSA = !!awardee.hasFilledSA;
     const hasMA = !!awardee.hasFilledMA;
     const raw = blendedScore(awardee.saScore || 0, awardee.maScore || 0, hasSA, hasMA);
     const elix = (hasSA || hasMA) ? toElixIndex(raw) : null;
-    
-    // Siapkan records (history)
-    const history = awardee.assessmentRecords.map(r => {
-      const hSA = !!r.hasFilledSA;
-      const hMA = !!r.hasFilledMA;
-      const hRaw = blendedScore(r.saScore || 0, r.maScore || 0, hSA, hMA);
-      const hElix = (hSA || hMA) ? toElixIndex(hRaw) : null;
-      return {
-        ...r,
-        elix: hElix,
-        category: hElix ? elixCategory(hElix) : null
-      };
+
+    // Siapkan cycles (gabungan live period dan record historis secara kronologis)
+    const cycles = allPeriods.map(p => {
+      if (p.isActive) {
+        return {
+          id: `active-${p.id}`,
+          periodId: p.id,
+          period: p,
+          isLive: true,
+          hasFilledSA: hasSA,
+          saScore: awardee.saScore || 0,
+          saResponses: awardee.saResponses,
+          saDimensionScores: awardee.saDimensionScores,
+          saSubmittedAt: awardee.saSubmittedAt,
+          hasFilledMA: hasMA,
+          maScore: awardee.maScore || 0,
+          maResponses: awardee.maResponses,
+          maDimensionScores: awardee.maDimensionScores,
+          maSubmittedAt: awardee.maSubmittedAt,
+          maById: awardee.maById,
+          elix,
+          category: elix ? elixCategory(elix) : null,
+        };
+      } else {
+        const rec = awardee.assessmentRecords.find(r => r.periodId === p.id);
+        const rSA = !!rec?.hasFilledSA;
+        const rMA = !!rec?.hasFilledMA;
+        const rRaw = blendedScore(rec?.saScore || 0, rec?.maScore || 0, rSA, rMA);
+        const rElix = (rSA || rMA) ? toElixIndex(rRaw) : null;
+        return {
+          id: rec?.id || `hist-${p.id}`,
+          periodId: p.id,
+          period: p,
+          isLive: false,
+          hasFilledSA: rSA,
+          saScore: rec?.saScore || 0,
+          saResponses: rec?.saResponses,
+          saDimensionScores: rec?.saDimensionScores,
+          saSubmittedAt: rec?.saSubmittedAt,
+          hasFilledMA: rMA,
+          maScore: rec?.maScore || 0,
+          maResponses: rec?.maResponses,
+          maDimensionScores: rec?.maDimensionScores,
+          maSubmittedAt: rec?.maSubmittedAt,
+          maById: rec?.maById,
+          elix: rElix,
+          category: rElix ? elixCategory(rElix) : null,
+        };
+      }
     });
+
+    const mappedPeriodIds = new Set(allPeriods.map(p => p.id));
+    const extraRecords = awardee.assessmentRecords
+      .filter(r => !mappedPeriodIds.has(r.periodId))
+      .map(r => {
+        const rSA = !!r.hasFilledSA;
+        const rMA = !!r.hasFilledMA;
+        const rRaw = blendedScore(r.saScore || 0, r.maScore || 0, rSA, rMA);
+        const rElix = (rSA || rMA) ? toElixIndex(rRaw) : null;
+        return {
+          ...r,
+          isLive: false,
+          elix: rElix,
+          category: rElix ? elixCategory(rElix) : null,
+        };
+      });
+
+    const fullHistory = [...cycles, ...extraRecords];
+    const activePeriod = allPeriods.find(p => p.isActive) || null;
 
     return NextResponse.json({
       ...awardee,
       elix,
       category: elix ? elixCategory(elix) : null,
-      history
+      activePeriod,
+      history: fullHistory,
+      cycles: fullHistory
     });
   } catch (error) {
     console.error('Error fetching awardee detail:', error);

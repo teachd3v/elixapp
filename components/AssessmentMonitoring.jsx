@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   CheckCircle2, XCircle, Search, Filter, FileSpreadsheet, MapPin, 
-  ExternalLink, Phone, MessageSquare, Calendar, UserCheck, AlertCircle, ArrowUpDown
+  ExternalLink, Calendar, UserCheck, AlertCircle, ArrowUpDown
 } from 'lucide-react';
 import { exportAssessmentProgressToExcel } from '../lib/exportExcel';
 import { blendedScore, toElixIndex, elixCategory } from '../lib/assessment';
@@ -336,9 +336,6 @@ export default function AssessmentMonitoring({ data, darkMode, onViewAwardee }) 
                 </tr>
               ) : (
                 filteredList.map((item, idx) => {
-                  const cleanPhone = item.phone ? item.phone.replace(/[^0-9]/g, '') : '';
-                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone}` : null;
-
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-4 text-center text-slate-400 font-bold">{idx + 1}</td>
@@ -408,26 +405,14 @@ export default function AssessmentMonitoring({ data, darkMode, onViewAwardee }) 
                         )}
                       </td>
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {waUrl && (
-                            <a
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors"
-                              title={`Chat WhatsApp ${item.name}`}
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => onViewAwardee ? onViewAwardee(item.id) : (window.location.href = `/awardee/${item.id}`)}
-                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 transition-colors"
-                            title="Buka Halaman Detail Awardee"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => onViewAwardee ? onViewAwardee(item.id) : (window.location.href = `/awardee/${item.id}`)}
+                          className="px-2.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Buka Halaman Detail Awardee"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Detail</span>
+                        </button>
                       </td>
                     </tr>
                   );
