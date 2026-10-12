@@ -22,3 +22,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
   1. **Live Data**: The currently active `AssessmentPeriod` (`isActive: true`) has its scores stored in `AwardeeProfile` (`saScore`, `maScore`, `elix`, etc.).
   2. **Historical Data**: Closed/inactive `AssessmentPeriod`s have their frozen scores stored in `AssessmentRecord`.
   When calculating or charting trends (e.g. Tren Siklus ELIX), you MUST dynamically check if the period `isActive`. If active, pull values from the live `AwardeeProfile`. If inactive, pull from `AssessmentRecord`. Do NOT create dummy "Saat Ini" periods for live data.
+
+# React-PDF Document Generation
+- **Standard Core Fonts**: Saat membuat komponen dokumen menggunakan `@react-pdf/renderer`, selalu gunakan standard PDF core fonts (`Helvetica`, `Helvetica-Bold`) daripada mendaftarkan font eksternal/remote (seperti Roboto melalui CDN). Hal ini mencegah error runtime `Font family not registered` dan memastikan dokumen dapat di-generate offline secara instan dan andal.
+- **Handling Unconducted Evaluation Cycles**: Pada laporan multi-siklus/komparatif (misal Baseline -> Mid-Review -> End-Review), jika ada siklus mendatang yang belum terlaksana (`!isActive` dan belum ada nilai pengisian SA/MA), JANGAN merender tabel kosong atau error. Selalu sediakan halaman informasi status khusus berpenampilan rapi dengan keterangan resmi bahwa siklus tersebut "Belum Dilaksanakan" beserta jadwal tanggalnya.
+
+# PWA & Service Worker Best Practices
+- **Synchronous Response Cloning**: Saat mengimplementasikan strategi caching di Service Worker (`sw.js`), `response.clone()` WAJIB dipanggil secara **sinkron** segera setelah menerima `networkResponse`, SEBELUM fungsi asinkron (seperti `caches.open`) dan sebelum mengembalikan respons ke browser. Menaruh `.clone()` di dalam callback asinkron setelah respons diserahkan ke browser akan mengunci stream body dan memicu `TypeError: Failed to execute 'clone' on 'Response': Response body is already used`.
+- **Navigation & Auth Route Isolation**:
+  1. Untuk navigasi dokumen HTML (`request.mode === 'navigate'`), selalu gunakan strategi **Network-First** agar sesi login, token Clerk, dan otorisasi role selalu sinkron dengan server.
+  2. Selalu lewati (bypass) request API (`/api/`), halaman autentikasi (`/sign-in`, `/sign-up`, `/sso-callback`), dynamic RSC payload (`_rsc`), dan request domain eksternal agar langsung menuju jaringan tanpa campur tangan Service Worker.
+
