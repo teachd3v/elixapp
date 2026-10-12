@@ -5,7 +5,7 @@ import { ResponsiveContainer,
 } from 'recharts';
 import {
   Users, MapPin, UserCheck, CheckCircle2, BarChart3, Shield, Loader2, RotateCcw,
-  ChevronDown, ChevronUp, X, ChevronLeft, ClipboardCheck, Megaphone, SlidersHorizontal
+  ChevronDown, ChevronUp, X, ChevronLeft, ClipboardCheck, Megaphone, SlidersHorizontal, ClipboardList
 } from 'lucide-react';
 import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
@@ -13,6 +13,7 @@ import AnnouncementsManager from './AnnouncementsManager';
 import ChangeRoleModal from './ChangeRoleModal';
 import { Edit, Trash2 } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
+import AssessmentMonitoring from './AssessmentMonitoring';
 import { useDialog } from './DialogProvider';
 import { blendedScore, toElixIndex } from '../lib/assessment';
 import SuperadminPDF from './pdf/SuperadminPDF';
@@ -234,6 +235,22 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   const { roleCounts = {}, totals = {}, nationalElix, wilayahRollup = [], dimensionAverages = [], awardees = [], mentors = [], superadmins = [] } = data || {};
 
+  // ---------- ASSESSMENT MONITORING TAB ----------
+  if (activeTab === 'monitoring') {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2">
+          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
+        </button>
+        <AssessmentMonitoring
+          data={data}
+          darkMode={darkMode}
+          onViewAwardee={(id) => window.location.href = `/awardee/${id}`}
+        />
+      </div>
+    );
+  }
+
   // ---------- USERS TAB (approvals + real directory) ----------
   if (activeTab === 'users') {
     // Normalize bucket entries so each row exposes `user` + optional `wilayahId`.
@@ -288,6 +305,16 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                               <MapPin className="w-3 h-3 inline mr-0.5" />{wilayah}
                             </span>
+                          )}
+                          {b.role === 'AWARDEE' && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${u.hasFilledSA ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'}`}>
+                                SA {u.hasFilledSA ? '✓' : '✗'}
+                              </span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${u.hasFilledMA ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-500'}`}>
+                                MA {u.hasFilledMA ? '✓' : '✗'}
+                              </span>
+                            </div>
                           )}
                           {b.role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
                             <button
@@ -557,7 +584,16 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
         </div>
 
         <div className={`border rounded-3xl p-5 ${card}`}>
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Peringkat Awardee</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Peringkat Awardee</h3>
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 self-start sm:self-auto cursor-pointer"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Lihat Monitoring Status SA & MA →</span>
+            </button>
+          </div>
           {scoredFiltered.length === 0 ? (
             <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada awardee dengan skor.</p>
           ) : (
@@ -670,8 +706,9 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
       </div>
 
       {/* Quick-access shortcut cards for hidden menu items */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
+          { id: 'monitoring', label: 'Monitoring SA & MA', icon: ClipboardList, gradient: 'from-emerald-500 to-teal-600' },
           { id: 'attendance', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
           { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
           { id: 'instruments', label: 'Instrumen & Formula', icon: SlidersHorizontal, gradient: 'from-purple-500 to-violet-600' },
@@ -679,7 +716,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 ${
+            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
               darkMode
                 ? 'bg-slate-900 border-slate-800 hover:border-slate-600'
                 : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'

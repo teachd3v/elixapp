@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Compass, BookOpen, ClipboardCheck, FolderHeart, User,
-  UserCheck, Megaphone, Users, SlidersHorizontal, BarChart3
+  UserCheck, Megaphone, Users, SlidersHorizontal, BarChart3, ClipboardList
 } from 'lucide-react';
 
 const MENU_CONFIG = {
@@ -19,6 +19,7 @@ const MENU_CONFIG = {
   ],
   superadmin: [
     { id: 'dashboard', label: 'Home', icon: Compass },
+    { id: 'monitoring', label: 'Monitoring', icon: ClipboardList },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'elix_analysis', label: 'Analisis', icon: BarChart3 },
   ],
