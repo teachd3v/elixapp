@@ -39,6 +39,7 @@ export default function AwardeeDetailPage({ params }) {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedCycleForModal, setSelectedCycleForModal] = useState(null);
   const [selectedDimCycleId, setSelectedDimCycleId] = useState('');
+  const [selectedPdfCycleId, setSelectedPdfCycleId] = useState('ALL');
 
   useEffect(() => {
     Promise.all([
@@ -134,7 +135,7 @@ export default function AwardeeDetailPage({ params }) {
           <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm self-start cursor-pointer transition-colors">
             <ArrowLeft className="w-5 h-5" /> Kembali
           </button>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => {
                 setSelectedCycleForModal(activeCycle?.periodId || null);
@@ -146,10 +147,38 @@ export default function AwardeeDetailPage({ params }) {
               <Eye className="w-4 h-4" />
               <span>Detail Data ELIX</span>
             </button>
+
+            {cycles.length > 1 && (
+              <select
+                value={selectedPdfCycleId}
+                onChange={(e) => setSelectedPdfCycleId(e.target.value)}
+                className="px-3 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm outline-none cursor-pointer"
+                title="Pilih siklus yang ingin di-export ke PDF"
+              >
+                <option value="ALL">Export: Semua Siklus (Terpisah)</option>
+                {cycles.map(c => (
+                  <option key={c.periodId || c.id} value={c.periodId}>
+                    Export: {c.period?.name} {c.isLive ? '(Aktif)' : '(Riwayat)'}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <PDFDownloadButton
-              document={<AwardeeComprehensivePDF awardee={data} dimensions={dimensions} />}
-              fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-              label="Export PDF Lengkap"
+              key={`pdf-head-${selectedPdfCycleId}`}
+              document={
+                <AwardeeComprehensivePDF
+                  awardee={data}
+                  dimensions={dimensions}
+                  selectedCycle={selectedPdfCycleId === 'ALL' ? null : selectedPdfCycleId}
+                />
+              }
+              fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}_${
+                selectedPdfCycleId === 'ALL'
+                  ? 'Semua_Siklus'
+                  : (cycles.find(c => c.periodId === selectedPdfCycleId)?.period?.name || 'Siklus').replace(/[^a-zA-Z0-9]/g, '_')
+              }.pdf`}
+              label={selectedPdfCycleId === 'ALL' ? 'Export PDF Lengkap' : `Export PDF ${cycles.find(c => c.periodId === selectedPdfCycleId)?.period?.name || ''}`}
             />
           </div>
         </div>
@@ -366,17 +395,26 @@ export default function AwardeeDetailPage({ params }) {
                     </div>
                   </div>
 
-                  {/* Tombol Lihat Detail Jawaban */}
-                  <button
-                    onClick={() => {
-                      setSelectedCycleForModal(c.periodId);
-                      setShowDetailModal(true);
-                    }}
-                    className="mt-3.5 w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>Lihat Detail Jawaban Siklus Ini</span>
-                  </button>
+                  {/* Tombol Aksi per Siklus */}
+                  <div className="mt-3.5 flex flex-col sm:flex-row items-stretch gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedCycleForModal(c.periodId);
+                        setShowDetailModal(true);
+                      }}
+                      className="flex-1 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Detail Jawaban</span>
+                    </button>
+                    <PDFDownloadButton
+                      key={`card-pdf-${c.periodId}`}
+                      document={<AwardeeComprehensivePDF awardee={data} dimensions={dimensions} selectedCycle={c} />}
+                      fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}_${(c.period?.name || 'Siklus').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+                      label="PDF Siklus Ini"
+                      className="py-2 px-3 text-xs"
+                    />
+                  </div>
                 </div>
               );
             })}
