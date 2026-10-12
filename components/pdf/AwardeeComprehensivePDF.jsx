@@ -6,7 +6,7 @@ const customStyles = StyleSheet.create({
   page: {
     padding: 34,
     backgroundColor: '#ffffff',
-    fontFamily: 'Roboto',
+    fontFamily: 'Helvetica',
     fontSize: 9,
     color: '#1e293b',
   },
@@ -21,7 +21,7 @@ const customStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 10.5,
-    fontWeight: 700,
+    fontWeight: 'bold',
     color: '#0f172a',
     marginBottom: 6,
     marginTop: 10,
@@ -43,7 +43,7 @@ const customStyles = StyleSheet.create({
   },
   metaLabel: {
     width: 95,
-    fontWeight: 700,
+    fontWeight: 'bold',
     color: '#64748b',
     fontSize: 8,
   },
@@ -66,8 +66,8 @@ const customStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   scoreNumber: {
-    fontSize: 20,
-    fontWeight: 900,
+    fontSize: 18,
+    fontWeight: 'bold',
     marginTop: 2,
   },
   table: {
@@ -86,7 +86,7 @@ const customStyles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   tableHeaderCol: {
-    fontWeight: 700,
+    fontWeight: 'bold',
     fontSize: 7.5,
     color: '#475569',
     textTransform: 'uppercase',
@@ -106,7 +106,7 @@ const customStyles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 3.5,
     fontSize: 7.5,
-    fontWeight: 700,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
   badgeSA: {
@@ -127,7 +127,7 @@ const customStyles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 10,
-    fontWeight: 700,
+    fontWeight: 'bold',
     color: '#b45309',
     marginBottom: 2,
   },
@@ -135,6 +135,14 @@ const customStyles = StyleSheet.create({
     fontSize: 8,
     color: '#78350f',
     lineHeight: 1.3,
+  },
+  notConductedBox: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 18,
+    marginVertical: 12,
   },
   footer: {
     marginTop: 12,
@@ -164,7 +172,7 @@ const CATEGORY_DESCRIPTIONS = {
   'Emerging Leader': "Awardee masih berada pada tahap awal pengembangan diri dan belum menunjukkan kompetensi yang diharapkan pada sebagian besar dimensi. Memerlukan pendampingan intensif, penguatan karakter, dan stimulasi berkelanjutan.",
 };
 
-// Render satu bab lengkap (Ringkasan Dimensi + Rincian Butir) murni untuk 1 siklus
+// Render satu bab untuk siklus tertentu
 function CycleReportPages({ cycle, awardee, dimensions = [] }) {
   const user = awardee.user || {};
   const wilayah = awardee.wilayah?.name || '—';
@@ -188,6 +196,100 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
   const saDate = formatDate(cycle.saSubmittedAt);
   const maDate = formatDate(cycle.maSubmittedAt);
 
+  // Periksa apakah siklus ini belum dilaksanakan sama sekali (seperti End-Review yang dijadwalkan di masa depan)
+  const isNotConducted = !isLive && !hasSA && !hasMA && (cycle.elix == null || cycle.elix === 0);
+
+  // JIKA SIKLUS BELUM DILAKSANAKAN: Tampilkan halaman status bersih sesuai permintaan
+  if (isNotConducted) {
+    return (
+      <Page size="A4" style={customStyles.page} key={cycle.id || cycle.periodId || periodName}>
+        {/* Header Dokumen */}
+        <View style={customStyles.headerBox}>
+          <View>
+            <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#1e3a8a' }}>PORTAL EXLEAD</Text>
+            <Text style={{ fontSize: 8.5, fontWeight: 'bold', color: '#64748b', marginTop: 1 }}>
+              YES GREAT EDUNESIA · LEADERSHIP INDEX (ELIX)
+            </Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#0f172a' }}>
+              Laporan Evaluasi · Siklus: {periodName}
+            </Text>
+            <Text style={{ fontSize: 7, color: '#94a3b8', marginTop: 1 }}>
+              Status: Belum Dilaksanakan · Dicetak: {new Date().toLocaleDateString('id-ID')}
+            </Text>
+          </View>
+        </View>
+
+        {/* Profil & Metadata Siklus */}
+        <View style={customStyles.metaBox}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Nama Awardee:</Text>
+                <Text style={[customStyles.metaValue, { fontWeight: 'bold' }]}>{user.name || '—'}</Text>
+              </View>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Wilayah Binaan:</Text>
+                <Text style={customStyles.metaValue}>{wilayah}</Text>
+              </View>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Institusi / Jurusan:</Text>
+                <Text style={customStyles.metaValue}>
+                  {awardee.university || awardee.school || '—'} {awardee.major ? `· ${awardee.major}` : ''}
+                </Text>
+              </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Siklus Penilaian:</Text>
+                <Text style={[customStyles.metaValue, { fontWeight: 'bold', color: '#64748b' }]}>
+                  {periodName} (Belum Dilaksanakan)
+                </Text>
+              </View>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Jadwal Periode:</Text>
+                <Text style={customStyles.metaValue}>{dateRange}</Text>
+              </View>
+              <View style={customStyles.metaRow}>
+                <Text style={customStyles.metaLabel}>Status Evaluasi:</Text>
+                <Text style={[customStyles.metaValue, { color: '#64748b', fontWeight: 'bold' }]}>
+                  Belum Dilaksanakan
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Box Keterangan Belum Dilaksanakan */}
+        <View style={customStyles.notConductedBox}>
+          <View style={{ backgroundColor: '#f1f5f9', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 4, marginBottom: 8, alignSelf: 'flex-start' }}>
+            <Text style={{ fontSize: 8.5, fontWeight: 'bold', color: '#475569' }}>
+              INFORMASI STATUS SIKLUS {periodName.toUpperCase()}
+            </Text>
+          </View>
+          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>
+            Siklus {periodName} Belum Dilaksanakan
+          </Text>
+          <Text style={{ fontSize: 8.5, color: '#475569', lineHeight: 1.45, marginBottom: 10 }}>
+            Pengisian instrumen Self Assessment (SA oleh Awardee) dan Mentor Assessment (MA oleh Mentor) untuk siklus {periodName} belum dilaksanakan. Periode ini dijadwalkan pada {dateRange}.
+          </Text>
+          <View style={{ borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 8, width: '100%' }}>
+            <Text style={{ fontSize: 7.5, color: '#64748b', lineHeight: 1.35 }}>
+              Catatan: Data rekapitulasi 5 dimensi kepemimpinan serta rincian penilaian per butir pertanyaan pada siklus {periodName} akan otomatis tercatat dan disajikan secara lengkap setelah periode evaluasi resmi dibuka dan diisi oleh pihak terkait.
+            </Text>
+          </View>
+        </View>
+
+        <View style={customStyles.footer}>
+          <Text>Laporan Resmi Evaluasi Kepemimpinan ELIX · Siklus: {periodName} (Belum Dilaksanakan)</Text>
+          <Text>Portal EXLEAD</Text>
+        </View>
+      </Page>
+    );
+  }
+
+  // JIKA SIKLUS SUDAH DILAKSANAKAN / SEDANG BERJALAN: Tampilkan halaman detail lengkap
   return (
     <React.Fragment key={cycle.id || cycle.periodId || periodName}>
       {/* HALAMAN 1 SIKLUS: Ringkasan & Skor 5 Dimensi Siklus Terkait */}
@@ -195,13 +297,13 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
         {/* Header Dokumen */}
         <View style={customStyles.headerBox}>
           <View>
-            <Text style={{ fontSize: 15, fontWeight: 900, color: '#1e3a8a' }}>PORTAL EXLEAD</Text>
-            <Text style={{ fontSize: 8.5, fontWeight: 700, color: '#64748b', marginTop: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#1e3a8a' }}>PORTAL EXLEAD</Text>
+            <Text style={{ fontSize: 8.5, fontWeight: 'bold', color: '#64748b', marginTop: 1 }}>
               YES GREAT EDUNESIA · LEADERSHIP INDEX (ELIX)
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 10, fontWeight: 700, color: '#0f172a' }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#0f172a' }}>
               Laporan Evaluasi · Siklus: {periodName}
             </Text>
             <Text style={{ fontSize: 7, color: '#94a3b8', marginTop: 1 }}>
@@ -216,7 +318,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
             <View style={{ flex: 1 }}>
               <View style={customStyles.metaRow}>
                 <Text style={customStyles.metaLabel}>Nama Awardee:</Text>
-                <Text style={[customStyles.metaValue, { fontWeight: 700 }]}>{user.name || '—'}</Text>
+                <Text style={[customStyles.metaValue, { fontWeight: 'bold' }]}>{user.name || '—'}</Text>
               </View>
               <View style={customStyles.metaRow}>
                 <Text style={customStyles.metaLabel}>Wilayah Binaan:</Text>
@@ -230,7 +332,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
               </View>
               <View style={customStyles.metaRow}>
                 <Text style={customStyles.metaLabel}>Siklus Penilaian:</Text>
-                <Text style={[customStyles.metaValue, { fontWeight: 700, color: '#2563eb' }]}>
+                <Text style={[customStyles.metaValue, { fontWeight: 'bold', color: '#2563eb' }]}>
                   {periodName} {isLive ? '(Aktif)' : '(Riwayat)'}
                 </Text>
               </View>
@@ -246,13 +348,13 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
               </View>
               <View style={customStyles.metaRow}>
                 <Text style={customStyles.metaLabel}>Status Form SA:</Text>
-                <Text style={[customStyles.metaValue, { color: hasSA ? '#1d4ed8' : '#e11d48', fontWeight: 700 }]}>
+                <Text style={[customStyles.metaValue, { color: hasSA ? '#1d4ed8' : '#e11d48', fontWeight: 'bold' }]}>
                   {hasSA ? `Sudah Diisi ${saDate ? `(${saDate})` : ''}` : 'Belum Diisi'}
                 </Text>
               </View>
               <View style={customStyles.metaRow}>
                 <Text style={customStyles.metaLabel}>Status Form MA:</Text>
-                <Text style={[customStyles.metaValue, { color: hasMA ? '#4338ca' : '#d97706', fontWeight: 700 }]}>
+                <Text style={[customStyles.metaValue, { color: hasMA ? '#4338ca' : '#d97706', fontWeight: 'bold' }]}>
                   {hasMA ? `Sudah Dinilai ${maDate ? `(${maDate})` : ''}` : 'Belum Dinilai'}
                 </Text>
               </View>
@@ -263,7 +365,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
         {/* Kartu Skor Hero Siklus Ini */}
         <View style={customStyles.scoreHero}>
           <View style={[customStyles.scoreCard, { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }]}>
-            <Text style={{ fontSize: 7.5, fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>
+            <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#166534', textTransform: 'uppercase' }}>
               Indeks ELIX ({periodName})
             </Text>
             <Text style={[customStyles.scoreNumber, { color: '#15803d' }]}>
@@ -273,7 +375,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
           </View>
 
           <View style={[customStyles.scoreCard, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}>
-            <Text style={{ fontSize: 7.5, fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' }}>
+            <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#1e40af', textTransform: 'uppercase' }}>
               Self Assessment (40%)
             </Text>
             <Text style={[customStyles.scoreNumber, { color: '#2563eb' }]}>
@@ -285,7 +387,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
           </View>
 
           <View style={[customStyles.scoreCard, { backgroundColor: '#eef2ff', borderColor: '#c7d2fe' }]}>
-            <Text style={{ fontSize: 7.5, fontWeight: 700, color: '#3730a3', textTransform: 'uppercase' }}>
+            <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#3730a3', textTransform: 'uppercase' }}>
               Mentor Assessment (60%)
             </Text>
             <Text style={[customStyles.scoreNumber, { color: '#4f46e5' }]}>
@@ -297,10 +399,10 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
           </View>
 
           <View style={[customStyles.scoreCard, { backgroundColor: '#faf5ff', borderColor: '#e9d5ff' }]}>
-            <Text style={{ fontSize: 7.5, fontWeight: 700, color: '#6b21a8', textTransform: 'uppercase' }}>
+            <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#6b21a8', textTransform: 'uppercase' }}>
               Kategori Siklus
             </Text>
-            <Text style={{ fontSize: 10, fontWeight: 900, color: '#7e22ce', textAlign: 'center', marginTop: 3 }}>
+            <Text style={{ fontSize: 9.5, fontWeight: 'bold', color: '#7e22ce', textAlign: 'center', marginTop: 3 }}>
               {category}
             </Text>
           </View>
@@ -340,7 +442,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
             return (
               <View key={d.id} style={[customStyles.tableRow, isAlt ? customStyles.tableRowAlt : {}]}>
                 <View style={{ flex: 3 }}>
-                  <Text style={{ fontWeight: 700, fontSize: 8 }}>{d.name}</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 8 }}>{d.name}</Text>
                 </View>
                 <Text style={{ flex: 1, textAlign: 'center', fontSize: 7.5 }}>
                   {d.weight ? `${d.weight}%` : '—'}
@@ -351,7 +453,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
                 <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 8, color: '#4338ca' }}>
                   {maVal != null ? maVal.toFixed(2) : '—'}
                 </Text>
-                <Text style={{ flex: 1.5, textAlign: 'right', fontWeight: 900, fontSize: 8.5, color: '#0f172a' }}>
+                <Text style={{ flex: 1.5, textAlign: 'right', fontWeight: 'bold', fontSize: 8.5, color: '#0f172a' }}>
                   {dimElix != null ? dimElix.toFixed(1) : '—'}
                 </Text>
               </View>
@@ -368,7 +470,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
       {/* HALAMAN 2 SIKLUS: Rincian Butir Pertanyaan Siklus Terkait */}
       <Page size="A4" style={customStyles.page}>
         <View style={{ borderBottomWidth: 1, borderBottomColor: '#cbd5e1', paddingBottom: 6, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>
             2. Rincian Penilaian per Butir Pertanyaan · Siklus: {periodName}
           </Text>
           <Text style={{ fontSize: 7.5, color: '#64748b', marginTop: 2 }}>
@@ -383,7 +485,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
           return (
             <View key={dim.id} style={{ marginBottom: 10 }} wrap={false}>
               <View style={{ backgroundColor: '#f1f5f9', paddingVertical: 3.5, paddingHorizontal: 6, borderRadius: 4, marginBottom: 3 }}>
-                <Text style={{ fontSize: 9, fontWeight: 700, color: '#1e293b' }}>Dimensi: {dim.name}</Text>
+                <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#1e293b' }}>Dimensi: {dim.name}</Text>
               </View>
 
               <View style={customStyles.table}>
@@ -401,7 +503,7 @@ function CycleReportPages({ cycle, awardee, dimensions = [] }) {
 
                   return (
                     <View key={stmt.id} style={[customStyles.tableRow, isAlt ? customStyles.tableRowAlt : {}]}>
-                      <Text style={{ width: 32, fontWeight: 700, fontSize: 7.5, color: '#64748b' }}>
+                      <Text style={{ width: 32, fontWeight: 'bold', fontSize: 7.5, color: '#64748b' }}>
                         {stmt.code || `Q${sIdx+1}`}
                       </Text>
                       <Text style={{ width: 75, fontSize: 7.5, color: '#334155', fontWeight: 500 }}>
@@ -481,13 +583,13 @@ export default function AwardeeComprehensivePDF({ awardee, dimensions = [], sele
         <Page size="A4" style={customStyles.page}>
           <View style={customStyles.headerBox}>
             <View>
-              <Text style={{ fontSize: 16, fontWeight: 900, color: '#1e3a8a' }}>PORTAL EXLEAD</Text>
-              <Text style={{ fontSize: 9, fontWeight: 700, color: '#64748b', marginTop: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1e3a8a' }}>PORTAL EXLEAD</Text>
+              <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#64748b', marginTop: 1 }}>
                 YES GREAT EDUNESIA · LEADERSHIP INDEX (ELIX)
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }}>
                 Ringkasan Komparasi Seluruh Siklus
               </Text>
               <Text style={{ fontSize: 7.5, color: '#94a3b8', marginTop: 2 }}>
@@ -502,7 +604,7 @@ export default function AwardeeComprehensivePDF({ awardee, dimensions = [], sele
               <View style={{ flex: 1 }}>
                 <View style={customStyles.metaRow}>
                   <Text style={customStyles.metaLabel}>Nama Lengkap:</Text>
-                  <Text style={[customStyles.metaValue, { fontWeight: 700 }]}>{user.name || '—'}</Text>
+                  <Text style={[customStyles.metaValue, { fontWeight: 'bold' }]}>{user.name || '—'}</Text>
                 </View>
                 <View style={customStyles.metaRow}>
                   <Text style={customStyles.metaLabel}>Wilayah Binaan:</Text>
@@ -524,7 +626,7 @@ export default function AwardeeComprehensivePDF({ awardee, dimensions = [], sele
                 </View>
                 <View style={customStyles.metaRow}>
                   <Text style={customStyles.metaLabel}>Total Siklus:</Text>
-                  <Text style={[customStyles.metaValue, { fontWeight: 700 }]}>{targetCycles.length} Siklus Terdata</Text>
+                  <Text style={[customStyles.metaValue, { fontWeight: 'bold' }]}>{targetCycles.length} Siklus Terdata</Text>
                 </View>
               </View>
             </View>
@@ -541,33 +643,36 @@ export default function AwardeeComprehensivePDF({ awardee, dimensions = [], sele
               <Text style={[customStyles.tableHeaderCol, { flex: 1.5, textAlign: 'right' }]}>Indeks ELIX</Text>
               <Text style={[customStyles.tableHeaderCol, { flex: 2, textAlign: 'right' }]}>Kategori</Text>
             </View>
-            {targetCycles.map((c, i) => (
-              <View key={c.id || i} style={[customStyles.tableRow, i % 2 === 1 ? customStyles.tableRowAlt : {}]}>
-                <Text style={{ flex: 2.5, fontWeight: 700, fontSize: 8 }}>
-                  {c.period?.name || `Siklus ${i + 1}`}
-                </Text>
-                <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 7.5, color: c.isLive ? '#059669' : '#64748b' }}>
-                  {c.isLive ? 'Aktif' : 'Riwayat'}
-                </Text>
-                <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 8, color: '#1d4ed8' }}>
-                  {c.hasFilledSA ? Number(c.saScore).toFixed(2) : '—'}
-                </Text>
-                <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 8, color: '#4338ca' }}>
-                  {c.hasFilledMA ? Number(c.maScore).toFixed(2) : '—'}
-                </Text>
-                <Text style={{ flex: 1.5, textAlign: 'right', fontWeight: 900, fontSize: 8.5, color: '#0f172a' }}>
-                  {c.elix != null ? Number(c.elix).toFixed(1) : '—'}
-                </Text>
-                <Text style={{ flex: 2, textAlign: 'right', fontSize: 8, fontWeight: 700, color: '#b45309' }}>
-                  {c.category || '—'}
-                </Text>
-              </View>
-            ))}
+            {targetCycles.map((c, i) => {
+              const isNotCond = !c.isLive && !c.hasFilledSA && !c.hasFilledMA && (c.elix == null || c.elix === 0);
+              return (
+                <View key={c.id || i} style={[customStyles.tableRow, i % 2 === 1 ? customStyles.tableRowAlt : {}]}>
+                  <Text style={{ flex: 2.5, fontWeight: 'bold', fontSize: 8 }}>
+                    {c.period?.name || `Siklus ${i + 1}`}
+                  </Text>
+                  <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 7.5, color: isNotCond ? '#94a3b8' : c.isLive ? '#059669' : '#64748b' }}>
+                    {isNotCond ? 'Belum Dilakukan' : c.isLive ? 'Aktif' : 'Riwayat'}
+                  </Text>
+                  <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 8, color: '#1d4ed8' }}>
+                    {c.hasFilledSA ? Number(c.saScore).toFixed(2) : '—'}
+                  </Text>
+                  <Text style={{ flex: 1.5, textAlign: 'center', fontSize: 8, color: '#4338ca' }}>
+                    {c.hasFilledMA ? Number(c.maScore).toFixed(2) : '—'}
+                  </Text>
+                  <Text style={{ flex: 1.5, textAlign: 'right', fontWeight: 'bold', fontSize: 8.5, color: '#0f172a' }}>
+                    {c.elix != null ? Number(c.elix).toFixed(1) : '—'}
+                  </Text>
+                  <Text style={{ flex: 2, textAlign: 'right', fontSize: 8, fontWeight: 'bold', color: isNotCond ? '#94a3b8' : '#b45309' }}>
+                    {isNotCond ? 'Belum Dilakukan' : c.category || '—'}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
 
           <View style={{ marginTop: 10, padding: 8, backgroundColor: '#f0fdf4', borderRadius: 6, borderWidth: 1, borderColor: '#bbf7d0' }}>
             <Text style={{ fontSize: 8, color: '#166534', lineHeight: 1.35 }}>
-              Catatan: Setiap siklus disajikan secara mandiri dan terpisah pada halaman-halaman berikutnya untuk memastikan data evaluasi murni sesuai instrumen pengisian masing-masing periode.
+              Catatan: Setiap siklus disajikan secara mandiri dan berurutan pada halaman-halaman berikutnya (dari Baseline hingga End-Review) untuk memastikan data evaluasi murni sesuai instrumen pengisian masing-masing periode.
             </Text>
           </View>
 
@@ -578,7 +683,7 @@ export default function AwardeeComprehensivePDF({ awardee, dimensions = [], sele
         </Page>
       )}
 
-      {/* Render bab murni untuk setiap siklus */}
+      {/* Render bab murni untuk setiap siklus berurutan */}
       {targetCycles.map(c => (
         <CycleReportPages
           key={c.id || c.periodId}
