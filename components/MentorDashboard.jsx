@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Users, ClipboardCheck, UserCheck, MapPin,
+  Users, ClipboardCheck, UserCheck, MapPin, BookOpen,
   TrendingUp, CheckCircle2, ChevronRight, Megaphone, ChevronLeft, BarChart3
 } from 'lucide-react';
 import { ResponsiveContainer,
@@ -11,6 +11,7 @@ import RealProfile from './RealProfile';
 import MentorAssessment from './MentorAssessment';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
+import MentorJournalManager from './MentorJournalManager';
 import { blendedScore, toElixIndex } from '../lib/assessment';
 import MentorPDF from './pdf/MentorPDF';
 import PDFDownloadButton from './pdf/PDFDownloadButton';
@@ -82,6 +83,9 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
 
   if (activeTab === 'profile') {
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;
+  }
+  if (activeTab === 'journal') {
+    return <MentorJournalManager darkMode={darkMode} dbUser={dbUser} />;
   }
   if (activeTab === 'pengumuman') {
     return (
@@ -372,9 +376,10 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
           </div>
         ))}
       </div>
-        {/* Quick-access shortcut cards for hidden menu items */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Quick-access shortcut cards for menu items */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
+            { id: 'journal', label: 'Jurnal Mentor', icon: BookOpen, gradient: 'from-indigo-500 to-purple-600' },
             { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
             { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
             { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3, gradient: 'from-emerald-500 to-teal-600' },
@@ -382,7 +387,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 ${
+              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
                 darkMode
                   ? 'bg-slate-900 border-slate-800 hover:border-slate-600'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'

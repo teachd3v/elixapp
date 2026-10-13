@@ -15,6 +15,7 @@ const MENU_CONFIG = {
   mentor: [
     { id: 'dashboard', label: 'Dashboard Wilayah', icon: Compass },
     { id: 'assessment', label: 'Penilaian Mentor (MA)', icon: UserCheck },
+    { id: 'journal', label: 'Jurnal Mentor', icon: BookOpen },
     { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck },
     { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone },
     { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3 },

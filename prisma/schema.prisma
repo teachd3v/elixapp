@@ -105,6 +105,7 @@ model MentorProfile {
   wilayah      Wilayah  @relation(fields: [wilayahId], references: [id])
   
   sessions     Session[]
+  journals     MentorJournal[]
 }
 
 // Model Wilayah
@@ -363,3 +364,35 @@ model AssessmentRecord {
 
   @@unique([awardeeId, periodId])
 }
+
+// ----------------------------------------------------------------------
+// DATA JURNAL MENTOR (DAY-BY-DAY ACTIVITY JOURNALING)
+// ----------------------------------------------------------------------
+
+model MentorJournal {
+  id                      String        @id @default(uuid())
+  journalCode             String        @unique // 1. Unique ID otomatis (misal: JRN-20261013-8F2A)
+  
+  mentorId                String
+  mentor                  MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+
+  activityName            String        // 2. Nama Kegiatan (Dropdown 16 opsi)
+  qualitativeAchievement  String        @db.Text // 3. Capaian Kualitatif (Deskripsi panjang)
+  quantitativeAchievement String        @db.Text // 4. Capaian Kuantitatif (Result/Indikator kuantitatif)
+  
+  activityDate            DateTime      // 5. Tanggal Pelaksanaan (Disimpan DateTime, UI DD/MM/YYYY)
+  activityTime            String        // 6. Waktu Pelaksanaan (Format 24 Jam Indonesia)
+  
+  locationType            String        // 7a. Dropdown: "Daring" atau "Luring"
+  locationDetail          String        // 7b. Deskripsi singkat lokasi (Zoom/GMeet atau Nama Tempat/Daerah)
+  
+  problemIdentification   String        @db.Text // 8. Identifikasi Masalah (Deskripsi panjang)
+  improvementPlan         String        @db.Text // 9. Rencana Perbaikan (Deskripsi perencanaan per poin)
+  
+  evidenceText            String?       @db.Text // 10a. Evidence berupa input teks singkat / tautan
+  evidencePhoto           String?       @db.Text // 10b. Evidence berupa foto dokumentasi (base64 compressed)
+
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+}
+

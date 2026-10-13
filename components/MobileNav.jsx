@@ -15,6 +15,7 @@ const MENU_CONFIG = {
   mentor: [
     { id: 'dashboard', label: 'Home', icon: Compass },
     { id: 'assessment', label: 'MA', icon: UserCheck },
+    { id: 'journal', label: 'Jurnal', icon: BookOpen },
     { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   superadmin: [
