@@ -96,7 +96,19 @@ export async function POST(request) {
               title: t.title.trim(),
               weight: Number(t.weight) || 0,
               semesterScope: validScope,
-              targetSemester: t.targetSemester?.trim() || '-',
+              targetScoreSem1:
+                t.targetScoreSem1 !== undefined
+                  ? t.targetScoreSem1
+                  : validScope === 'SEMESTER_2'
+                  ? null
+                  : 4.0,
+              targetScoreSem2:
+                t.targetScoreSem2 !== undefined
+                  ? t.targetScoreSem2
+                  : validScope === 'SEMESTER_1'
+                  ? null
+                  : 4.0,
+              targetSemester: t.targetSemester?.trim() || null,
               order: targetOrderOffset + tIdx + 1,
             },
           });

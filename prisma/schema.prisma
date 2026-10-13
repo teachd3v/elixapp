@@ -427,7 +427,9 @@ model MentorPerformanceTarget {
   title          String                   // Target Kerja
   weight         Float                    // Bobot (dalam %, total 100)
   semesterScope  PerformanceSemesterScope @default(KEDUANYA) // Semester 1 / Semester 2 / Keduanya
-  targetSemester String                   @db.Text // Target Capaian Semester
+  targetSemester String?                  @db.Text // Deskripsi / Indikator Capaian Semester (opsional)
+  targetScoreSem1 Float?                  @default(4.0) // Target Capaian Nilai Semester 1 (0.00 - 4.00)
+  targetScoreSem2 Float?                  @default(4.0) // Target Capaian Nilai Semester 2 (0.00 - 4.00)
   order          Int                      @default(0)
 
   createdAt      DateTime                 @default(now())

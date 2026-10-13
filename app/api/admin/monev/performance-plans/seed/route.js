@@ -31,6 +31,8 @@ export async function POST() {
             title: targetData.title,
             weight: targetData.weight,
             semesterScope: targetData.semesterScope,
+            targetScoreSem1: targetData.targetScoreSem1 ?? null,
+            targetScoreSem2: targetData.targetScoreSem2 ?? null,
             targetSemester: targetData.targetSemester,
             order: targetData.order,
           },

@@ -10,7 +10,16 @@ export async function PATCH(request, context) {
 
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
-  const { type = 'TARGET', title, weight, semesterScope, targetSemester, planId } = body;
+  const {
+    type = 'TARGET',
+    title,
+    weight,
+    semesterScope,
+    targetSemester,
+    targetScoreSem1,
+    targetScoreSem2,
+    planId,
+  } = body;
 
   if (type === 'PLAN') {
     if (!title?.trim()) {
@@ -41,7 +50,15 @@ export async function PATCH(request, context) {
     if (validScopes.includes(semesterScope)) data.semesterScope = semesterScope;
   }
   if (targetSemester !== undefined) {
-    data.targetSemester = targetSemester.trim();
+    data.targetSemester = targetSemester?.trim() || null;
+  }
+  if (targetScoreSem1 !== undefined) {
+    const num = targetScoreSem1 === null || targetScoreSem1 === '' ? null : parseFloat(targetScoreSem1);
+    data.targetScoreSem1 = num === null || Number.isNaN(num) ? null : Math.min(4.0, Math.max(0.0, num));
+  }
+  if (targetScoreSem2 !== undefined) {
+    const num = targetScoreSem2 === null || targetScoreSem2 === '' ? null : parseFloat(targetScoreSem2);
+    data.targetScoreSem2 = num === null || Number.isNaN(num) ? null : Math.min(4.0, Math.max(0.0, num));
   }
   if (planId !== undefined) {
     data.planId = planId;

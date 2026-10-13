@@ -36,6 +36,8 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
   const [targetTitle, setTargetTitle] = useState('');
   const [targetWeight, setTargetWeight] = useState('10');
   const [semesterScope, setSemesterScope] = useState('KEDUANYA');
+  const [targetScoreSem1, setTargetScoreSem1] = useState('4.00');
+  const [targetScoreSem2, setTargetScoreSem2] = useState('4.00');
   const [targetSemester, setTargetSemester] = useState('');
   const [savingTarget, setSavingTarget] = useState(false);
 
@@ -252,6 +254,8 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
     setTargetTitle('');
     setTargetWeight('10');
     setSemesterScope('KEDUANYA');
+    setTargetScoreSem1('4.00');
+    setTargetScoreSem2('4.00');
     setTargetSemester('');
     setTargetModalOpen(true);
   };
@@ -262,6 +266,8 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
     setTargetTitle(t.title);
     setTargetWeight(String(t.weight));
     setSemesterScope(t.semesterScope || 'KEDUANYA');
+    setTargetScoreSem1(t.targetScoreSem1 != null ? String(t.targetScoreSem1) : '4.00');
+    setTargetScoreSem2(t.targetScoreSem2 != null ? String(t.targetScoreSem2) : '4.00');
     setTargetSemester(t.targetSemester || '');
     setTargetModalOpen(true);
   };
@@ -282,6 +288,9 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
       return;
     }
 
+    const s1 = parseFloat(targetScoreSem1);
+    const s2 = parseFloat(targetScoreSem2);
+
     setSavingTarget(true);
     try {
       if (editingTarget) {
@@ -294,6 +303,8 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
             title: targetTitle.trim(),
             weight: w,
             semesterScope,
+            targetScoreSem1: semesterScope === 'SEMESTER_2' ? null : Number.isNaN(s1) ? 4.0 : s1,
+            targetScoreSem2: semesterScope === 'SEMESTER_1' ? null : Number.isNaN(s2) ? 4.0 : s2,
             targetSemester: targetSemester.trim(),
           }),
         });
@@ -308,6 +319,8 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
             targetTitle: targetTitle.trim(),
             weight: w,
             semesterScope,
+            targetScoreSem1: semesterScope === 'SEMESTER_2' ? null : Number.isNaN(s1) ? 4.0 : s1,
+            targetScoreSem2: semesterScope === 'SEMESTER_1' ? null : Number.isNaN(s2) ? 4.0 : s2,
             targetSemester: targetSemester.trim(),
           }),
         });
@@ -528,7 +541,7 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
                           <th className="py-3 px-4 min-w-[200px]">Target Kerja</th>
                           <th className="py-3 px-4 w-28 text-center">Bobot (%)</th>
                           <th className="py-3 px-4 w-32 text-center">Penilaian Semester</th>
-                          <th className="py-3 px-4 min-w-[240px]">Target Capaian Semester</th>
+                          <th className="py-3 px-4 min-w-[240px]">Target Capaian (0.00 - 4.00)</th>
                           <th className="py-3 px-4 w-20 text-center">Aksi</th>
                         </tr>
                       </thead>
@@ -567,8 +580,26 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
                                   {isBoth ? 'Semester 1 & 2' : isSem1 ? 'Semester 1' : 'Semester 2'}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]">
-                                {t.targetSemester}
+                              <td className="py-3 px-4 leading-relaxed text-[11px]">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {(isBoth || isSem1) && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold font-mono text-[10px]">
+                                        Sem 1: {t.targetScoreSem1 != null ? Number(t.targetScoreSem1).toFixed(2) : '4.00'}
+                                      </span>
+                                    )}
+                                    {(isBoth || !isSem1) && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold font-mono text-[10px]">
+                                        Sem 2: {t.targetScoreSem2 != null ? Number(t.targetScoreSem2).toFixed(2) : '4.00'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {t.targetSemester && (
+                                    <p className="text-[10px] text-slate-400 leading-snug line-clamp-2" title={t.targetSemester}>
+                                      {t.targetSemester}
+                                    </p>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <div className="flex items-center justify-center gap-1.5">
@@ -735,17 +766,59 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
                 </div>
               </div>
 
+              {/* TARGET CAPAIAN NILAI (0.00 - 4.00) */}
+              <div className="grid grid-cols-2 gap-3">
+                {(semesterScope === 'SEMESTER_1' || semesterScope === 'KEDUANYA') && (
+                  <div className={semesterScope === 'SEMESTER_1' ? 'col-span-2' : ''}>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 flex items-center justify-between">
+                      <span>Target Nilai Sem 1 <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] text-blue-500 font-mono font-bold">0.00 - 4.00</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min="0"
+                      max="4"
+                      value={targetScoreSem1}
+                      onChange={(e) => setTargetScoreSem1(e.target.value)}
+                      placeholder="4.00"
+                      className={`w-full p-3 rounded-xl text-xs font-black font-mono border outline-none ${inputClass}`}
+                      required
+                    />
+                  </div>
+                )}
+
+                {(semesterScope === 'SEMESTER_2' || semesterScope === 'KEDUANYA') && (
+                  <div className={semesterScope === 'SEMESTER_2' ? 'col-span-2' : ''}>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 flex items-center justify-between">
+                      <span>Target Nilai Sem 2 <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] text-purple-500 font-mono font-bold">0.00 - 4.00</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min="0"
+                      max="4"
+                      value={targetScoreSem2}
+                      onChange={(e) => setTargetScoreSem2(e.target.value)}
+                      placeholder="4.00"
+                      className={`w-full p-3 rounded-xl text-xs font-black font-mono border outline-none ${inputClass}`}
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5">
-                  Target Capaian Semester <span className="text-rose-500">*</span>
+                  Deskripsi / Indikator Capaian <span className="text-slate-400 font-normal">(Opsional)</span>
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={targetSemester}
                   onChange={(e) => setTargetSemester(e.target.value)}
-                  placeholder="Deskripsi target capaian terukur per semester..."
+                  placeholder="Kriteria kualitatif / indikator ketercapaian target capaian..."
                   className={`w-full p-3 rounded-xl text-xs border outline-none leading-relaxed ${inputClass}`}
-                  required
                 />
               </div>
 
@@ -908,6 +981,16 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
                             {p.targets.map((t, tIdx) => (
                               <li key={tIdx}>
                                 <strong>{t.title}</strong> — Bobot: <span className="font-mono font-bold text-amber-500">{t.weight}%</span> ({t.semesterScope === 'KEDUANYA' ? 'Sem 1 & 2' : t.semesterScope})
+                                {t.targetScoreSem1 != null && (
+                                  <span className="ml-1.5 text-blue-600 dark:text-blue-400 font-mono font-bold">
+                                    [Tgt Sem 1: {Number(t.targetScoreSem1).toFixed(2)}]
+                                  </span>
+                                )}
+                                {t.targetScoreSem2 != null && (
+                                  <span className="ml-1 text-purple-600 dark:text-purple-400 font-mono font-bold">
+                                    [Tgt Sem 2: {Number(t.targetScoreSem2).toFixed(2)}]
+                                  </span>
+                                )}
                               </li>
                             ))}
                           </ul>

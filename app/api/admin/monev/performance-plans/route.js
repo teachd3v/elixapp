@@ -27,7 +27,17 @@ export async function POST(request) {
   if (me.role !== 'SUPERADMIN') return new NextResponse('Forbidden', { status: 403 });
 
   const body = await request.json().catch(() => ({}));
-  const { type, planTitle, planId, targetTitle, weight, semesterScope, targetSemester } = body;
+  const {
+    type,
+    planTitle,
+    planId,
+    targetTitle,
+    weight,
+    semesterScope,
+    targetSemester,
+    targetScoreSem1,
+    targetScoreSem2,
+  } = body;
 
   if (type === 'PLAN') {
     if (!planTitle?.trim()) {
@@ -59,6 +69,12 @@ export async function POST(request) {
   const validScopes = ['SEMESTER_1', 'SEMESTER_2', 'KEDUANYA'];
   const scope = validScopes.includes(semesterScope) ? semesterScope : 'KEDUANYA';
 
+  const parseScore = (v) => {
+    if (v === undefined || v === null || v === '') return null;
+    const n = parseFloat(v);
+    return Number.isNaN(n) ? null : Math.min(4.0, Math.max(0.0, n));
+  };
+
   const targetCount = await prisma.mentorPerformanceTarget.count({ where: { planId } });
   const createdTarget = await prisma.mentorPerformanceTarget.create({
     data: {
@@ -66,7 +82,9 @@ export async function POST(request) {
       title: targetTitle.trim(),
       weight: parsedWeight,
       semesterScope: scope,
-      targetSemester: targetSemester?.trim() || 'Target capaian standar',
+      targetScoreSem1: scope === 'SEMESTER_2' ? null : parseScore(targetScoreSem1) ?? 4.0,
+      targetScoreSem2: scope === 'SEMESTER_1' ? null : parseScore(targetScoreSem2) ?? 4.0,
+      targetSemester: targetSemester?.trim() || null,
       order: targetCount + 1,
     },
   });

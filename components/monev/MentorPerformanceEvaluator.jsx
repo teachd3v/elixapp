@@ -465,8 +465,8 @@ export default function MentorPerformanceEvaluator({
                         <th className="py-3 px-4 min-w-[200px]">Target Kerja</th>
                         <th className="py-3 px-4 w-24 text-center">Bobot</th>
                         <th className="py-3 px-4 w-28 text-center">Semester</th>
-                        <th className="py-3 px-4 min-w-[220px]">Target Capaian Semester</th>
-                        <th className="py-3 px-4 min-w-[240px] text-center">Input Skor (0 - 4)</th>
+                        <th className="py-3 px-4 min-w-[210px]">Target Capaian (0.00 - 4.00)</th>
+                        <th className="py-3 px-4 min-w-[260px] text-center">Input Skor (0 - 4)</th>
                         <th className="py-3 px-4 min-w-[220px]">Catatan Evidence</th>
                       </tr>
                     </thead>
@@ -477,6 +477,9 @@ export default function MentorPerformanceEvaluator({
                         const scope = t.semesterScope || 'KEDUANYA';
                         const showSem1 = scope === 'SEMESTER_1' || scope === 'KEDUANYA';
                         const showSem2 = scope === 'SEMESTER_2' || scope === 'KEDUANYA';
+
+                        const expSem1 = t.targetScoreSem1 != null ? Number(t.targetScoreSem1).toFixed(2) : '4.00';
+                        const expSem2 = t.targetScoreSem2 != null ? Number(t.targetScoreSem2).toFixed(2) : '4.00';
 
                         return (
                           <tr
@@ -511,8 +514,26 @@ export default function MentorPerformanceEvaluator({
                                   : 'Semester 2'}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 leading-relaxed text-[11px] align-top">
-                              {t.targetSemester}
+                            <td className="py-3.5 px-4 leading-relaxed text-[11px] align-top">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {showSem1 && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold font-mono text-[10px]">
+                                      Sem 1: {expSem1}
+                                    </span>
+                                  )}
+                                  {showSem2 && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold font-mono text-[10px]">
+                                      Sem 2: {expSem2}
+                                    </span>
+                                  )}
+                                </div>
+                                {t.targetSemester && (
+                                  <p className="text-[10px] text-slate-400 leading-snug">
+                                    {t.targetSemester}
+                                  </p>
+                                )}
+                              </div>
                             </td>
 
                             {/* SKOR SELECTOR CELL */}
@@ -520,9 +541,10 @@ export default function MentorPerformanceEvaluator({
                               <div className="space-y-2">
                                 {showSem1 && (
                                   <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50">
-                                    <span className="text-[10px] font-black text-blue-500 uppercase shrink-0">
-                                      Sem 1:
-                                    </span>
+                                    <div className="flex items-center gap-1 text-[10px] font-black text-blue-500 uppercase shrink-0">
+                                      <span>Sem 1</span>
+                                      <span className="text-[9px] font-mono text-slate-400 font-bold">(Tgt: {expSem1}):</span>
+                                    </div>
                                     <div className="flex items-center gap-1">
                                       {[0, 1, 2, 3, 4].map((sVal) => {
                                         const isSelected = currentEntry.scoreSem1 === sVal;
@@ -554,9 +576,10 @@ export default function MentorPerformanceEvaluator({
 
                                 {showSem2 && (
                                   <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50">
-                                    <span className="text-[10px] font-black text-purple-500 uppercase shrink-0">
-                                      Sem 2:
-                                    </span>
+                                    <div className="flex items-center gap-1 text-[10px] font-black text-purple-500 uppercase shrink-0">
+                                      <span>Sem 2</span>
+                                      <span className="text-[9px] font-mono text-slate-400 font-bold">(Tgt: {expSem2}):</span>
+                                    </div>
                                     <div className="flex items-center gap-1">
                                       {[0, 1, 2, 3, 4].map((sVal) => {
                                         const isSelected = currentEntry.scoreSem2 === sVal;
