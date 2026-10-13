@@ -349,11 +349,25 @@ export default function RealProfile({ darkMode, role, dbUser, setDbUser }) {
             <input className={inputCls} value={form.phone} onChange={set('phone')} placeholder="08xx" />
           </div>
           <div className="sm:col-span-2">
-            <label className={labelCls}>Wilayah {isMentor ? 'Binaan' : ''} <span className="text-rose-500">*</span></label>
+            <label className={labelCls}>Wilayah {isMentor ? 'Binaan (Maks. 2 Akun Mentor / Wilayah)' : ''} <span className="text-rose-500">*</span></label>
             <select className={`${inputCls} cursor-pointer`} value={form.wilayahId} onChange={set('wilayahId')} required>
               <option value="">— Pilih Wilayah —</option>
-              {wilayahList.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              {wilayahList.map((w) => {
+                const count = w.mentorCount ?? 0;
+                const isMine = (w.mentorUserIds || []).includes(dbUser?.id);
+                const isFull = isMentor && count >= 2 && !isMine;
+                return (
+                  <option key={w.id} value={w.id} disabled={isFull}>
+                    {w.name}{isMentor ? ` (${count}/2 Mentor${isFull ? ' - Penuh' : ''})` : ''}
+                  </option>
+                );
+              })}
             </select>
+            {isMentor && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                Setiap wilayah binaan dapat diisi oleh maksimal 2 akun mentor.
+              </p>
+            )}
           </div>
 
           {!isMentor && (

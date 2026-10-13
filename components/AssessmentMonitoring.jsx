@@ -54,8 +54,8 @@ export default function AssessmentMonitoring({ data, darkMode, onViewAwardee }) 
       const category = elix != null ? elixCategory(elix) : null;
 
       const wilayahName = wilayahRollup.find(w => w.id === a.wilayahId)?.name || '—';
-      const mentorObj = mentors.find(m => m.wilayahId === a.wilayahId);
-      const mentorName = mentorObj?.user?.name || '—';
+      const wMentors = mentors.filter(m => m.wilayahId === a.wilayahId);
+      const mentorName = wMentors.length ? wMentors.map(m => m.user?.name).filter(Boolean).join(' & ') : '—';
 
       return {
         id: a.id,

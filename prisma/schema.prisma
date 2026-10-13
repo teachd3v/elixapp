@@ -101,7 +101,7 @@ model MentorProfile {
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  wilayahId    String   @unique
+  wilayahId    String   // Maksimal 2 akun mentor per wilayah
   wilayah      Wilayah  @relation(fields: [wilayahId], references: [id])
   
   sessions     Session[]
@@ -113,7 +113,7 @@ model Wilayah {
   id             String          @id @default(uuid())
   name           String          @unique
   
-  mentorProfile  MentorProfile?
+  mentorProfiles MentorProfile[]
   awardees       AwardeeProfile[]
   sessions       Session[]
 }

@@ -739,7 +739,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             {wilayahRollup.map((w) => {
               const isExpanded = expandedWilayah[w.id];
               const wAwardees = awardees.filter(a => a.wilayahId === w.id);
-              const wMentor = mentors.find(m => m.wilayahId === w.id);
+              const wMentors = mentors.filter(m => m.wilayahId === w.id);
 
               return (
                 <div key={w.id} className={`p-4 rounded-2xl border transition-colors ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
@@ -757,6 +757,8 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap text-[10px] font-bold text-slate-500 mb-2">
+                    <span>Mentor: <span className="text-slate-700 dark:text-slate-300">{wMentors.length}/2</span></span>
+                    <span>·</span>
                     <span>Awardee: <span className="text-slate-700 dark:text-slate-300">{w.awardeeCount}</span></span>
                     <span>·</span>
                     <span>SA: <span className="text-slate-700 dark:text-slate-300">{w.saFilled}</span></span>
@@ -766,17 +768,17 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                   
                   {isExpanded && (
                     <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-slate-700 pt-3">
-                       {wMentor && (
-                         <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(wMentor)}>
+                       {wMentors.map((wMentor, idx) => (
+                         <div key={wMentor.id || idx} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(wMentor)}>
                            <div className="flex items-center gap-3">
                               <img src={wMentor.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(wMentor.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
                               <div>
                                  <p className="text-xs font-bold">{wMentor.user?.name}</p>
-                                 <p className="text-[10px] text-blue-500 font-bold">Mentor</p>
+                                 <p className="text-[10px] text-blue-500 font-bold">Mentor {wMentors.length > 1 ? `#${idx + 1}` : ''}</p>
                               </div>
                            </div>
                          </div>
-                       )}
+                       ))}
                        {wAwardees.length > 0 ? (
                          wAwardees.map(a => (
                            <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => window.location.href = `/awardee/${a.id}`}>

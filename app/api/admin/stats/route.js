@@ -83,7 +83,7 @@ export async function GET() {
   const wilayahRollup = wilayahList.map((w) => {
     const wa = enrichedAwardees.filter((a) => a.wilayahId === w.id);
     const ws = wa.filter((a) => a.elix != null);
-    const mentor = mentors.find((m) => m.wilayahId === w.id) || null;
+    const wMentors = mentors.filter((m) => m.wilayahId === w.id);
     return {
       id: w.id,
       name: w.name,
@@ -91,7 +91,8 @@ export async function GET() {
       saFilled: wa.filter((a) => a.hasFilledSA).length,
       maFilled: wa.filter((a) => a.hasFilledMA).length,
       avgElix: ws.length ? parseFloat((ws.reduce((s, a) => s + a.elix, 0) / ws.length).toFixed(1)) : null,
-      mentor: mentor?.user || null,
+      mentor: wMentors[0]?.user || null,
+      mentors: wMentors.map((m) => m.user).filter(Boolean),
     };
   });
 

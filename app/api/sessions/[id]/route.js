@@ -2,12 +2,23 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentDbUser } from '@/lib/auth';
 
-// Only the creator (or a SUPERADMIN) may edit or delete a session.
+// Creator, co-mentor in the same wilayah, or SUPERADMIN may edit or delete a session.
 async function loadForMutation(me, id) {
   const session = await prisma.session.findUnique({ where: { id } });
   if (!session) return { session: null, allowed: false };
-  const allowed = me.role === 'SUPERADMIN' || session.createdById === me.id;
-  return { session, allowed };
+  if (me.role === 'SUPERADMIN' || session.createdById === me.id) {
+    return { session, allowed: true };
+  }
+  if (me.role === 'MENTOR' && session.wilayahId) {
+    const mp = await prisma.mentorProfile.findUnique({
+      where: { userId: me.id },
+      select: { wilayahId: true },
+    });
+    if (mp && mp.wilayahId === session.wilayahId) {
+      return { session, allowed: true };
+    }
+  }
+  return { session, allowed: false };
 }
 
 // PATCH /api/sessions/[id] — edit title/date/time. Scope/wilayah are immutable.

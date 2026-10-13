@@ -17,7 +17,7 @@ export async function GET() {
           select: { 
             id: true, 
             name: true, 
-            mentorProfile: { include: { user: { select: { name: true } } } } 
+            mentorProfiles: { include: { user: { select: { name: true } } } } 
           } 
         },
         assessmentRecords: {
@@ -27,6 +27,14 @@ export async function GET() {
         }
       },
     });
+    if (profile?.wilayah) {
+      const mentorNames = (profile.wilayah.mentorProfiles || [])
+        .map((mp) => mp.user?.name)
+        .filter(Boolean);
+      profile.wilayah.mentorProfile = mentorNames.length
+        ? { user: { name: mentorNames.join(' & ') } }
+        : null;
+    }
     return NextResponse.json({ user: publicUser(me), profile });
   }
 
@@ -87,7 +95,20 @@ export async function POST(request) {
         update: data,
       });
     } else {
-      // MENTOR — profile is just the assigned region for now.
+      // MENTOR — maksimal 2 akun mentor di setiap wilayah
+      const otherMentorsCount = await prisma.mentorProfile.count({
+        where: {
+          wilayahId,
+          userId: { not: me.id },
+        },
+      });
+      if (otherMentorsCount >= 2) {
+        return NextResponse.json(
+          { error: 'Wilayah ini sudah mencapai batas maksimal 2 akun mentor. Silakan pilih wilayah lain.' },
+          { status: 409 }
+        );
+      }
+
       await prisma.mentorProfile.upsert({
         where: { userId: me.id },
         create: { userId: me.id, wilayahId },
@@ -106,10 +127,9 @@ export async function POST(request) {
 
     return NextResponse.json({ ok: true, user: publicUser(updatedUser) });
   } catch (error) {
-    // A MentorProfile's wilayah is unique (one mentor per region).
     if (error.code === 'P2002') {
       return NextResponse.json(
-        { error: 'Wilayah ini sudah memiliki mentor. Pilih wilayah lain.' },
+        { error: 'Wilayah ini sudah penuh. Pilih wilayah lain.' },
         { status: 409 }
       );
     }
