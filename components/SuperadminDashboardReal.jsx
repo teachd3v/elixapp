@@ -14,6 +14,7 @@ import ChangeRoleModal from './ChangeRoleModal';
 import { Edit, Trash2 } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
 import AssessmentMonitoring from './AssessmentMonitoring';
+import MonevHub from './monev/MonevHub';
 import { useDialog } from './DialogProvider';
 import { blendedScore, toElixIndex } from '../lib/assessment';
 import SuperadminPDF from './pdf/SuperadminPDF';
@@ -247,6 +248,18 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           darkMode={darkMode}
           onViewAwardee={(id) => window.location.href = `/awardee/${id}`}
         />
+      </div>
+    );
+  }
+
+  // ---------- PENILAIAN MONEV TAB ----------
+  if (activeTab === 'monev') {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2">
+          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
+        </button>
+        <MonevHub darkMode={darkMode} />
       </div>
     );
   }

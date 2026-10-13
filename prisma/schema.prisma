@@ -43,6 +43,9 @@ model User {
   announcementsCreated Announcement[] @relation("AnnouncementCreator")
   announcementReads    AnnouncementRead[]
 
+  // Evaluasi performa mentor yang dinilai oleh superadmin ini
+  mentorEvaluationsCreated MentorPerformanceEvaluation[] @relation("EvaluatedByAdmin")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -104,8 +107,9 @@ model MentorProfile {
   wilayahId    String   // Maksimal 2 akun mentor per wilayah
   wilayah      Wilayah  @relation(fields: [wilayahId], references: [id])
   
-  sessions     Session[]
-  journals     MentorJournal[]
+  sessions               Session[]
+  journals               MentorJournal[]
+  performanceEvaluations MentorPerformanceEvaluation[]
 }
 
 // Model Wilayah
@@ -395,4 +399,69 @@ model MentorJournal {
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 }
+
+// ----------------------------------------------------------------------
+// MONEV: INSTRUMEN 1 - PENILAIAN PERFORMA MENTOR
+// ----------------------------------------------------------------------
+
+enum PerformanceSemesterScope {
+  SEMESTER_1
+  SEMESTER_2
+  KEDUANYA
+}
+
+model MentorPerformancePlan {
+  id        String                    @id @default(uuid())
+  title     String                    // Rencana Kerja
+  order     Int                       @default(0)
+  targets   MentorPerformanceTarget[]
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+}
+
+model MentorPerformanceTarget {
+  id             String                   @id @default(uuid())
+  planId         String
+  plan           MentorPerformancePlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  title          String                   // Target Kerja
+  weight         Float                    // Bobot (dalam %, total 100)
+  semesterScope  PerformanceSemesterScope @default(KEDUANYA) // Semester 1 / Semester 2 / Keduanya
+  targetSemester String                   @db.Text // Target Capaian Semester
+  order          Int                      @default(0)
+
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+}
+
+model MentorPerformanceEvaluation {
+  id               String        @id @default(uuid())
+  
+  mentorId         String
+  mentor           MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+
+  periodName       String        // misal: "Oktober - November 2026"
+  evaluationYear   Int           @default(2026)
+
+  // Nilai Hasil Kalkulasi (Skala 0 - 100)
+  scoreSemester1   Float?        // Poin Nilai Performa Semester 1
+  scoreSemester2   Float?        // Poin Nilai Performa Semester 2
+  totalScore       Float         // Total Poin Nilai Performa 1 Tahun
+  category         String        // SANGAT BAIK | BAIK | CUKUP | KURANG
+
+  // Catatan Observer
+  wellDoneNotes    String?       @db.Text // Hal yang sudah berjalan / tercapai dengan baik
+  improvementNotes String?       @db.Text // Hal yang perlu dikembangkan
+
+  // Rincian skor dan catatan evidence per butir target kerja
+  // JSON format: { [targetId]: { scoreSem1?: 0-4, scoreSem2?: 0-4, evidence?: string, weight: number, ... } }
+  itemScores       Json
+
+  evaluatedById    String
+  evaluatedBy      User          @relation("EvaluatedByAdmin", fields: [evaluatedById], references: [id])
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
 
