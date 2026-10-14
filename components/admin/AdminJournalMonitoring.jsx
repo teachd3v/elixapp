@@ -620,10 +620,16 @@ export default function AdminJournalMonitoring({ darkMode }) {
 
       {/* 4. MODAL RINCIAN HOLISTIK (Dossier View 10 Poin) */}
       {selectedJournal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
-          <div className={`w-full max-w-2xl border rounded-3xl p-6 shadow-2xl relative my-8 space-y-5 ${cardBase}`}>
-            {/* Header Modal */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSelectedJournal(null)}
+        >
+          <div 
+            className={`w-full max-w-2xl my-auto border rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ${cardBase}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal (Pinned Top) */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between shrink-0 bg-slate-50/70 dark:bg-slate-800/50">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
@@ -639,140 +645,146 @@ export default function AdminJournalMonitoring({ darkMode }) {
               </div>
               <button
                 onClick={() => setSelectedJournal(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
+                className="p-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Profile & Metadata Bar */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedJournal.mentor?.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedJournal.mentor?.user?.name || 'Mentor')}&background=random`}
-                  alt=""
-                  className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                />
-                <div>
-                  <p className="font-bold text-slate-800 dark:text-slate-200">{selectedJournal.mentor?.user?.name || 'Mentor'}</p>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">{selectedJournal.mentor?.wilayah?.name || '—'}</p>
-                </div>
-              </div>
-
-              <div className="space-y-1 text-slate-600 dark:text-slate-300">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>{formatDateDDMMYYYY(selectedJournal.activityDate)}</span>
-                  <span>·</span>
-                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>{selectedJournal.activityTime || '—'}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="truncate">{selectedJournal.locationDetail || '—'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Capaian Kualitatif & Kuantitatif */}
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Hasil & Capaian Aktivitas</h4>
-              
-              {/* Capaian Kuantitatif */}
-              <div className="p-3.5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15">
-                <div className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
-                  🎯 4. Capaian Kuantitatif (Result / Indikator Angka)
-                </div>
-                <p className="text-xs font-bold leading-relaxed text-slate-800 dark:text-slate-100">
-                  {selectedJournal.quantitativeAchievement || '—'}
-                </p>
-              </div>
-
-              {/* Capaian Kualitatif */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
-                  📝 3. Capaian Kualitatif (Deskripsi Lengkap)
-                </div>
-                <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                  {selectedJournal.qualitativeAchievement || '—'}
-                </p>
-              </div>
-            </div>
-
-            {/* Evaluasi Lapangan: Masalah & Rencana Perbaikan */}
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Evaluasi & Tindak Lanjut</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* 8. Identifikasi Masalah */}
-                <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/15">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-500 mb-1.5">
-                    <AlertCircle className="w-3.5 h-3.5" /> 8. Identifikasi Masalah
-                  </div>
-                  <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                    {selectedJournal.problemIdentification || '—'}
-                  </p>
-                </div>
-
-                {/* 9. Rencana Perbaikan */}
-                <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/15">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> 9. Rencana Perbaikan
-                  </div>
-                  <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                    {selectedJournal.improvementPlan || '—'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Evidence & Dokumentasi */}
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">10. Bukti / Evidence Dokumentasi</h4>
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3">
-                {selectedJournal.evidenceText ? (
+            {/* Scrollable Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+              {/* Profile & Metadata Bar */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedJournal.mentor?.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedJournal.mentor?.user?.name || 'Mentor')}&background=random`}
+                    alt=""
+                    className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                  />
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 block mb-0.5">Keterangan / Tautan:</span>
-                    <p className="text-xs text-slate-700 dark:text-slate-200 break-words font-medium">
-                      {selectedJournal.evidenceText.startsWith('http') ? (
-                        <a
-                          href={selectedJournal.evidenceText}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 underline inline-flex items-center gap-1"
-                        >
-                          {selectedJournal.evidenceText} <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        selectedJournal.evidenceText
-                      )}
+                    <p className="font-bold text-slate-800 dark:text-slate-200">{selectedJournal.mentor?.user?.name || 'Mentor'}</p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">{selectedJournal.mentor?.wilayah?.name || '—'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{formatDateDDMMYYYY(selectedJournal.activityDate)}</span>
+                    <span>·</span>
+                    <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{selectedJournal.activityTime || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{selectedJournal.locationDetail || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Capaian Kualitatif & Kuantitatif */}
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Hasil & Capaian Aktivitas</h4>
+                
+                {/* Capaian Kuantitatif */}
+                <div className="p-3.5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
+                    🎯 4. Capaian Kuantitatif (Result / Indikator Angka)
+                  </div>
+                  <p className="text-xs font-bold leading-relaxed text-slate-800 dark:text-slate-100">
+                    {selectedJournal.quantitativeAchievement || '—'}
+                  </p>
+                </div>
+
+                {/* Capaian Kualitatif */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                    📝 3. Capaian Kualitatif (Deskripsi Lengkap)
+                  </div>
+                  <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
+                    {selectedJournal.qualitativeAchievement || '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Evaluasi Lapangan: Masalah & Rencana Perbaikan */}
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Evaluasi & Tindak Lanjut</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* 8. Identifikasi Masalah */}
+                  <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/15">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-500 mb-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" /> 8. Identifikasi Masalah
+                    </div>
+                    <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
+                      {selectedJournal.problemIdentification || '—'}
                     </p>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">Tidak ada catatan teks evidence.</p>
-                )}
 
-                {selectedJournal.evidencePhoto ? (
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 block mb-1.5">Foto Dokumentasi Kegiatan:</span>
-                    <img
-                      src={selectedJournal.evidencePhoto}
-                      alt="Dokumentasi"
-                      onClick={() => setPreviewPhoto(selectedJournal.evidencePhoto)}
-                      className="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    />
-                    <span className="text-[10px] text-slate-400 mt-1 block">Klik foto untuk memperbesar</span>
+                  {/* 9. Rencana Perbaikan */}
+                  <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> 9. Rencana Perbaikan
+                    </div>
+                    <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
+                      {selectedJournal.improvementPlan || '—'}
+                    </p>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">Tidak ada foto dokumentasi terlampir.</p>
-                )}
+                </div>
+              </div>
+
+              {/* Evidence & Dokumentasi */}
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">10. Bukti / Evidence Dokumentasi</h4>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3">
+                  {selectedJournal.evidenceText ? (
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block mb-0.5">Keterangan / Tautan:</span>
+                      <p className="text-xs text-slate-700 dark:text-slate-200 break-words font-medium">
+                        {selectedJournal.evidenceText.startsWith('http') ? (
+                          <a
+                            href={selectedJournal.evidenceText}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-500 underline inline-flex items-center gap-1"
+                          >
+                            {selectedJournal.evidenceText} <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          selectedJournal.evidenceText
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">Tidak ada catatan teks evidence.</p>
+                  )}
+
+                  {selectedJournal.evidencePhoto ? (
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block mb-1.5">Foto Dokumentasi Kegiatan:</span>
+                      <img
+                        src={selectedJournal.evidencePhoto}
+                        alt="Dokumentasi"
+                        onClick={() => setPreviewPhoto(selectedJournal.evidencePhoto)}
+                        className="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">Klik foto untuk memperbesar</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">Tidak ada foto dokumentasi terlampir.</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Footer Modal */}
-            <div className="pt-2 flex justify-end">
+            {/* Footer Modal (Pinned Bottom) */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+              <span className="text-[11px] font-mono font-bold text-slate-400">
+                {selectedJournal.journalCode}
+              </span>
               <button
                 onClick={() => setSelectedJournal(null)}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Tutup
               </button>
