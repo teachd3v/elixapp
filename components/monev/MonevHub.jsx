@@ -8,13 +8,15 @@ import {
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
+import MonevTeachingInstrumentManager from './MonevTeachingInstrumentManager';
+import MentorTeachingEvaluator from './MentorTeachingEvaluator';
 import { useDialog } from '../DialogProvider';
-import { getPerformanceCategory } from '../../lib/monev';
+import { getPerformanceCategory, getTeachingCategory } from '../../lib/monev';
 
 export default function MonevHub({ darkMode }) {
   const { confirm, alert } = useDialog();
 
-  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'observation'
+  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation'
   const [mentors, setMentors] = useState([]);
   const [loadingMentors, setLoadingMentors] = useState(true);
 
@@ -22,12 +24,15 @@ export default function MonevHub({ darkMode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWilayah, setSelectedWilayah] = useState('ALL');
 
-  // Evaluator View State
+  // Evaluator View State (Performa)
   const [evaluatingMentor, setEvaluatingMentor] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
-
-  // History Modal State
   const [historyMentor, setHistoryMentor] = useState(null);
+
+  // Evaluator View State (Kompetensi Mengajar)
+  const [evaluatingTeachingMentor, setEvaluatingTeachingMentor] = useState(null);
+  const [selectedTeachingEvaluation, setSelectedTeachingEvaluation] = useState(null);
+  const [historyTeachingMentor, setHistoryTeachingMentor] = useState(null);
 
   const loadMentors = async () => {
     setLoadingMentors(true);
@@ -125,12 +130,64 @@ export default function MonevHub({ darkMode }) {
     }
   };
 
+  // Handle Delete Teaching Evaluation
+  const handleDeleteTeachingEvaluation = async (evaluationId) => {
+    const ok = await confirm(
+      'Apakah kamu yakin ingin menghapus arsip evaluasi kompetensi mengajar ini?',
+      'Hapus Evaluasi'
+    );
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/admin/monev/teaching-evaluations/${evaluationId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Gagal menghapus evaluasi');
+
+      await loadMentors();
+      if (historyTeachingMentor) {
+        setHistoryTeachingMentor((prev) => ({
+          ...prev,
+          teachingEvaluations: (prev.teachingEvaluations || []).filter(
+            (e) => e.id !== evaluationId
+          ),
+        }));
+      }
+      await alert('Arsip evaluasi kompetensi mengajar berhasil dihapus.', 'Berhasil', 'success');
+    } catch (err) {
+      await alert(err.message || 'Error saat menghapus', 'Error', 'error');
+    }
+  };
+
+  // Teaching Stats calculation
+  const teachingStats = useMemo(() => {
+    const total = mentors.length;
+    let evaluated = 0;
+    let pctSum = 0;
+
+    for (const m of mentors) {
+      const evals = m.teachingEvaluations || [];
+      if (evals.length > 0) {
+        evaluated++;
+        pctSum += Number(evals[0].percentage) || 0;
+      }
+    }
+
+    const avgPct = evaluated > 0 ? (pctSum / evaluated).toFixed(1) : '—';
+    return {
+      total,
+      evaluated,
+      unEvaluated: total - evaluated,
+      avgPct,
+    };
+  }, [mentors]);
+
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
   const inputClass = darkMode
     ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500'
     : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-indigo-500';
 
-  // If currently evaluating a mentor, render evaluator view directly
+  // If currently evaluating performance
   if (evaluatingMentor) {
     return (
       <MentorPerformanceEvaluator
@@ -144,6 +201,26 @@ export default function MonevHub({ darkMode }) {
           loadMentors();
           setEvaluatingMentor(null);
           setSelectedEvaluation(null);
+        }}
+        darkMode={darkMode}
+      />
+    );
+  }
+
+  // If currently evaluating teaching competency
+  if (evaluatingTeachingMentor) {
+    return (
+      <MentorTeachingEvaluator
+        mentor={evaluatingTeachingMentor}
+        initialEvaluation={selectedTeachingEvaluation}
+        onBack={() => {
+          setEvaluatingTeachingMentor(null);
+          setSelectedTeachingEvaluation(null);
+        }}
+        onSaved={() => {
+          loadMentors();
+          setEvaluatingTeachingMentor(null);
+          setSelectedTeachingEvaluation(null);
         }}
         darkMode={darkMode}
       />
@@ -184,14 +261,28 @@ export default function MonevHub({ darkMode }) {
             className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
               activeSubTab === 'teaching'
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <BookOpen className="w-4 h-4" />
             Kompetensi Mengajar
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              activeSubTab === 'teaching' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
               Instrumen 2
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('instrument_teaching')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'instrument_teaching'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Pengaturan Instrumen Mengajar
           </button>
 
           <button
@@ -426,20 +517,212 @@ export default function MonevHub({ darkMode }) {
         <MonevPerformanceInstrumentManager darkMode={darkMode} />
       )}
 
-      {/* SUB-TAB 3: PLACEHOLDER INSTRUMEN 2 (KOMPETENSI MENGAJAR) */}
+      {/* SUB-TAB 3: PENILAIAN KOMPETENSI MENGAJAR MENTOR */}
       {activeSubTab === 'teaching' && (
-        <div className={`border rounded-3xl p-12 text-center space-y-4 ${card}`}>
-          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto">
-            <BookOpen className="w-8 h-8" />
+        <div className="space-y-6">
+          {/* STATS OVERVIEW CARDS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Total Mentor</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black">{teachingStats.total}</span>
+                <span className="text-xs text-slate-400 font-semibold">Akun</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Sudah Diobservasi</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-emerald-500">{teachingStats.evaluated}</span>
+                <span className="text-xs text-emerald-600/70 font-semibold">Mentor</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diobservasi</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-amber-500">{teachingStats.unEvaluated}</span>
+                <span className="text-xs text-amber-600/70 font-semibold">Mentor</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Rata-rata Skor Capaian</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-blue-500 font-mono">{teachingStats.avgPct}</span>
+                <span className="text-xs text-blue-600/70 font-semibold">%</span>
+              </div>
+            </div>
           </div>
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 text-blue-500 border border-blue-500/20">
-            Instrumen 2 Monev
-          </span>
-          <h3 className="text-lg font-black">Penilaian Kompetensi Mengajar Mentor</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            Instrumen evaluasi kualitas pedagogik, penyampaian materi kurikulum kepemimpinan, dan interaksi pengajaran mentor bersama awardee. Fitur ini akan kita aktifkan pada langkah selanjutnya!
-          </p>
+
+          {/* SEARCH & WILAYAH FILTER BAR */}
+          <div className={`border rounded-3xl p-4 ${card} flex flex-col sm:flex-row items-center justify-between gap-3`}>
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari mentor, email, atau wilayah..."
+                className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs border outline-none font-medium ${inputClass}`}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+              <select
+                value={selectedWilayah}
+                onChange={(e) => setSelectedWilayah(e.target.value)}
+                className={`w-full sm:w-56 p-2.5 rounded-2xl text-xs font-bold border outline-none cursor-pointer ${inputClass}`}
+              >
+                <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
+                {wilayahOptions.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* MENTOR CARDS GRID */}
+          {filteredMentors.length === 0 ? (
+            <div className={`border rounded-3xl p-12 text-center text-slate-400 ${card}`}>
+              Tidak ada data mentor yang cocok dengan pencarian atau filter wilayah saat ini.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMentors.map((m) => {
+                const evals = m.teachingEvaluations || [];
+                const hasEvaluated = evals.length > 0;
+                const latestEval = hasEvaluated ? evals[0] : null;
+                const cat = latestEval ? getTeachingCategory(latestEval.percentage) : null;
+
+                return (
+                  <div
+                    key={m.id}
+                    className={`border rounded-3xl p-5 ${card} hover:border-blue-500/50 transition-all flex flex-col justify-between`}
+                  >
+                    <div>
+                      {/* Top Bar: Wilayah Badge */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                          {m.wilayah?.name || 'Wilayah Belum Diset'}
+                        </span>
+
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${
+                            hasEvaluated
+                              ? `${cat.tone}`
+                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                          }`}
+                        >
+                          {hasEvaluated ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              {cat.label} ({latestEval.percentage}%)
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-3 h-3" />
+                              Belum Diobservasi
+                            </>
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Mentor Info */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <img
+                          src={
+                            m.user?.avatarUrl ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              m.user?.name || 'Mentor'
+                            )}&background=random`
+                          }
+                          alt="Avatar"
+                          className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
+                            {m.user?.name || 'Mentor'}
+                          </h4>
+                          <p className="text-xs text-slate-400 truncate">{m.user?.email || '—'}</p>
+                          {m.user?.phone && (
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              {m.user.phone}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Latest Teaching Evaluation Summary Box */}
+                      {hasEvaluated ? (
+                        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs space-y-1.5 mb-4">
+                          <div className="flex items-center justify-between text-slate-400 font-semibold text-[11px]">
+                            <span>Periode:</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-200 truncate max-w-[150px]">
+                              {latestEval.periodName}
+                            </span>
+                          </div>
+                          {latestEval.sessionTopic && (
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-slate-400">Topik Sesi:</span>
+                              <span className="font-medium text-slate-600 dark:text-slate-300 truncate max-w-[150px]">
+                                {latestEval.sessionTopic}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                            <span className="text-slate-400">Skor Capaian:</span>
+                            <span className="font-black text-blue-600 dark:text-blue-400 font-mono text-xs">
+                              {latestEval.totalScore} / {latestEval.maxScore} ({latestEval.percentage}%)
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-xs text-amber-600/80 dark:text-amber-400/80 mb-4 flex items-center gap-2">
+                          <Clock className="w-4 h-4 shrink-0" />
+                          <span>Belum ada lembar evaluasi kompetensi mengajar yang tersimpan.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setEvaluatingTeachingMentor(m);
+                          setSelectedTeachingEvaluation(latestEval || null);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        {hasEvaluated ? 'Edit Penilaian' : 'Nilai Kompetensi'}
+                      </button>
+
+                      {evals.length > 0 && (
+                        <button
+                          onClick={() => setHistoryTeachingMentor(m)}
+                          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+                          title="Lihat Riwayat Observasi Mengajar"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* SUB-TAB 4: PENGATURAN INSTRUMEN KOMPETENSI MENGAJAR */}
+      {activeSubTab === 'instrument_teaching' && (
+        <MonevTeachingInstrumentManager darkMode={darkMode} />
       )}
 
       {/* SUB-TAB 4: PLACEHOLDER INSTRUMEN 3 (OBSERVASI WILAYAH) */}
@@ -545,6 +828,107 @@ export default function MonevHub({ darkMode }) {
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setHistoryMentor(null)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RIWAYAT OBSERVASI KOMPETENSI MENGAJAR MENTOR */}
+      {historyTeachingMentor && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className={`w-full max-w-2xl border rounded-3xl p-6 shadow-2xl my-8 ${card}`}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <img
+                  src={
+                    historyTeachingMentor.user?.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      historyTeachingMentor.user?.name || 'Mentor'
+                    )}&background=random`
+                  }
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-2xl object-cover"
+                />
+                <div>
+                  <h3 className="font-black text-sm">Riwayat Observasi Kompetensi Mengajar</h3>
+                  <p className="text-xs text-slate-400">
+                    {historyTeachingMentor.user?.name} · Wilayah {historyTeachingMentor.wilayah?.name}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setHistoryTeachingMentor(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {(historyTeachingMentor.teachingEvaluations || []).length === 0 ? (
+                <p className="p-8 text-center text-xs text-slate-400 italic">
+                  Belum ada riwayat observasi mengajar tersimpan.
+                </p>
+              ) : (
+                historyTeachingMentor.teachingEvaluations.map((ev) => {
+                  const cat = getTeachingCategory(ev.percentage);
+                  return (
+                    <div
+                      key={ev.id}
+                      className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-black text-xs">{ev.periodName}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${cat.tone}`}>
+                            {cat.label} ({ev.percentage}%)
+                          </span>
+                        </div>
+                        {ev.sessionTopic && (
+                          <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mb-0.5">
+                            Topik: {ev.sessionTopic}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-slate-400">
+                          Skor: {ev.totalScore} / {ev.maxScore} · Dinilai oleh:{' '}
+                          {ev.evaluatedBy?.name || 'Admin'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => {
+                            setEvaluatingTeachingMentor(historyTeachingMentor);
+                            setSelectedTeachingEvaluation(ev);
+                            setHistoryTeachingMentor(null);
+                          }}
+                          className="p-2 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                          title="Buka / Edit Penilaian"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTeachingEvaluation(ev.id)}
+                          className="p-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                          title="Hapus Penilaian"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setHistoryTeachingMentor(null)}
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
               >
                 Tutup

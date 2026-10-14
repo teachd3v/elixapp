@@ -45,6 +45,7 @@ model User {
 
   // Evaluasi performa mentor yang dinilai oleh superadmin ini
   mentorEvaluationsCreated MentorPerformanceEvaluation[] @relation("EvaluatedByAdmin")
+  teachingEvaluationsCreated MentorTeachingEvaluation[] @relation("TeachingEvaluatedByAdmin")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,6 +111,7 @@ model MentorProfile {
   sessions               Session[]
   journals               MentorJournal[]
   performanceEvaluations MentorPerformanceEvaluation[]
+  teachingEvaluations    MentorTeachingEvaluation[]
 }
 
 // Model Wilayah
@@ -461,6 +463,63 @@ model MentorPerformanceEvaluation {
 
   evaluatedById    String
   evaluatedBy      User          @relation("EvaluatedByAdmin", fields: [evaluatedById], references: [id])
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+// ----------------------------------------------------------------------
+// MONEV: INSTRUMEN 2 - PENILAIAN KOMPETENSI MENGAJAR MENTOR
+// ----------------------------------------------------------------------
+
+model MentorTeachingAspect {
+  id          String                    @id @default(uuid())
+  title       String                    // Aspek Kompetensi Mengajar
+  order       Int                       @default(0)
+  indicators  MentorTeachingIndicator[]
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+}
+
+model MentorTeachingIndicator {
+  id          String               @id @default(uuid())
+  aspectId    String
+  aspect      MentorTeachingAspect @relation(fields: [aspectId], references: [id], onDelete: Cascade)
+
+  title       String               // Indikator
+  score       Float                @default(1.0) // Nilai Skor jika indikator tercapai
+  order       Int                  @default(0)
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model MentorTeachingEvaluation {
+  id               String        @id @default(uuid())
+  
+  mentorId         String
+  mentor           MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+
+  periodName       String        // Nama Periode (misal: "Semester 1 - Oktober 2026")
+  evaluationDate   DateTime      @default(now())
+  sessionTopic     String?       // Topik / Judul Sesi Mengajar yang diobservasi
+
+  // Skor Hasil
+  totalScore       Float         // Total Skor yang diperoleh dari indikator yang diceklis
+  maxScore         Float         // Total Skor maksimal dari seluruh indikator aktif
+  percentage       Float         // (totalScore / maxScore) * 100
+  category         String        // SANGAT BAIK | BAIK | CUKUP | KURANG
+
+  // Catatan Observer
+  strengthsNotes   String?       @db.Text // Kelebihan / Hal baik saat mengajar
+  improvementNotes String?       @db.Text // Hal yang perlu dikembangkan / rekomendasi
+
+  // Rincian centang dan catatan per indikator
+  // JSON format: { [indicatorId]: { checked: boolean, score: number, notes: string } }
+  itemScores       Json
+
+  evaluatedById    String
+  evaluatedBy      User          @relation("TeachingEvaluatedByAdmin", fields: [evaluatedById], references: [id])
 
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt

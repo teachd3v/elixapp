@@ -37,6 +37,14 @@ export async function GET() {
           },
         },
       },
+      teachingEvaluations: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          evaluatedBy: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      },
     },
   });
 
