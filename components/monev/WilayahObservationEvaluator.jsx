@@ -47,6 +47,33 @@ export default function WilayahObservationEvaluator({
     return [];
   });
 
+  const [observers, setObservers] = useState([]);
+  const [evaluatedById, setEvaluatedById] = useState(initialObservation?.evaluatedById || '');
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchObservers() {
+      try {
+        const res = await fetch('/api/admin/monev/observers');
+        if (res.ok) {
+          const d = await res.json();
+          if (isMounted) {
+            setObservers(d.observers || []);
+            if (!initialObservation?.evaluatedById && d.currentObserverId) {
+              setEvaluatedById(d.currentObserverId);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchObservers();
+    return () => {
+      isMounted = false;
+    };
+  }, [initialObservation]);
+
   // Get info of currently selected wilayah
   const selectedWilayah = useMemo(() => {
     return wilayahList.find((w) => w.id === selectedWilayahId) || null;
@@ -107,6 +134,7 @@ export default function WilayahObservationEvaluator({
         programRealization: programRealization.trim(),
         mentorPerformanceSummary: mentorPerformanceSummary.trim(),
         findings: findings.filter(f => f.finding?.trim() || f.recommendation?.trim()),
+        evaluatedById: evaluatedById || undefined,
       };
 
       const url = initialObservation?.id
@@ -199,7 +227,7 @@ export default function WilayahObservationEvaluator({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Pilih Wilayah */}
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
@@ -244,6 +272,25 @@ export default function WilayahObservationEvaluator({
               onChange={(e) => setObservationDate(e.target.value)}
               className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
             />
+          </div>
+
+          {/* Observer / Penilai */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
+              Penilai / Observer (Superadmin) <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={evaluatedById}
+              onChange={(e) => setEvaluatedById(e.target.value)}
+              className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+            >
+              {observers.length === 0 && <option value="">Memuat observer...</option>}
+              {observers.map((obs) => (
+                <option key={obs.id} value={obs.id}>
+                  {obs.name} ({obs.email})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

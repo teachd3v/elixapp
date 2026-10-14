@@ -195,9 +195,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'attendance') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
         <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />
       </div>
     );
@@ -205,9 +202,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'instruments') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
         <InstrumentEditor darkMode={darkMode} />
       </div>
     );
@@ -215,9 +209,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'pengumuman') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
         <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />
       </div>
     );
@@ -241,9 +232,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'monitoring') {
     return (
       <div className="space-y-4">
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2">
-          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
-        </button>
         <AssessmentMonitoring
           data={data}
           darkMode={darkMode}
@@ -257,9 +245,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'journals') {
     return (
       <div className="space-y-4">
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2 cursor-pointer">
-          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
-        </button>
         <AdminJournalMonitoring darkMode={darkMode} />
       </div>
     );
@@ -269,9 +254,6 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (activeTab === 'monev') {
     return (
       <div className="space-y-4">
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2">
-          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
-        </button>
         <MonevHub darkMode={darkMode} />
       </div>
     );

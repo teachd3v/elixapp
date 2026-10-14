@@ -5,7 +5,7 @@ import {
   Award, SlidersHorizontal, BookOpen, Compass, Search, Filter,
   Building2, CheckCircle2, Clock, ChevronRight, UserCheck, Plus,
   TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText, MessageSquare,
-  GraduationCap
+  GraduationCap, ClipboardList
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
@@ -500,106 +500,139 @@ export default function MonevHub({ darkMode }) {
   return (
     <div className="space-y-6">
       {/* MONEV SUB-NAVIGATION TABS */}
-      <div className={`border rounded-3xl p-3 ${card} flex items-center justify-between flex-wrap gap-2`}>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setActiveSubTab('performance')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'performance'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Award className="w-4 h-4" />
-            Penilaian Performa Mentor
-          </button>
+      {/* MONEV SUB-NAVIGATION TABS (CLEAN 1-ROW SEGMENTED) */}
+      <div className={`border rounded-2xl p-2 ${card} flex items-center justify-between gap-3 overflow-x-auto no-scrollbar`}>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Mode Switcher: Input Penilaian vs Pengaturan Instrumen */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800 shrink-0">
+            <button
+              onClick={() => {
+                if (activeSubTab.startsWith('instrument_')) {
+                  setActiveSubTab('performance');
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                !activeSubTab.startsWith('instrument_')
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
+              <span>Input Penilaian</span>
+            </button>
 
-          <button
-            onClick={() => setActiveSubTab('instrument_performance')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'instrument_performance'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Pengaturan Instrumen Performa
-          </button>
+            <button
+              onClick={() => {
+                if (!activeSubTab.startsWith('instrument_')) {
+                  setActiveSubTab('instrument_performance');
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeSubTab.startsWith('instrument_')
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+              <span>Pengaturan Instrumen</span>
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveSubTab('teaching')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'teaching'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            Kompetensi Mengajar
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeSubTab === 'teaching' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
-            }`}>
-              Instrumen 2
-            </span>
-          </button>
+          {/* Subtle Vertical Divider */}
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
-          <button
-            onClick={() => setActiveSubTab('instrument_teaching')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'instrument_teaching'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Pengaturan Instrumen Mengajar
-          </button>
+          {/* Sub-Instrument Pills */}
+          <div className="flex items-center gap-1 shrink-0">
+            {!activeSubTab.startsWith('instrument_') ? (
+              <>
+                <button
+                  onClick={() => setActiveSubTab('performance')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'performance'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  1. Performa Mentor
+                </button>
 
-          <button
-            onClick={() => setActiveSubTab('observation')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'observation'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            Observasi Wilayah
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeSubTab === 'observation' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
-            }`}>
-              Instrumen 3
-            </span>
-          </button>
+                <button
+                  onClick={() => setActiveSubTab('teaching')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'teaching'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  2. Kompetensi Mengajar
+                </button>
 
-          <button
-            onClick={() => setActiveSubTab('interview')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'interview'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Wawancara Awardee
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeSubTab === 'interview' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
-            }`}>
-              Instrumen 4
-            </span>
-          </button>
+                <button
+                  onClick={() => setActiveSubTab('observation')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'observation'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  3. Observasi Wilayah
+                </button>
 
-          <button
-            onClick={() => setActiveSubTab('instrument_interview')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'instrument_interview'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Pengaturan Instrumen Wawancara
-          </button>
+                <button
+                  onClick={() => setActiveSubTab('interview')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'interview'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  4. Wawancara Awardee
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setActiveSubTab('instrument_performance')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'instrument_performance'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Instrumen 1 (Performa)
+                </button>
+
+                <button
+                  onClick={() => setActiveSubTab('instrument_teaching')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'instrument_teaching'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Instrumen 2 (Mengajar)
+                </button>
+
+                <button
+                  onClick={() => setActiveSubTab('instrument_interview')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'instrument_interview'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Instrumen 4 (Wawancara)
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <button
@@ -610,10 +643,10 @@ export default function MonevHub({ darkMode }) {
             loadAwardees();
           }}
           disabled={loadingMentors || loadingObservations || loadingAwardees}
-          className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 cursor-pointer"
+          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 cursor-pointer shrink-0 ml-auto"
           title="Segarkan Data"
         >
-          <RefreshCw className={`w-4 h-4 ${(loadingMentors || loadingObservations || loadingAwardees) ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${(loadingMentors || loadingObservations || loadingAwardees) ? 'animate-spin' : ''}`} />
         </button>
       </div>
 

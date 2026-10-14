@@ -55,6 +55,7 @@ export async function POST(request) {
     itemScores = {},
     wellDoneNotes,
     improvementNotes,
+    evaluatedById,
   } = body;
 
   if (!mentorId) {
@@ -90,7 +91,7 @@ export async function POST(request) {
     wellDoneNotes: wellDoneNotes?.trim() || null,
     improvementNotes: improvementNotes?.trim() || null,
     itemScores,
-    evaluatedById: me.id,
+    evaluatedById: evaluatedById || me.id,
   };
 
   let saved;

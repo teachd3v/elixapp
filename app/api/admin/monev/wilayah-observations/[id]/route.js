@@ -55,6 +55,7 @@ export async function PUT(request, { params }) {
     programRealization,
     mentorPerformanceSummary,
     findings,
+    evaluatedById,
   } = body;
 
   try {
@@ -68,6 +69,7 @@ export async function PUT(request, { params }) {
     if (observationDate !== undefined) dataToUpdate.observationDate = new Date(observationDate);
     if (programRealization !== undefined) dataToUpdate.programRealization = programRealization.trim();
     if (mentorPerformanceSummary !== undefined) dataToUpdate.mentorPerformanceSummary = mentorPerformanceSummary.trim();
+    if (evaluatedById !== undefined && evaluatedById) dataToUpdate.evaluatedById = evaluatedById;
     if (findings !== undefined && Array.isArray(findings)) {
       dataToUpdate.findings = findings.map((f, idx) => ({
         id: f.id || `finding-${idx + 1}-${Date.now()}`,

@@ -59,6 +59,7 @@ export async function POST(request) {
     programRealization,
     mentorPerformanceSummary,
     findings,
+    evaluatedById,
   } = body;
 
   if (!wilayahId) {
@@ -93,7 +94,7 @@ export async function POST(request) {
         programRealization: programRealization.trim(),
         mentorPerformanceSummary: mentorPerformanceSummary.trim(),
         findings: sanitizedFindings,
-        evaluatedById: me.id,
+        evaluatedById: evaluatedById || me.id,
       },
       include: {
         wilayah: {

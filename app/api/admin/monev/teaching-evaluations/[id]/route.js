@@ -48,6 +48,7 @@ export async function PUT(request, { params }) {
     strengthsNotes,
     improvementNotes,
     itemScores,
+    evaluatedById,
   } = body;
 
   try {
@@ -64,6 +65,7 @@ export async function PUT(request, { params }) {
         strengthsNotes: strengthsNotes !== undefined ? (strengthsNotes?.trim() || null) : undefined,
         improvementNotes: improvementNotes !== undefined ? (improvementNotes?.trim() || null) : undefined,
         itemScores: itemScores || undefined,
+        evaluatedById: evaluatedById || undefined,
       },
       include: {
         evaluatedBy: { select: { id: true, name: true, email: true } },

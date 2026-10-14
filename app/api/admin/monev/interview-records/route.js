@@ -60,6 +60,7 @@ export async function POST(request) {
     answers,
     generalSummary,
     actionPlan,
+    evaluatedById,
   } = body;
 
   if (!awardeeId) {
@@ -81,7 +82,7 @@ export async function POST(request) {
         answers,
         generalSummary: generalSummary?.trim() || null,
         actionPlan: actionPlan?.trim() || null,
-        evaluatedById: me.id,
+        evaluatedById: evaluatedById || me.id,
       },
       include: {
         awardee: {

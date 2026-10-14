@@ -38,28 +38,43 @@ export default function MentorTeachingEvaluator({
   
   const [strengthsNotes, setStrengthsNotes] = useState(initialEvaluation?.strengthsNotes || '');
   const [improvementNotes, setImprovementNotes] = useState(initialEvaluation?.improvementNotes || '');
+  const [observers, setObservers] = useState([]);
+  const [evaluatedById, setEvaluatedById] = useState(initialEvaluation?.evaluatedById || '');
 
-  // Load master aspects & indicators
+  // Load master aspects, indicators & observers
   useEffect(() => {
     let isMounted = true;
-    async function fetchAspects() {
+    async function fetchData() {
       setLoadingAspects(true);
       try {
-        const res = await fetch('/api/admin/monev/teaching-plans');
-        if (!res.ok) throw new Error('Gagal memuat master instrumen');
-        const data = await res.json();
-        if (isMounted) setAspects(data || []);
+        const [aspectsRes, obsRes] = await Promise.all([
+          fetch('/api/admin/monev/teaching-plans'),
+          fetch('/api/admin/monev/observers'),
+        ]);
+        if (aspectsRes.ok) {
+          const data = await aspectsRes.json();
+          if (isMounted) setAspects(data || []);
+        }
+        if (obsRes.ok) {
+          const obsData = await obsRes.json();
+          if (isMounted) {
+            setObservers(obsData.observers || []);
+            if (!initialEvaluation?.evaluatedById && obsData.currentObserverId) {
+              setEvaluatedById(obsData.currentObserverId);
+            }
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
         if (isMounted) setLoadingAspects(false);
       }
     }
-    fetchAspects();
+    fetchData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialEvaluation]);
 
   // Compute live scores
   const scoreMetrics = useMemo(() => {
@@ -146,6 +161,7 @@ export default function MentorTeachingEvaluator({
         strengthsNotes: strengthsNotes.trim() || null,
         improvementNotes: improvementNotes.trim() || null,
         itemScores,
+        evaluatedById: evaluatedById || undefined,
       };
 
       const url = evaluationId
@@ -255,7 +271,7 @@ export default function MentorTeachingEvaluator({
         <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">
           Informasi Sesi & Observasi
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1.5">
               Periode / Siklus Penilaian
@@ -285,15 +301,33 @@ export default function MentorTeachingEvaluator({
 
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1.5">
-              Topik / Judul Sesi Pembinaan (Opsional)
+              Topik Sesi Mengajar (Opsional)
             </label>
             <input
               type="text"
               value={sessionTopic}
               onChange={(e) => setSessionTopic(e.target.value)}
-              placeholder="Contoh: Pembinaan Klasikal: Leadership Ethics"
+              placeholder="Contoh: Pembinaan Klasikal"
               className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-medium border outline-none ${inputClass}`}
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">
+              Penilai / Observer (Superadmin)
+            </label>
+            <select
+              value={evaluatedById}
+              onChange={(e) => setEvaluatedById(e.target.value)}
+              className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-bold border outline-none cursor-pointer ${inputClass}`}
+            >
+              {observers.length === 0 && <option value="">Memuat observer...</option>}
+              {observers.map((obs) => (
+                <option key={obs.id} value={obs.id}>
+                  {obs.name} ({obs.email})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

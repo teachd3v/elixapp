@@ -31,28 +31,43 @@ export default function MentorPerformanceEvaluator({
   const [wellDoneNotes, setWellDoneNotes] = useState(initialEvaluation?.wellDoneNotes || '');
   const [improvementNotes, setImprovementNotes] = useState(initialEvaluation?.improvementNotes || '');
   const [showRubricInfo, setShowRubricInfo] = useState(true);
+  const [observers, setObservers] = useState([]);
+  const [evaluatedById, setEvaluatedById] = useState(initialEvaluation?.evaluatedById || '');
 
-  // Load master plans & targets
+  // Load master plans, targets & observers
   useEffect(() => {
     let isMounted = true;
-    async function fetchPlans() {
+    async function fetchData() {
       setLoadingPlans(true);
       try {
-        const res = await fetch('/api/admin/monev/performance-plans');
-        if (!res.ok) throw new Error('Gagal memuat rencana instrumen');
-        const data = await res.json();
-        if (isMounted) setPlans(data || []);
+        const [plansRes, obsRes] = await Promise.all([
+          fetch('/api/admin/monev/performance-plans'),
+          fetch('/api/admin/monev/observers'),
+        ]);
+        if (plansRes.ok) {
+          const data = await plansRes.json();
+          if (isMounted) setPlans(data || []);
+        }
+        if (obsRes.ok) {
+          const obsData = await obsRes.json();
+          if (isMounted) {
+            setObservers(obsData.observers || []);
+            if (!initialEvaluation?.evaluatedById && obsData.currentObserverId) {
+              setEvaluatedById(obsData.currentObserverId);
+            }
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
         if (isMounted) setLoadingPlans(false);
       }
     }
-    fetchPlans();
+    fetchData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialEvaluation]);
 
   // Flatten all targets across plans for score calculations
   const allTargets = useMemo(() => {
@@ -150,6 +165,7 @@ export default function MentorPerformanceEvaluator({
         itemScores,
         wellDoneNotes: wellDoneNotes.trim(),
         improvementNotes: improvementNotes.trim(),
+        evaluatedById: evaluatedById || undefined,
       };
 
       const res = await fetch('/api/admin/monev/performance-evaluations', {
@@ -253,9 +269,9 @@ export default function MentorPerformanceEvaluator({
           </div>
         </div>
 
-        {/* Input Periode & Tahun Penilaian */}
-        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="sm:col-span-2">
+        {/* Input Periode, Tahun Penilaian & Penilai Observer */}
+        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
             <label className="text-xs font-bold text-slate-400 block mb-1.5 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-amber-500" />
               Periode Penilaian (Rentang Bulan) <span className="text-rose-500">*</span>
@@ -305,6 +321,25 @@ export default function MentorPerformanceEvaluator({
               onChange={(e) => setEvaluationYear(e.target.value)}
               className={`w-full p-2.5 rounded-xl text-xs font-black font-mono border outline-none ${inputClass}`}
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-400 block mb-1.5 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-amber-500" />
+              Penilai / Observer (Superadmin) <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={evaluatedById}
+              onChange={(e) => setEvaluatedById(e.target.value)}
+              className={`w-full p-2.5 rounded-xl text-xs font-semibold border outline-none cursor-pointer ${inputClass}`}
+            >
+              {observers.length === 0 && <option value="">Memuat observer...</option>}
+              {observers.map((obs) => (
+                <option key={obs.id} value={obs.id}>
+                  {obs.name} ({obs.email})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

@@ -94,9 +94,6 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   if (activeTab === 'pengumuman') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
         <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />
       </div>
     );
@@ -107,9 +104,6 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   if (activeTab === 'sessions') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <button onClick={() => setActiveTab('dashboard')} className="flex items-center mb-2 text-slate-400 hover:text-slate-600">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
         <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate awardees={data?.awardees || []} />
       </div>
     );

@@ -52,6 +52,7 @@ export async function POST(request) {
     strengthsNotes,
     improvementNotes,
     itemScores,
+    evaluatedById,
   } = body;
 
   if (!mentorId) {
@@ -78,7 +79,7 @@ export async function POST(request) {
         strengthsNotes: strengthsNotes?.trim() || null,
         improvementNotes: improvementNotes?.trim() || null,
         itemScores,
-        evaluatedById: me.id,
+        evaluatedById: evaluatedById || me.id,
       },
       include: {
         evaluatedBy: { select: { id: true, name: true, email: true } },

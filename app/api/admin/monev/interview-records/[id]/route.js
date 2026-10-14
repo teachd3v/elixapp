@@ -52,6 +52,7 @@ export async function PUT(request, { params }) {
     answers,
     generalSummary,
     actionPlan,
+    evaluatedById,
   } = body;
 
   try {
@@ -66,6 +67,7 @@ export async function PUT(request, { params }) {
     if (answers !== undefined) dataToUpdate.answers = answers;
     if (generalSummary !== undefined) dataToUpdate.generalSummary = generalSummary?.trim() || null;
     if (actionPlan !== undefined) dataToUpdate.actionPlan = actionPlan?.trim() || null;
+    if (evaluatedById !== undefined && evaluatedById) dataToUpdate.evaluatedById = evaluatedById;
 
     const updated = await prisma.awardeeInterviewRecord.update({
       where: { id },

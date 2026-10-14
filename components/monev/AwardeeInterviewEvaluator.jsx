@@ -68,23 +68,42 @@ export default function AwardeeInterviewEvaluator({
 
   // Active aspect tab for easy navigation
   const [activeAspectId, setActiveAspectId] = useState('ALL');
+  const [observers, setObservers] = useState([]);
+  const [evaluatedById, setEvaluatedById] = useState(initialRecord?.evaluatedById || '');
 
   useEffect(() => {
-    async function fetchQuestions() {
+    let isMounted = true;
+    async function fetchData() {
       setLoadingAspects(true);
       try {
-        const res = await fetch('/api/admin/monev/interview-questions');
-        if (!res.ok) throw new Error('Gagal memuat pertanyaan wawancara');
-        const data = await res.json();
-        setAspects(data || []);
+        const [questionsRes, obsRes] = await Promise.all([
+          fetch('/api/admin/monev/interview-questions'),
+          fetch('/api/admin/monev/observers'),
+        ]);
+        if (questionsRes.ok) {
+          const data = await questionsRes.json();
+          if (isMounted) setAspects(data || []);
+        }
+        if (obsRes.ok) {
+          const obsData = await obsRes.json();
+          if (isMounted) {
+            setObservers(obsData.observers || []);
+            if (!initialRecord?.evaluatedById && obsData.currentObserverId) {
+              setEvaluatedById(obsData.currentObserverId);
+            }
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
-        setLoadingAspects(false);
+        if (isMounted) setLoadingAspects(false);
       }
     }
-    fetchQuestions();
-  }, []);
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [initialRecord]);
 
   // Update answer for a specific question
   const handleUpdateAnswer = (questionId, field, value) => {
@@ -148,6 +167,7 @@ export default function AwardeeInterviewEvaluator({
         answers: formattedAnswers,
         generalSummary: generalSummary.trim() || null,
         actionPlan: actionPlan.trim() || null,
+        evaluatedById: evaluatedById || undefined,
       };
 
       const url = initialRecord?.id
@@ -281,8 +301,8 @@ export default function AwardeeInterviewEvaluator({
           </div>
         </div>
 
-        {/* METADATA FORM: PERIODE & TANGGAL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+        {/* METADATA FORM: PERIODE, TANGGAL & PENILAI */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
           <div>
             <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
               Periode Wawancara <span className="text-rose-500">*</span>
@@ -306,6 +326,24 @@ export default function AwardeeInterviewEvaluator({
               onChange={(e) => setInterviewDate(e.target.value)}
               className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+              Penilai / Observer (Superadmin) <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={evaluatedById}
+              onChange={(e) => setEvaluatedById(e.target.value)}
+              className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+            >
+              {observers.length === 0 && <option value="">Memuat observer...</option>}
+              {observers.map((obs) => (
+                <option key={obs.id} value={obs.id}>
+                  {obs.name} ({obs.email})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
