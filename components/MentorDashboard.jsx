@@ -12,6 +12,7 @@ import MentorAssessment from './MentorAssessment';
 import SessionsManager from './SessionsManager';
 import AnnouncementsManager from './AnnouncementsManager';
 import MentorJournalManager from './MentorJournalManager';
+import MentorMonevView from './monev/MentorMonevView';
 import { blendedScore, toElixIndex } from '../lib/assessment';
 import MentorPDF from './pdf/MentorPDF';
 import PDFDownloadButton from './pdf/PDFDownloadButton';
@@ -86,6 +87,9 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   }
   if (activeTab === 'journal') {
     return <MentorJournalManager darkMode={darkMode} dbUser={dbUser} />;
+  }
+  if (activeTab === 'monev') {
+    return <MentorMonevView darkMode={darkMode} dbUser={dbUser} />;
   }
   if (activeTab === 'pengumuman') {
     return (

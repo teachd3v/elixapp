@@ -10,6 +10,7 @@ import RealProfile from './RealProfile';
 import SelfAssessment from './SelfAssessment';
 import SessionsManager from './SessionsManager';
 import PortfolioManager from './PortfolioManager';
+import AwardeeMonevView from './monev/AwardeeMonevView';
 import { toElixIndex, elixCategory, blendedScore } from '../lib/assessment';
 import AwardeePDF from './pdf/AwardeePDF';
 import PDFDownloadButton from './pdf/PDFDownloadButton';
@@ -74,6 +75,9 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
   }
   if (activeTab === 'portfolio') {
     return <PortfolioManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate />;
+  }
+  if (activeTab === 'monev') {
+    return <AwardeeMonevView darkMode={darkMode} dbUser={dbUser} />;
   }
 
   // ---------- dashboard tab ----------

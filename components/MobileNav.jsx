@@ -10,12 +10,14 @@ const MENU_CONFIG = {
     { id: 'assessment', label: 'SA', icon: BookOpen },
     { id: 'attendance', label: 'Absen', icon: ClipboardCheck },
     { id: 'portfolio', label: 'Karya', icon: FolderHeart },
+    { id: 'monev', label: 'Monev', icon: Award },
     { id: 'profile', label: 'Profil', icon: User },
   ],
   mentor: [
     { id: 'dashboard', label: 'Home', icon: Compass },
     { id: 'assessment', label: 'MA', icon: UserCheck },
     { id: 'journal', label: 'Jurnal', icon: BookOpen },
+    { id: 'monev', label: 'Monev', icon: Award },
     { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   superadmin: [

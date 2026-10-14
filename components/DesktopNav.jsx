@@ -9,8 +9,9 @@ const MENU_CONFIG = {
     { id: 'dashboard', label: 'Dashboard ELIX', icon: Compass },
     { id: 'assessment', label: 'Self Assessment (SA)', icon: BookOpen },
     { id: 'attendance', label: 'Sesi & Absensi', icon: ClipboardCheck },
-    { id: 'profile', label: 'Profil Saya', icon: UserCheck },
     { id: 'portfolio', label: 'Portofolio', icon: FolderHeart },
+    { id: 'monev', label: 'Hasil Monev', icon: Award },
+    { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   mentor: [
     { id: 'dashboard', label: 'Dashboard Wilayah', icon: Compass },
@@ -19,6 +20,7 @@ const MENU_CONFIG = {
     { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck },
     { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone },
     { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3 },
+    { id: 'monev', label: 'Hasil Monev', icon: Award },
     { id: 'profile', label: 'Profil Saya', icon: UserCheck },
   ],
   superadmin: [
