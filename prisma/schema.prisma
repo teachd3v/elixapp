@@ -47,6 +47,7 @@ model User {
   mentorEvaluationsCreated MentorPerformanceEvaluation[] @relation("EvaluatedByAdmin")
   teachingEvaluationsCreated MentorTeachingEvaluation[] @relation("TeachingEvaluatedByAdmin")
   wilayahObservationsCreated WilayahMonevObservation[] @relation("WilayahObservationObserver")
+  awardeeInterviewsEvaluated AwardeeInterviewRecord[] @relation("AwardeeInterviewEvaluator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,6 +99,9 @@ model AwardeeProfile {
   
   // Riwayat Penilaian per Periode
   assessmentRecords AssessmentRecord[]
+
+  // Riwayat Wawancara Indepth
+  interviewRecords AwardeeInterviewRecord[]
 }
 
 // Profil Khusus Mentor
@@ -556,6 +560,64 @@ model WilayahMonevObservation {
 
   @@index([wilayahId])
   @@index([observationDate])
+}
+
+// ==========================================
+// INSTRUMEN 4: INDEPTH INTERVIEW AWARDEE
+// ==========================================
+
+model AwardeeInterviewAspect {
+  id          String                     @id @default(uuid())
+  name        String                     // e.g. "Academic Readiness", "Islamic Character", dll.
+  description String?
+  order       Int                        @default(0) // Nomor urut aspek
+
+  questions   AwardeeInterviewQuestion[]
+
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+}
+
+model AwardeeInterviewQuestion {
+  id          String                 @id @default(uuid())
+  aspectId    String
+  aspect      AwardeeInterviewAspect @relation(fields: [aspectId], references: [id], onDelete: Cascade)
+
+  question    String                 // Teks butir pertanyaan
+  guideNotes  String?                // Panduan observer/pewawancara (opsional)
+  order       Int                    @default(0) // Nomor urut pertanyaan
+
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([aspectId])
+}
+
+model AwardeeInterviewRecord {
+  id             String         @id @default(uuid())
+
+  awardeeId      String
+  awardee        AwardeeProfile @relation(fields: [awardeeId], references: [id], onDelete: Cascade)
+
+  periodName     String         // e.g. "Semester 1 - 2026"
+  interviewDate  DateTime       @default(now())
+
+  // Hasil Jawaban per Pertanyaan:
+  // Array of: [{ questionId, aspectName, question, answer, notes }]
+  answers        Json           @default("[]")
+
+  // Catatan Kesimpulan & Rencana Aksi
+  generalSummary String?        @db.Text // Kesimpulan umum hasil interview
+  actionPlan     String?        @db.Text // Rencana aksi / rekomendasi pengembangan diri awardee
+
+  evaluatedById  String
+  evaluatedBy    User           @relation("AwardeeInterviewEvaluator", fields: [evaluatedById], references: [id])
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([awardeeId])
+  @@index([interviewDate])
 }
 
 

@@ -4,7 +4,8 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   Award, SlidersHorizontal, BookOpen, Compass, Search, Filter,
   Building2, CheckCircle2, Clock, ChevronRight, UserCheck, Plus,
-  TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText
+  TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText, MessageSquare,
+  GraduationCap
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
@@ -12,13 +13,16 @@ import MonevTeachingInstrumentManager from './MonevTeachingInstrumentManager';
 import MentorTeachingEvaluator from './MentorTeachingEvaluator';
 import WilayahObservationEvaluator from './WilayahObservationEvaluator';
 import WilayahObservationDetailModal from './WilayahObservationDetailModal';
+import MonevInterviewInstrumentManager from './MonevInterviewInstrumentManager';
+import AwardeeInterviewEvaluator from './AwardeeInterviewEvaluator';
+import AwardeeInterviewDetailModal from './AwardeeInterviewDetailModal';
 import { useDialog } from '../DialogProvider';
 import { getPerformanceCategory, getTeachingCategory } from '../../lib/monev';
 
 export default function MonevHub({ darkMode }) {
   const { confirm, alert } = useDialog();
 
-  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation'
+  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation' | 'interview' | 'instrument_interview'
   const [mentors, setMentors] = useState([]);
   const [loadingMentors, setLoadingMentors] = useState(true);
 
@@ -45,6 +49,17 @@ export default function MonevHub({ darkMode }) {
   const [detailObservation, setDetailObservation] = useState(null);
   const [observationSearchQuery, setObservationSearchQuery] = useState('');
   const [observationWilayahFilter, setObservationWilayahFilter] = useState('ALL');
+
+  // Evaluator View State (Instrumen 4: Indepth Interview Awardee)
+  const [awardees, setAwardees] = useState([]);
+  const [loadingAwardees, setLoadingAwardees] = useState(false);
+  const [evaluatingAwardee, setEvaluatingAwardee] = useState(null);
+  const [selectedInterviewRecord, setSelectedInterviewRecord] = useState(null);
+  const [detailInterviewRecord, setDetailInterviewRecord] = useState(null);
+  const [historyAwardee, setHistoryAwardee] = useState(null);
+  const [awardeeSearchQuery, setAwardeeSearchQuery] = useState('');
+  const [awardeeWilayahFilter, setAwardeeWilayahFilter] = useState('ALL');
+  const [awardeeInterviewStatusFilter, setAwardeeInterviewStatusFilter] = useState('ALL');
 
   const loadMentors = async () => {
     setLoadingMentors(true);
@@ -87,15 +102,36 @@ export default function MonevHub({ darkMode }) {
     }
   };
 
+  const loadAwardees = async () => {
+    setLoadingAwardees(true);
+    try {
+      const res = await fetch('/api/admin/monev/awardees');
+      if (res.ok) {
+        const data = await res.json();
+        setAwardees(data || []);
+      }
+    } catch (err) {
+      console.error('Gagal memuat awardee untuk monev:', err);
+    } finally {
+      setLoadingAwardees(false);
+    }
+  };
+
   useEffect(() => {
     loadMentors();
     loadWilayahList();
     loadObservations();
+    loadAwardees();
   }, []);
 
   useEffect(() => {
     if (activeSubTab === 'observation') {
       loadObservations();
+      if (wilayahList.length === 0) {
+        loadWilayahList();
+      }
+    } else if (activeSubTab === 'interview') {
+      loadAwardees();
       if (wilayahList.length === 0) {
         loadWilayahList();
       }
@@ -301,6 +337,81 @@ export default function MonevHub({ darkMode }) {
     });
   }, [observations, observationWilayahFilter, observationSearchQuery]);
 
+  // Delete Interview Record Handler
+  const handleDeleteInterviewRecord = async (recordId) => {
+    const ok = await confirm(
+      'Apakah kamu yakin ingin menghapus catatan wawancara indepth awardee ini?',
+      'Hapus Wawancara'
+    );
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/admin/monev/interview-records/${recordId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Gagal menghapus catatan wawancara');
+
+      await loadAwardees();
+      if (historyAwardee) {
+        setHistoryAwardee((prev) => ({
+          ...prev,
+          interviewRecords: (prev.interviewRecords || []).filter((r) => r.id !== recordId),
+        }));
+      }
+      if (detailInterviewRecord?.id === recordId) {
+        setDetailInterviewRecord(null);
+      }
+      await alert('Catatan wawancara berhasil dihapus.', 'Berhasil', 'success');
+    } catch (err) {
+      await alert(err.message || 'Error saat menghapus', 'Error', 'error');
+    }
+  };
+
+  // Interview Stats calculation
+  const interviewStats = useMemo(() => {
+    const total = awardees.length;
+    let interviewed = 0;
+    let totalInterviewsCount = 0;
+
+    for (const a of awardees) {
+      const count = (a.interviewRecords || []).length;
+      if (count > 0) {
+        interviewed++;
+        totalInterviewsCount += count;
+      }
+    }
+
+    return {
+      total,
+      interviewed,
+      unInterviewed: total - interviewed,
+      totalInterviewsCount,
+    };
+  }, [awardees]);
+
+  // Filtered awardees for interview tab
+  const filteredAwardees = useMemo(() => {
+    return awardees.filter((a) => {
+      const matchWilayah =
+        awardeeWilayahFilter === 'ALL' || a.wilayahId === awardeeWilayahFilter;
+      if (!matchWilayah) return false;
+
+      const hasInterviews = (a.interviewRecords || []).length > 0;
+      if (awardeeInterviewStatusFilter === 'INTERVIEWED' && !hasInterviews) return false;
+      if (awardeeInterviewStatusFilter === 'NOT_INTERVIEWED' && hasInterviews) return false;
+
+      if (!awardeeSearchQuery.trim()) return true;
+      const q = awardeeSearchQuery.toLowerCase();
+      const name = a.user?.name?.toLowerCase() || '';
+      const email = a.user?.email?.toLowerCase() || '';
+      const univ = a.university?.toLowerCase() || '';
+      const major = a.major?.toLowerCase() || '';
+      const wName = a.wilayah?.name?.toLowerCase() || '';
+
+      return name.includes(q) || email.includes(q) || univ.includes(q) || major.includes(q) || wName.includes(q);
+    });
+  }, [awardees, awardeeWilayahFilter, awardeeInterviewStatusFilter, awardeeSearchQuery]);
+
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
   const inputClass = darkMode
     ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500'
@@ -360,6 +471,26 @@ export default function MonevHub({ darkMode }) {
           setCreatingObservation(false);
           setEditingObservation(null);
           loadObservations();
+        }}
+        darkMode={darkMode}
+      />
+    );
+  }
+
+  // If currently conducting interview with an awardee
+  if (evaluatingAwardee) {
+    return (
+      <AwardeeInterviewEvaluator
+        awardee={evaluatingAwardee}
+        initialRecord={selectedInterviewRecord}
+        onBack={() => {
+          setEvaluatingAwardee(null);
+          setSelectedInterviewRecord(null);
+        }}
+        onSaved={() => {
+          loadAwardees();
+          setEvaluatingAwardee(null);
+          setSelectedInterviewRecord(null);
         }}
         darkMode={darkMode}
       />
@@ -429,14 +560,45 @@ export default function MonevHub({ darkMode }) {
             className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
               activeSubTab === 'observation'
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <Compass className="w-4 h-4" />
             Observasi Wilayah
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              activeSubTab === 'observation' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
               Instrumen 3
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('interview')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'interview'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Wawancara Awardee
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              activeSubTab === 'interview' ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
+              Instrumen 4
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('instrument_interview')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'instrument_interview'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Pengaturan Instrumen Wawancara
           </button>
         </div>
 
@@ -445,12 +607,13 @@ export default function MonevHub({ darkMode }) {
             loadMentors();
             loadObservations();
             loadWilayahList();
+            loadAwardees();
           }}
-          disabled={loadingMentors || loadingObservations}
+          disabled={loadingMentors || loadingObservations || loadingAwardees}
           className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 cursor-pointer"
           title="Segarkan Data"
         >
-          <RefreshCw className={`w-4 h-4 ${(loadingMentors || loadingObservations) ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${(loadingMentors || loadingObservations || loadingAwardees) ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -1112,6 +1275,242 @@ export default function MonevHub({ darkMode }) {
         </div>
       )}
 
+      {/* SUB-TAB 6: INSTRUMEN 4 (INDEPTH INTERVIEW AWARDEE) */}
+      {activeSubTab === 'interview' && (
+        <div className="space-y-6">
+          {/* STATS OVERVIEW CARDS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Total Awardee</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black">{interviewStats.total}</span>
+                <span className="text-xs text-slate-400 font-semibold">Mahasiswa</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Sudah Diwawancara</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-emerald-500">
+                  {interviewStats.interviewed}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">Awardee</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diwawancara</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-amber-500">
+                  {interviewStats.unInterviewed}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">Awardee</span>
+              </div>
+            </div>
+
+            <div className={`border rounded-3xl p-5 ${card}`}>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Total Sesi Wawancara</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-indigo-500">
+                  {interviewStats.totalInterviewsCount}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">Lembar</span>
+              </div>
+            </div>
+          </div>
+
+          {/* FILTER & SEARCH BAR */}
+          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-4`}>
+            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari nama awardee, universitas, jurusan, atau wilayah..."
+                  value={awardeeSearchQuery}
+                  onChange={(e) => setAwardeeSearchQuery(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
+                />
+              </div>
+
+              {/* Filter Wilayah */}
+              <div className="relative w-44 shrink-0 hidden sm:block">
+                <select
+                  value={awardeeWilayahFilter}
+                  onChange={(e) => setAwardeeWilayahFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Wilayah</option>
+                  {wilayahList.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter Status */}
+              <div className="relative w-44 shrink-0 hidden md:block">
+                <select
+                  value={awardeeInterviewStatusFilter}
+                  onChange={(e) => setAwardeeInterviewStatusFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Status</option>
+                  <option value="INTERVIEWED">Sudah Diwawancara</option>
+                  <option value="NOT_INTERVIEWED">Belum Diwawancara</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveSubTab('instrument_interview')}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-emerald-500" />
+              Kelola Instrumen Pertanyaan
+            </button>
+          </div>
+
+          {/* AWARDEE CARDS GRID */}
+          {loadingAwardees ? (
+            <div className={`p-12 text-center border rounded-3xl ${card}`}>
+              <RefreshCw className="w-6 h-6 animate-spin text-emerald-500 mx-auto mb-2" />
+              <p className="text-xs text-slate-400 font-semibold">Memuat daftar awardee...</p>
+            </div>
+          ) : filteredAwardees.length === 0 ? (
+            <div className={`p-12 text-center border rounded-3xl ${card} space-y-3`}>
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
+                <MessageSquare className="w-7 h-7" />
+              </div>
+              <h3 className="text-sm font-black text-slate-700 dark:text-slate-200">
+                Tidak Ada Data Awardee
+              </h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                {awardeeSearchQuery || awardeeWilayahFilter !== 'ALL' || awardeeInterviewStatusFilter !== 'ALL'
+                  ? 'Tidak ada awardee yang cocok dengan filter yang dipilih.'
+                  : 'Belum ada data awardee terdaftar pada sistem.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredAwardees.map((a) => {
+                const records = a.interviewRecords || [];
+                const hasInterviewed = records.length > 0;
+                const latestRecord = records[0];
+                const latestDate = latestRecord?.interviewDate
+                  ? new Date(latestRecord.interviewDate).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })
+                  : null;
+
+                return (
+                  <div
+                    key={a.id}
+                    className={`border rounded-3xl p-5 ${card} hover:border-emerald-500/30 transition-all flex flex-col justify-between shadow-sm space-y-4`}
+                  >
+                    <div>
+                      {/* Awardee Identity */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              a.user?.avatarUrl ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                a.user?.name || 'Awardee'
+                              )}&background=random`
+                            }
+                            alt="Avatar"
+                            className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                          />
+                          <div>
+                            <h3 className="font-black text-sm text-slate-900 dark:text-white leading-tight">
+                              {a.user?.name || 'Awardee'}
+                            </h3>
+                            <p className="text-xs text-slate-400 truncate max-w-[170px]">
+                              {a.user?.email || '—'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                          {a.wilayah?.name || '—'}
+                        </span>
+                      </div>
+
+                      {/* University & Major info */}
+                      <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5 mb-3">
+                        <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                          {a.university || 'Belum mengisi universitas'}
+                        </p>
+                        <p className="text-[11px] truncate">
+                          {a.major ? `${a.major}` : ''}
+                          {a.generation ? ` · Angkatan ${a.generation}` : ''}
+                        </p>
+                      </div>
+
+                      {/* Status Wawancara Banner */}
+                      {hasInterviewed ? (
+                        <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 text-xs space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-black text-emerald-600 dark:text-emerald-400 text-[11px]">
+                              Sudah Diwawancara
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600">
+                              {records.length} Sesi
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400">
+                            Terakhir: {latestDate} ({latestRecord.periodName})
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-600/90 dark:text-amber-400/90 flex items-center gap-2">
+                          <Clock className="w-4 h-4 shrink-0" />
+                          <span className="text-[11px]">Belum pernah dilakukan indepth interview.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setEvaluatingAwardee(a);
+                          setSelectedInterviewRecord(null);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {hasInterviewed ? 'Wawancara Baru' : 'Wawancara Sekarang'}
+                      </button>
+
+                      {hasInterviewed && (
+                        <button
+                          onClick={() => setHistoryAwardee(a)}
+                          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+                          title="Lihat Riwayat Wawancara"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUB-TAB 7: PENGATURAN INSTRUMEN WAWANCARA */}
+      {activeSubTab === 'instrument_interview' && (
+        <MonevInterviewInstrumentManager darkMode={darkMode} />
+      )}
+
       {/* MODAL RIWAYAT PENILAIAN MENTOR */}
       {historyMentor && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto">
@@ -1317,6 +1716,137 @@ export default function MonevHub({ darkMode }) {
           onEdit={(obs) => {
             setDetailObservation(null);
             setEditingObservation(obs);
+          }}
+          darkMode={darkMode}
+        />
+      )}
+
+      {/* MODAL RIWAYAT WAWANCARA AWARDEE */}
+      {historyAwardee && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className={`w-full max-w-2xl border rounded-3xl p-6 shadow-2xl my-8 ${card}`}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <img
+                  src={
+                    historyAwardee.user?.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      historyAwardee.user?.name || 'Awardee'
+                    )}&background=random`
+                  }
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-2xl object-cover"
+                />
+                <div>
+                  <h3 className="font-black text-sm">Riwayat Wawancara Indepth</h3>
+                  <p className="text-xs text-slate-400">
+                    {historyAwardee.user?.name} · Wilayah {historyAwardee.wilayah?.name}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setHistoryAwardee(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {(historyAwardee.interviewRecords || []).length === 0 ? (
+                <p className="p-8 text-center text-xs text-slate-400 italic">
+                  Belum ada riwayat wawancara tersimpan.
+                </p>
+              ) : (
+                historyAwardee.interviewRecords.map((rec) => {
+                  const recDate = rec.interviewDate
+                    ? new Date(rec.interviewDate).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : '—';
+
+                  return (
+                    <div
+                      key={rec.id}
+                      className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-black text-xs">{rec.periodName}</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black border bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                            {recDate}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Pewawancara: {rec.evaluatedBy?.name || 'Admin'}
+                        </p>
+                        {rec.generalSummary && (
+                          <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1 mt-1 font-medium">
+                            {rec.generalSummary}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => {
+                            setDetailInterviewRecord(rec);
+                            setHistoryAwardee(null);
+                          }}
+                          className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white transition-colors cursor-pointer"
+                          title="Lihat Dossier Lengkap"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEvaluatingAwardee(historyAwardee);
+                            setSelectedInterviewRecord(rec);
+                            setHistoryAwardee(null);
+                          }}
+                          className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                          title="Buka / Edit Wawancara"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteInterviewRecord(rec.id)}
+                          className="p-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                          title="Hapus Wawancara"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setHistoryAwardee(null)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DOSSIER WAWANCARA AWARDEE */}
+      {detailInterviewRecord && (
+        <AwardeeInterviewDetailModal
+          record={detailInterviewRecord}
+          onClose={() => setDetailInterviewRecord(null)}
+          onEdit={(rec) => {
+            setDetailInterviewRecord(null);
+            setEvaluatingAwardee(rec.awardee || historyAwardee);
+            setSelectedInterviewRecord(rec);
           }}
           darkMode={darkMode}
         />
