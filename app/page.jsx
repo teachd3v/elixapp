@@ -338,14 +338,29 @@ return (
     <div className={`min-h-screen ${currentTheme} flex flex-col transition-colors duration-300 pb-24 md:pb-0`}>
       {/* Floating Header / Navbar */}
       <header className="w-full max-w-7xl mx-auto px-4 pt-4 sticky top-0 z-50 transition-all duration-300">
-        <div className={`border rounded-full px-6 py-3.5 flex items-center justify-between backdrop-blur-lg shadow-xl shadow-slate-950/5 transition-all ${
+        <div className={`border rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between backdrop-blur-lg shadow-xl shadow-slate-950/5 transition-all gap-3 ${
           darkMode ? 'border-slate-800/40 bg-slate-950/65' : 'bg-white/70'
         }`}>
-          <div className="flex items-center gap-3">
-            <img src="/logo-yes.png" alt="YES Logo" className="h-8 w-auto object-contain" />
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="flex items-center gap-3 cursor-pointer focus:outline-none"
+              title="Dashboard"
+            >
+              <img src="/logo-yes.png" alt="YES Logo" className="h-8 w-auto object-contain" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Integrated Desktop Nav in Center */}
+          {showNav && (
+            <DesktopNav
+              role={role}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          <div className="flex items-center gap-2.5 shrink-0">
             {/* Profile Avatar Quick info removed */}
 
             <NotificationsBell darkMode={darkMode} />
@@ -378,15 +393,6 @@ return (
           </div>
         ) : (
           <>
-        {/* Navigation Tabs */}
-            {showNav && (
-            <DesktopNav
-              role={role}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
-            )}
-
         {/* ---------------- UNVERIFIED (PENDING APPROVAL) ---------------- */}
         {role === 'unverified' && <UnverifiedView darkMode={darkMode} />}
 
