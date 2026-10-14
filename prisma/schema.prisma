@@ -46,6 +46,7 @@ model User {
   // Evaluasi performa mentor yang dinilai oleh superadmin ini
   mentorEvaluationsCreated MentorPerformanceEvaluation[] @relation("EvaluatedByAdmin")
   teachingEvaluationsCreated MentorTeachingEvaluation[] @relation("TeachingEvaluatedByAdmin")
+  wilayahObservationsCreated WilayahMonevObservation[] @relation("WilayahObservationObserver")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -122,6 +123,7 @@ model Wilayah {
   mentorProfiles MentorProfile[]
   awardees       AwardeeProfile[]
   sessions       Session[]
+  monevObservations WilayahMonevObservation[]
 }
 
 // Cakupan sesi: WILAYAH (dibuat mentor untuk wilayahnya) atau NASIONAL (dibuat superadmin, semua wilayah).
@@ -523,6 +525,37 @@ model MentorTeachingEvaluation {
 
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+}
+
+// ==========================================
+// INSTRUMEN 3: LAPORAN OBSERVASI MONEV WILAYAH
+// ==========================================
+
+model WilayahMonevObservation {
+  id                       String        @id @default(uuid())
+  
+  wilayahId                String
+  wilayah                  Wilayah       @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
+
+  periodName               String        // e.g. "Semester 1 - 2026"
+  observationDate          DateTime      @default(now())
+
+  // Bagian A. Perkembangan Program
+  programRealization       String        @db.Text // Kesimpulan Pelaksanaan Program mengacu pada keseluruhan Instrumen Monev
+  mentorPerformanceSummary String        @db.Text // Kesimpulan Performa Mentor mengacu pada Instrumen Penilaian Mentor dan Mengajar Mentor
+
+  // Bagian B. Temuan Ketidakcapaian Target Program
+  // Array of: [{ id: string, finding: string, recommendation: string, dueDate: string }]
+  findings                 Json          @default("[]")
+
+  evaluatedById            String
+  evaluatedBy              User          @relation("WilayahObservationObserver", fields: [evaluatedById], references: [id])
+
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  @@index([wilayahId])
+  @@index([observationDate])
 }
 
 
