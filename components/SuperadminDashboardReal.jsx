@@ -5,7 +5,7 @@ import { ResponsiveContainer,
 } from 'recharts';
 import {
   Users, MapPin, UserCheck, CheckCircle2, BarChart3, Shield, Loader2, RotateCcw,
-  ChevronDown, ChevronUp, X, ChevronLeft, ClipboardCheck, Megaphone, SlidersHorizontal, ClipboardList
+  ChevronDown, ChevronUp, X, ChevronLeft, ClipboardCheck, Megaphone, SlidersHorizontal, ClipboardList, BookOpen
 } from 'lucide-react';
 import PendingApprovals from './PendingApprovals';
 import SessionsManager from './SessionsManager';
@@ -14,6 +14,7 @@ import ChangeRoleModal from './ChangeRoleModal';
 import { Edit, Trash2 } from 'lucide-react';
 import InstrumentEditor from './InstrumentEditor';
 import AssessmentMonitoring from './AssessmentMonitoring';
+import AdminJournalMonitoring from './admin/AdminJournalMonitoring';
 import MonevHub from './monev/MonevHub';
 import { useDialog } from './DialogProvider';
 import { blendedScore, toElixIndex } from '../lib/assessment';
@@ -248,6 +249,18 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
           darkMode={darkMode}
           onViewAwardee={(id) => window.location.href = `/awardee/${id}`}
         />
+      </div>
+    );
+  }
+
+  // ---------- MENTOR JOURNALS MONITORING TAB ----------
+  if (activeTab === 'journals') {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 mb-2 cursor-pointer">
+          <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
+        </button>
+        <AdminJournalMonitoring darkMode={darkMode} />
       </div>
     );
   }
@@ -719,9 +732,10 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
       </div>
 
       {/* Quick-access shortcut cards for hidden menu items */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { id: 'monitoring', label: 'Monitoring SA & MA', icon: ClipboardList, gradient: 'from-emerald-500 to-teal-600' },
+          { id: 'journals', label: 'Jurnal Mentor', icon: BookOpen, gradient: 'from-blue-600 to-indigo-600' },
           { id: 'attendance', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
           { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
           { id: 'instruments', label: 'Instrumen & Formula', icon: SlidersHorizontal, gradient: 'from-purple-500 to-violet-600' },

@@ -24,6 +24,7 @@ const MENU_CONFIG = {
   superadmin: [
     { id: 'dashboard', label: 'Dashboard Konsolidasi', icon: Compass },
     { id: 'monitoring', label: 'Monitoring SA & MA', icon: ClipboardList },
+    { id: 'journals', label: 'Jurnal Mentor', icon: BookOpen },
     { id: 'monev', label: 'Penilaian Monev', icon: Award },
     { id: 'users', label: 'Manajemen User', icon: Users },
     { id: 'attendance', label: 'Sesi & Presensi', icon: ClipboardCheck },
