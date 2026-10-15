@@ -744,61 +744,101 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
         {wilayahRollup.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-6">Belum ada wilayah.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {wilayahRollup.map((w) => {
               const isExpanded = expandedWilayah[w.id];
               const wAwardees = awardees.filter(a => a.wilayahId === w.id);
               const wMentors = mentors.filter(m => m.wilayahId === w.id);
 
               return (
-                <div key={w.id} className={`p-4 rounded-2xl border transition-colors ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                <div 
+                  key={w.id} 
+                  className={`p-4 rounded-2xl border transition-all ${
+                    darkMode 
+                      ? 'bg-slate-800/40 border-slate-800 hover:border-slate-700' 
+                      : 'bg-slate-50/80 border-slate-200/80 hover:border-slate-300 hover:shadow-sm'
+                  }`}
+                >
                   <div 
-                    className="flex items-center justify-between gap-3 mb-2 cursor-pointer group"
+                    className="flex items-center justify-between gap-2 mb-2.5 cursor-pointer group select-none"
                     onClick={() => toggleWilayah(w.id)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span className="font-bold text-sm truncate group-hover:text-blue-500 transition-colors">{w.name}</span>
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        darkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-blue-600'
+                      }`}>
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="font-bold text-sm truncate group-hover:text-blue-500 transition-colors" title={w.name}>
+                        {w.name}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-black">{w.avgElix == null ? '—' : w.avgElix.toFixed(0)}</span>
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-black px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        {w.avgElix == null ? '—' : w.avgElix.toFixed(0)}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap text-[10px] font-bold text-slate-500 mb-2">
-                    <span>Mentor: <span className="text-slate-700 dark:text-slate-300">{wMentors.length}/2</span></span>
-                    <span>·</span>
-                    <span>Awardee: <span className="text-slate-700 dark:text-slate-300">{w.awardeeCount}</span></span>
-                    <span>·</span>
-                    <span>SA: <span className="text-slate-700 dark:text-slate-300">{w.saFilled}</span></span>
-                    <span>·</span>
-                    <span>MA: <span className="text-slate-700 dark:text-slate-300">{w.maFilled}</span></span>
+
+                  <div className="grid grid-cols-2 gap-1.5 text-[10px] font-semibold text-slate-500 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                    <div className={`flex items-center justify-between px-2 py-1 rounded-lg ${darkMode ? 'bg-slate-900/60' : 'bg-white border border-slate-100'}`}>
+                      <span className="text-slate-400">Mentor</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{wMentors.length}/2</span>
+                    </div>
+                    <div className={`flex items-center justify-between px-2 py-1 rounded-lg ${darkMode ? 'bg-slate-900/60' : 'bg-white border border-slate-100'}`}>
+                      <span className="text-slate-400">Awardee</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{w.awardeeCount}</span>
+                    </div>
+                    <div className={`flex items-center justify-between px-2 py-1 rounded-lg ${darkMode ? 'bg-slate-900/60' : 'bg-white border border-slate-100'}`}>
+                      <span className="text-slate-400">SA</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{w.saFilled}</span>
+                    </div>
+                    <div className={`flex items-center justify-between px-2 py-1 rounded-lg ${darkMode ? 'bg-slate-900/60' : 'bg-white border border-slate-100'}`}>
+                      <span className="text-slate-400">MA</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{w.maFilled}</span>
+                    </div>
                   </div>
                   
                   {isExpanded && (
-                    <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <div className="mt-3 space-y-2 border-t border-slate-200 dark:border-slate-700 pt-3 max-h-80 overflow-y-auto pr-1">
+                       <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Mentor Wilayah</p>
                        {wMentors.map((wMentor, idx) => (
-                         <div key={wMentor.id || idx} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setViewingProfile(wMentor)}>
-                           <div className="flex items-center gap-3">
-                              <img src={wMentor.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(wMentor.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
-                              <div>
-                                 <p className="text-xs font-bold">{wMentor.user?.name}</p>
-                                 <p className="text-[10px] text-blue-500 font-bold">Mentor {wMentors.length > 1 ? `#${idx + 1}` : ''}</p>
+                         <div 
+                           key={wMentor.id || idx} 
+                           className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" 
+                           onClick={() => setViewingProfile(wMentor)}
+                         >
+                           <div className="flex items-center gap-2.5 min-w-0">
+                              <img src={wMentor.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(wMentor.user?.name || 'User')}&background=random`} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+                              <div className="min-w-0">
+                                 <p className="text-xs font-bold truncate">{wMentor.user?.name}</p>
+                                 <p className="text-[9px] text-blue-500 font-bold">Mentor {wMentors.length > 1 ? `#${idx + 1}` : ''}</p>
                               </div>
                            </div>
                          </div>
                        ))}
+
+                       <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 pt-2">Daftar Awardee ({wAwardees.length})</p>
                        {wAwardees.length > 0 ? (
                          wAwardees.map(a => (
-                           <div key={a.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" onClick={() => window.location.href = `/awardee/${a.id}`}>
-                             <div className="flex items-center gap-3">
-                                <img src={a.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full object-cover" />
-                                <div>
-                                   <p className="text-xs font-bold">{a.user?.name}</p>
-                                   <p className="text-[10px] text-slate-500">{a.university || a.school}</p>
+                           <div 
+                             key={a.id} 
+                             className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-blue-500 transition-colors" 
+                             onClick={() => window.location.href = `/awardee/${a.id}`}
+                           >
+                             <div className="flex items-center gap-2.5 min-w-0">
+                                <img src={a.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'User')}&background=random`} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+                                <div className="min-w-0">
+                                   <p className="text-xs font-bold truncate">{a.user?.name}</p>
+                                   <p className="text-[9px] text-slate-500 truncate">{a.school || a.university || 'Awardee'}</p>
                                 </div>
                              </div>
-                             <div className="text-right">
+                             <div className="text-right shrink-0 pl-1">
                                 <span className="text-xs font-black">{a.elix != null ? a.elix.toFixed(1) : '—'}</span>
                              </div>
                            </div>
