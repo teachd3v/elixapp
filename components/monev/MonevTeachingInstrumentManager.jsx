@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   BookOpen, Plus, Trash2, Edit3, UploadCloud, Download,
   CheckCircle2, AlertCircle, FileSpreadsheet, Layers,
-  ChevronDown, ChevronUp, Loader2, Sparkles, X, Check
+  ChevronDown, ChevronUp, Loader2, Sparkles, X, Check, FileUp
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useDialog } from '../DialogProvider';
@@ -278,13 +278,13 @@ export default function MonevTeachingInstrumentManager({ darkMode }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-2xl bg-blue-500/10 text-blue-500">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
-              </span>
+              </div>
               <h2 className="text-xl font-black">Pengaturan Instrumen Kompetensi Mengajar</h2>
             </div>
-            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Kelola master aspek, indikator, dan poin skor pengamatan kualitas mengajar mentor. Anda dapat memperbarui data menggunakan fitur Bulk Import Excel.
+            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+              Kelola master aspek, indikator, dan poin skor pengamatan kualitas mengajar mentor melalui fitur Bulk Import Excel.
             </p>
           </div>
 
@@ -295,9 +295,10 @@ export default function MonevTeachingInstrumentManager({ darkMode }) {
                 setParsedResult(null);
                 setImportModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-2xl text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+              title="Unggah dan impor file spreadsheet Excel"
             >
-              <UploadCloud className="w-4 h-4" />
+              <FileUp className="w-4 h-4" />
               Bulk Import Excel
             </button>
           </div>
@@ -338,24 +339,26 @@ export default function MonevTeachingInstrumentManager({ darkMode }) {
           <p className="text-xs font-bold text-slate-400">Memuat master instrumen kompetensi mengajar...</p>
         </div>
       ) : aspects.length === 0 ? (
-        <div className={`border rounded-3xl p-16 text-center space-y-4 ${card}`}>
-          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto">
-            <FileSpreadsheet className="w-8 h-8" />
+        <div className={`border rounded-3xl p-12 text-center space-y-4 ${card}`}>
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+            <Layers className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold">Instrumen Masih Kosong</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Belum ada aspek kompetensi mengajar yang terdaftar. Silakan unggah file template melalui tombol Bulk Import Excel.
+          <h3 className="text-base font-black">Belum Ada Instrumen Kompetensi Mengajar</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+            Gunakan fitur <strong>Bulk Import Excel</strong> untuk memasukkan master aspek dan indikator penilaian sekaligus. Template Excel resmi dapat diunduh langsung di dalam menu import.
           </p>
-          <button
-            onClick={() => {
-              setSelectedFile(null);
-              setParsedResult(null);
-              setImportModalOpen(true);
-            }}
-            className="px-5 py-2.5 rounded-2xl text-xs font-black bg-blue-600 text-white hover:bg-blue-700 transition-all cursor-pointer inline-flex items-center gap-2"
-          >
-            <UploadCloud className="w-4 h-4" /> Buka Modal Bulk Import
-          </button>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setSelectedFile(null);
+                setParsedResult(null);
+                setImportModalOpen(true);
+              }}
+              className="px-6 py-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+            >
+              <FileUp className="w-4 h-4" /> Unggah &amp; Bulk Import Excel
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

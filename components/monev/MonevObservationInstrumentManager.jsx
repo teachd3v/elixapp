@@ -5,7 +5,7 @@ import {
   Compass, Plus, Trash2, Edit3, UploadCloud, Download,
   CheckCircle2, AlertCircle, FileSpreadsheet, Layers,
   ChevronDown, ChevronUp, Loader2, Sparkles, X, Check,
-  Building2, HelpCircle, Filter
+  Building2, HelpCircle, Filter, FileUp
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useDialog } from '../DialogProvider';
@@ -390,70 +390,30 @@ export default function MonevObservationInstrumentManager({ darkMode }) {
       {/* HEADER SECTION & METRICS */}
       <div className={`border rounded-3xl p-6 ${card}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl shrink-0">
-              <Compass className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black">Pengaturan Instrumen Observasi Wilayah</h2>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  Instrumen 3
-                </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <Compass className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                Konfigurasi aspek & panduan observasi wilayah: <strong>Bagian A (Perkembangan Program)</strong> untuk analisis kualitatif esai, dan <strong>Bagian B (Kategori Target & Temuan)</strong> sebagai acuan kendala serta rekomendasi.
-              </p>
+              <h2 className="text-xl font-black">Pengaturan Instrumen Observasi Wilayah</h2>
             </div>
+            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+              Kelola aspek &amp; poin panduan observasi: Bagian A (Perkembangan Program) dan Bagian B (Kategori Target &amp; Temuan) melalui fitur Bulk Import Excel.
+            </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleOpenAddAspect}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-xs font-black flex items-center gap-2 shadow-sm hover:brightness-105 transition-all cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Tambah Aspek
-            </button>
-
-            <button
-              onClick={() => handleOpenAddIndicator()}
-              disabled={aspects.length === 0}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-500" />
-              Tambah Panduan
-            </button>
-
-            <button
-              onClick={handleDownloadTemplate}
-              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
-              title="Unduh Template Excel"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-500" />
-              Unduh Excel
-            </button>
-
             <button
               onClick={() => {
                 setSelectedFile(null);
                 setParsedResult(null);
                 setImportModalOpen(true);
               }}
-              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
-              title="Bulk Import Excel"
+              className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+              title="Unggah dan impor file spreadsheet Excel"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-blue-500" />
-              Import Excel
-            </button>
-
-            <button
-              onClick={handleSeedDefault}
-              className="px-3 py-2 rounded-xl border border-amber-300/60 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 text-xs font-black flex items-center gap-1.5 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 transition-all cursor-pointer"
-              title="Muat 6 Aspek Standar Bawaan YES"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              Template Bawaan
+              <FileUp className="w-4 h-4" />
+              Bulk Import Excel
             </button>
           </div>
         </div>
@@ -535,27 +495,24 @@ export default function MonevObservationInstrumentManager({ darkMode }) {
           <p className="text-xs text-slate-400 font-semibold">Memuat master instrumen observasi wilayah...</p>
         </div>
       ) : aspects.length === 0 ? (
-        <div className={`p-12 text-center rounded-3xl border ${card}`}>
-          <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-3xl flex items-center justify-center mx-auto mb-4">
-            <Compass className="w-8 h-8" />
+        <div className={`border rounded-3xl p-12 text-center space-y-4 ${card}`}>
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+            <Layers className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-black mb-1">Belum Ada Aspek Observasi Wilayah</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
-            Mulai atur butir instrumen pengamatan dengan memuat template standar 6 aspek YES atau menambah aspek secara manual.
+          <h3 className="text-base font-black">Belum Ada Instrumen Observasi Wilayah</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+            Gunakan fitur <strong>Bulk Import Excel</strong> untuk memasukkan master aspek dan poin panduan observasi sekaligus. Template Excel resmi dapat diunduh langsung di dalam menu import.
           </p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="pt-2">
             <button
-              onClick={handleSeedDefault}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-sm hover:brightness-105 transition-all cursor-pointer"
+              onClick={() => {
+                setSelectedFile(null);
+                setParsedResult(null);
+                setImportModalOpen(true);
+              }}
+              className="px-6 py-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all inline-flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" />
-              Muat Template Bawaan YES
-            </button>
-            <button
-              onClick={handleOpenAddAspect}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-            >
-              + Buat Manual
+              <FileUp className="w-4 h-4" /> Unggah &amp; Bulk Import Excel
             </button>
           </div>
         </div>
