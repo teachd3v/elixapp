@@ -773,16 +773,16 @@ export default function MonevHub({ darkMode }) {
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             {!activeSubTab.startsWith('instrument_') && (
               <button
+                type="button"
                 onClick={() => setShowScorecards(!showScorecards)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2 rounded-xl border transition-colors cursor-pointer shrink-0 ${
                   darkMode
-                    ? 'bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-slate-300'
-                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                    ? 'border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
-                title={showScorecards ? "Sembunyikan Ringkasan Statistik" : "Tampilkan Ringkasan Statistik"}
+                title={showScorecards ? "Tutup Ringkasan" : "Buka Ringkasan"}
               >
-                {showScorecards ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                <span className="hidden sm:inline">{showScorecards ? 'Tutup Ringkasan' : 'Buka Ringkasan'}</span>
+                {showScorecards ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             )}
 
