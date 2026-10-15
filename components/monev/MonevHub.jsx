@@ -1216,8 +1216,11 @@ export default function MonevHub({ darkMode }) {
                           <Building2 className="w-6 h-6" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight truncate">
-                            Wilayah {w.name}
+                          <h3
+                            className="font-black text-base text-slate-900 dark:text-white leading-tight truncate"
+                            title={w.name}
+                          >
+                            {w.name.replace(/^Wilayah\s+/i, '')}
                           </h3>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
                             <Users className="w-3.5 h-3.5 text-purple-500 shrink-0" />
@@ -1340,7 +1343,7 @@ export default function MonevHub({ darkMode }) {
                         className="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md shadow-purple-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Compass className="w-4 h-4" />
-                        Observasi Wilayah Ini
+                        Mulai Observasi
                       </button>
                     )}
                   </div>
