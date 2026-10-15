@@ -15,8 +15,6 @@ export async function POST() {
       await tx.wilayahObservationAspect.deleteMany();
 
       const created = [];
-      let indOrder = 1;
-
       for (const a of DEFAULT_WILAYAH_OBSERVATION_ASPECTS) {
         const aspect = await tx.wilayahObservationAspect.create({
           data: {
@@ -24,18 +22,6 @@ export async function POST() {
             title: a.title,
             description: a.description || null,
             order: a.order,
-            indicators: {
-              create: a.indicators.map((ind) => ({
-                title: ind.title,
-                guideNotes: ind.guideNotes || null,
-                order: ind.order || indOrder++,
-              })),
-            },
-          },
-          include: {
-            indicators: {
-              orderBy: { order: 'asc' },
-            },
           },
         });
         created.push(aspect);

@@ -4,9 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChevronLeft, Compass, Save, Plus, Trash2, Calendar,
   Building2, Users, FileText, AlertTriangle, CheckCircle2,
-  Clock, Sparkles, HelpCircle
+  Clock, Sparkles
 } from 'lucide-react';
 import { useDialog } from '../DialogProvider';
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
 
 export default function WilayahObservationEvaluator({
   wilayahList = [],
@@ -38,6 +43,11 @@ export default function WilayahObservationEvaluator({
   const [mentorPerformanceSummary, setMentorPerformanceSummary] = useState(
     initialObservation?.mentorPerformanceSummary || ''
   );
+  const [sectionAAnswers, setSectionAAnswers] = useState(() => {
+    return (initialObservation?.sectionAAnswers && typeof initialObservation.sectionAAnswers === 'object')
+      ? initialObservation.sectionAAnswers
+      : {};
+  });
 
   // Bagian B states: [{ id, category, finding, recommendation, dueDate }]
   const [findings, setFindings] = useState(() => {
@@ -45,12 +55,6 @@ export default function WilayahObservationEvaluator({
       return initialObservation.findings;
     }
     return [];
-  });
-
-  const [sectionAAnswers, setSectionAAnswers] = useState(() => {
-    return (initialObservation?.sectionAAnswers && typeof initialObservation.sectionAAnswers === 'object')
-      ? initialObservation.sectionAAnswers
-      : {};
   });
 
   const [observers, setObservers] = useState([]);
@@ -99,27 +103,43 @@ export default function WilayahObservationEvaluator({
 
   // Section A & B filtered aspects
   const sectionAAspects = useMemo(() => {
-    return masterAspects.filter((a) => a.section !== 'SECTION_B');
+    const list = masterAspects.filter((a) => a.section !== 'SECTION_B');
+    if (list.length > 0) return list;
+    // Fallback if no master aspects seeded yet
+    return [
+      {
+        id: 'default-1',
+        order: 1,
+        title: 'Realisasi Pelaksanaan Program',
+        description: 'Kesimpulan pelaksanaan program mengacu pada keseluruhan instrumen monev.',
+      },
+      {
+        id: 'default-2',
+        order: 2,
+        title: 'Performa Mentor',
+        description: 'Kesimpulan performa mentor mengacu pada Instrumen Penilaian Mentor dan Mengajar Mentor.',
+      },
+    ];
   }, [masterAspects]);
 
   const sectionBAspects = useMemo(() => {
     return masterAspects.filter((a) => a.section === 'SECTION_B');
   }, [masterAspects]);
 
-  // Match default standard aspects
-  const realizationAspect = useMemo(() => {
-    return sectionAAspects.find(a => a.title.toLowerCase().includes('realisasi')) || sectionAAspects[0] || null;
-  }, [sectionAAspects]);
+  // Month options for Due Date
+  const currentYear = useMemo(() => {
+    const match = periodName.match(/\b(20\d\d)\b/);
+    return match ? parseInt(match[1], 10) : new Date().getFullYear();
+  }, [periodName]);
 
-  const mentorAspect = useMemo(() => {
-    return sectionAAspects.find(a => a.title.toLowerCase().includes('performa') || a.title.toLowerCase().includes('mentor')) || sectionAAspects[1] || null;
-  }, [sectionAAspects]);
+  const monthOptions = useMemo(() => {
+    const list = [];
+    MONTH_NAMES.forEach((m) => list.push(`${m} ${currentYear}`));
+    MONTH_NAMES.forEach((m) => list.push(`${m} ${currentYear + 1}`));
+    return list;
+  }, [currentYear]);
 
-  const additionalSectionAAspects = useMemo(() => {
-    return sectionAAspects.filter(a => a.id !== realizationAspect?.id && a.id !== mentorAspect?.id);
-  }, [sectionAAspects, realizationAspect, mentorAspect]);
-
-  // Get info of currently selected wilayah
+  // Selected wilayah info
   const selectedWilayah = useMemo(() => {
     return wilayahList.find((w) => w.id === selectedWilayahId) || null;
   }, [wilayahList, selectedWilayahId]);
@@ -133,7 +153,7 @@ export default function WilayahObservationEvaluator({
         category: sectionBAspects[0]?.title || '',
         finding: '',
         recommendation: '',
-        dueDate: '',
+        dueDate: `${MONTH_NAMES[new Date().getMonth()]} ${currentYear}`,
       },
     ]);
   };
@@ -162,13 +182,28 @@ export default function WilayahObservationEvaluator({
       await alert('Nama Periode Observasi wajib diisi.', 'Validasi', 'error');
       return;
     }
-    if (!programRealization.trim()) {
-      await alert('Kesimpulan Realisasi Pelaksanaan Program (Bagian A) wajib diisi.', 'Validasi', 'error');
+
+    // Determine values for programRealization and mentorPerformanceSummary
+    let finalRealization = programRealization.trim();
+    let finalMentor = mentorPerformanceSummary.trim();
+
+    if (!finalRealization) {
+      const keys = Object.keys(sectionAAnswers);
+      const k = keys.find((key) => key.toLowerCase().includes('realisasi')) || keys[0];
+      if (k) finalRealization = String(sectionAAnswers[k] || '').trim();
+    }
+    if (!finalMentor) {
+      const keys = Object.keys(sectionAAnswers);
+      const k = keys.find((key) => key.toLowerCase().includes('performa') || key.toLowerCase().includes('mentor')) || keys[1] || keys[0];
+      if (k) finalMentor = String(sectionAAnswers[k] || '').trim();
+    }
+
+    if (!finalRealization) {
+      await alert('Isian deskriptif Bagian A (Realisasi Program) wajib diisi.', 'Validasi', 'error');
       return;
     }
-    if (!mentorPerformanceSummary.trim()) {
-      await alert('Kesimpulan Performa Mentor (Bagian A) wajib diisi.', 'Validasi', 'error');
-      return;
+    if (!finalMentor) {
+      finalMentor = finalRealization;
     }
 
     setSaving(true);
@@ -177,10 +212,10 @@ export default function WilayahObservationEvaluator({
         wilayahId: selectedWilayahId,
         periodName: periodName.trim(),
         observationDate,
-        programRealization: programRealization.trim(),
-        mentorPerformanceSummary: mentorPerformanceSummary.trim(),
+        programRealization: finalRealization,
+        mentorPerformanceSummary: finalMentor,
         sectionAAnswers,
-        findings: findings.filter(f => f.finding?.trim() || f.recommendation?.trim()),
+        findings: findings.filter((f) => f.finding?.trim() || f.recommendation?.trim()),
         evaluatedById: evaluatedById || undefined,
       };
 
@@ -265,7 +300,7 @@ export default function WilayahObservationEvaluator({
         </div>
       </div>
 
-      {/* METADATA OBSERVASI CARD */}
+      {/* 1. PARAMETER OBSERVASI WILAYAH */}
       <div className={`border rounded-3xl p-5 sm:p-6 ${card} space-y-4 shadow-sm`}>
         <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
           <Building2 className="w-5 h-5 text-purple-500" />
@@ -278,17 +313,17 @@ export default function WilayahObservationEvaluator({
           {/* Pilih Wilayah */}
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
-              Pilih Wilayah Program <span className="text-rose-500">*</span>
+              Wilayah Sasaran <span className="text-rose-500">*</span>
             </label>
             <select
               value={selectedWilayahId}
               onChange={(e) => setSelectedWilayahId(e.target.value)}
               className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
             >
-              <option value="" disabled>-- Pilih Wilayah --</option>
+              {wilayahList.length === 0 && <option value="">Tidak ada wilayah</option>}
               {wilayahList.map((w) => (
                 <option key={w.id} value={w.id}>
-                  Wilayah {w.name} {w.mentorCount ? `(${w.mentorCount} Mentor)` : ''}
+                  {w.name}
                 </option>
               ))}
             </select>
@@ -311,20 +346,20 @@ export default function WilayahObservationEvaluator({
           {/* Tanggal Observasi */}
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
-              Tanggal Pelaksanaan <span className="text-rose-500">*</span>
+              Tanggal Kunjungan / Observasi <span className="text-rose-500">*</span>
             </label>
             <input
               type="date"
               value={observationDate}
               onChange={(e) => setObservationDate(e.target.value)}
-              className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
+              className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
             />
           </div>
 
-          {/* Observer / Penilai */}
+          {/* Observer */}
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
-              Penilai / Observer (Superadmin) <span className="text-rose-500">*</span>
+              Identitas Observer / Penilai <span className="text-rose-500">*</span>
             </label>
             <select
               value={evaluatedById}
@@ -362,8 +397,8 @@ export default function WilayahObservationEvaluator({
         )}
       </div>
 
-      {/* BAGIAN A: PERKEMBANGAN PROGRAM */}
-      <div className={`border rounded-3xl p-5 sm:p-6 ${card} space-y-5 shadow-sm`}>
+      {/* BAGIAN A: PERKEMBANGAN PROGRAM (DESKRIPTIF / TULISAN PANJANG) */}
+      <div className={`border rounded-3xl p-5 sm:p-6 ${card} space-y-6 shadow-sm`}>
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black text-xs">
@@ -374,139 +409,65 @@ export default function WilayahObservationEvaluator({
                 Bagian A. Perkembangan Program
               </h2>
               <p className="text-xs text-slate-400">
-                Observasi kualitatif komprehensif realisasi program dan performa mentor wilayah
+                Observasi kualitatif komprehensif dalam bentuk tulisan panjang deskriptif untuk setiap aspek
               </p>
             </div>
           </div>
         </div>
 
-        {/* Realisasi Pelaksanaan Program */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-              <span>Realisasi Pelaksanaan Program</span>
-              <span className="text-rose-500">*</span>
-            </label>
-            <span className="text-[11px] text-slate-400">
-              Mengacu pada keseluruhan instrumen monev
-            </span>
-          </div>
+        <div className="space-y-6">
+          {sectionAAspects.map((asp, aIdx) => {
+            const isRealisasi = asp.title.toLowerCase().includes('realisasi');
+            const isMentor = asp.title.toLowerCase().includes('performa') || asp.title.toLowerCase().includes('mentor');
+            
+            const currentVal = sectionAAnswers[asp.title] !== undefined
+              ? sectionAAnswers[asp.title]
+              : isRealisasi
+              ? programRealization
+              : isMentor
+              ? mentorPerformanceSummary
+              : '';
 
-          {realizationAspect?.indicators && realizationAspect.indicators.length > 0 && (
-            <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
-              <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                Poin Panduan Observasi Lapangan:
-              </span>
-              <div className="space-y-1">
-                {realizationAspect.indicators.map((ind, i) => (
-                  <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
-                    • <strong>{ind.title}</strong>
-                    {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-            Berikan kesimpulan komprehensif mengenai capaian target kegiatan, dinamika pembinaan, kehadiran awardee, kepatuhan kurikulum, serta sarana/prasarana pendukung di wilayah ini.
-          </p>
-          <textarea
-            rows={5}
-            value={programRealization}
-            onChange={(e) => setProgramRealization(e.target.value)}
-            placeholder="Tuliskan kesimpulan observasi pelaksanaan program di wilayah ini secara detail..."
-            className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
-          />
-        </div>
-
-        {/* Performa Mentor */}
-        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-baseline justify-between gap-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-              <span>Performa Mentor</span>
-              <span className="text-rose-500">*</span>
-            </label>
-            <span className="text-[11px] text-slate-400">
-              Mengacu pada Instrumen Penilaian Mentor & Mengajar Mentor
-            </span>
-          </div>
-
-          {mentorAspect?.indicators && mentorAspect.indicators.length > 0 && (
-            <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
-              <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                Poin Panduan Observasi Lapangan:
-              </span>
-              <div className="space-y-1">
-                {mentorAspect.indicators.map((ind, i) => (
-                  <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
-                    • <strong>{ind.title}</strong>
-                    {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-            Berikan kesimpulan umum terkait kedisiplinan administratif (jurnal), kepemimpinan mentor dalam mendampingi awardee, serta kompetensi pedagogik saat memandu sesi pembinaan.
-          </p>
-          <textarea
-            rows={5}
-            value={mentorPerformanceSummary}
-            onChange={(e) => setMentorPerformanceSummary(e.target.value)}
-            placeholder="Tuliskan kesimpulan performa dan kompetensi mentor wilayah ini..."
-            className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
-          />
-        </div>
-
-        {/* Aspek Tambahan Bagian A jika dikonfigurasi */}
-        {additionalSectionAAspects.map((asp, aIdx) => (
-          <div key={asp.id || aIdx} className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-            <div className="flex items-baseline justify-between gap-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                <span>{asp.title}</span>
-              </label>
-              {asp.description && (
-                <span className="text-[11px] text-slate-400 line-clamp-1">
-                  {asp.description}
-                </span>
-              )}
-            </div>
-
-            {asp.indicators && asp.indicators.length > 0 && (
-              <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
-                <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Poin Panduan Observasi Lapangan:
-                </span>
-                <div className="space-y-1">
-                  {asp.indicators.map((ind, i) => (
-                    <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
-                      • <strong>{ind.title}</strong>
-                      {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
-                    </div>
-                  ))}
+            return (
+              <div
+                key={asp.id || aIdx}
+                className="space-y-2 pt-4 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-slate-800/80"
+              >
+                <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center shrink-0">
+                      {asp.order || aIdx + 1}
+                    </span>
+                    <span>{asp.title}</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
                 </div>
-              </div>
-            )}
 
-            <textarea
-              rows={4}
-              value={sectionAAnswers[asp.title] || ''}
-              onChange={(e) =>
-                setSectionAAnswers((prev) => ({ ...prev, [asp.title]: e.target.value }))
-              }
-              placeholder={`Tuliskan kesimpulan observasi mengenai ${asp.title.toLowerCase()}...`}
-              className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
-            />
-          </div>
-        ))}
+                {asp.description && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                    {asp.description}
+                  </p>
+                )}
+
+                <textarea
+                  rows={5}
+                  value={currentVal}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSectionAAnswers((prev) => ({ ...prev, [asp.title]: val }));
+                    if (isRealisasi) setProgramRealization(val);
+                    if (isMentor) setMentorPerformanceSummary(val);
+                  }}
+                  placeholder={`Tuliskan laporan pengamatan deskriptif mengenai ${asp.title.toLowerCase()} secara detail dan mendalam...`}
+                  className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* BAGIAN B: TEMUAN KETIDAKCAPAIAN TARGET PROGRAM */}
+      {/* BAGIAN B: TEMUAN KETIDAKCAPAIAN TARGET PROGRAM (3 INPUT: TEMUAN, REKOMENDASI, DUE DATE BULAN) */}
       <div className={`border rounded-3xl p-5 sm:p-6 ${card} space-y-4 shadow-sm`}>
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
@@ -518,7 +479,7 @@ export default function WilayahObservationEvaluator({
                 Bagian B. Temuan Ketidakcapaian Target Program
               </h2>
               <p className="text-xs text-slate-400">
-                Daftar kendala lapangan, rekomendasi perbaikan terukur, dan tenggat waktu
+                Catat poin ketidakcapaian target dengan 3 input: Temuan, Rekomendasi, dan Due Date (Opsi Bulan)
               </p>
             </div>
           </div>
@@ -539,21 +500,21 @@ export default function WilayahObservationEvaluator({
               Tidak Ada Temuan Ketidakcapaian Khusus
             </p>
             <p className="text-[11px] text-slate-400 max-w-md mx-auto">
-              Jika pelaksanaan program berjalan sesuai target atau tidak ada gap yang perlu ditindaklanjuti, Anda dapat melanjutkan tanpa menambah temuan. Atau klik tombol di bawah untuk menambah catatan temuan.
+              Jika pelaksanaan program berjalan sesuai target, Anda dapat melanjutkan tanpa menambah temuan. Atau klik tombol di bawah untuk menambahkan catatan temuan.
             </p>
             <button
               onClick={handleAddFinding}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer"
+              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" /> Tambah Temuan Sekarang
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {findings.map((item, index) => (
               <div
                 key={item.id || index}
-                className={`p-4 rounded-2xl border ${subCard} transition-all space-y-3`}
+                className={`p-4 sm:p-5 rounded-2xl border ${subCard} transition-all space-y-3.5`}
               >
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                   <div className="flex items-center gap-2">
@@ -561,7 +522,7 @@ export default function WilayahObservationEvaluator({
                       #{index + 1}
                     </span>
                     <span className="text-xs font-black text-slate-700 dark:text-slate-200">
-                      Temuan & Rekomendasi
+                      Poin Temuan Ketidakcapaian #{index + 1}
                     </span>
                   </div>
 
@@ -574,70 +535,80 @@ export default function WilayahObservationEvaluator({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                  {/* Kategori Target (dari Aspek Bagian B) */}
-                  {sectionBAspects.length > 0 && (
-                    <div className="md:col-span-12 space-y-1">
-                      <label className="block text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                        Kategori Target Program (Acuan Aspek Bagian B)
-                      </label>
-                      <select
-                        value={item.category || ''}
-                        onChange={(e) => handleUpdateFinding(index, 'category', e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold outline-none cursor-pointer ${inputClass}`}
-                      >
-                        <option value="">-- Kategori Umum (Tanpa Kategori Khusus) --</option>
-                        {sectionBAspects.map((asp) => (
-                          <option key={asp.id} value={asp.title}>
-                            {asp.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                {/* Optional category selector if sectionBAspects exist */}
+                {sectionBAspects.length > 0 && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-purple-600 dark:text-purple-400 mb-1">
+                      Kategori Aspek Target (Opsional)
+                    </label>
+                    <select
+                      value={item.category || ''}
+                      onChange={(e) => handleUpdateFinding(index, 'category', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold outline-none cursor-pointer ${inputClass}`}
+                    >
+                      <option value="">-- Umum / Tanpa Kategori Khusus --</option>
+                      {sectionBAspects.map((asp) => (
+                        <option key={asp.id} value={asp.title}>
+                          {asp.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-                  {/* Temuan */}
+                {/* 3 Core Inputs: 1. Temuan, 2. Rekomendasi, 3. Due Date Bulan */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                  {/* 1. Temuan */}
                   <div className="md:col-span-5 space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                      Temuan Ketidakcapaian / Kendala
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      1. Temuan Ketidakcapaian <span className="text-rose-500">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={item.finding}
                       onChange={(e) => handleUpdateFinding(index, 'finding', e.target.value)}
-                      placeholder="Contoh: Kehadiran awardee pada sesi klasikal masih di bawah 80% karena bentrok jadwal kuliah praktikum..."
-                      className={`w-full p-2.5 rounded-xl border text-xs font-medium outline-none transition-all resize-y ${inputClass}`}
+                      placeholder="Jelaskan temuan ketidakcapaian atau kendala yang dihadapi..."
+                      className={`w-full p-3 rounded-xl border text-xs font-medium outline-none transition-all resize-y ${inputClass}`}
                     />
                   </div>
 
-                  {/* Rekomendasi */}
-                  <div className="md:col-span-5 space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                      Rekomendasi Tindak Lanjut
+                  {/* 2. Rekomendasi */}
+                  <div className="md:col-span-4 space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      2. Rekomendasi Solusi <span className="text-rose-500">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={item.recommendation}
                       onChange={(e) => handleUpdateFinding(index, 'recommendation', e.target.value)}
-                      placeholder="Contoh: Menggeser jadwal sesi ke Sabtu malam atau Minggu pagi, serta melakukan koordinasi ulang komitmen awardee..."
-                      className={`w-full p-2.5 rounded-xl border text-xs font-medium outline-none transition-all resize-y ${inputClass}`}
+                      placeholder="Tuliskan rekomendasi atau langkah solusi penyelesaiannya..."
+                      className={`w-full p-3 rounded-xl border text-xs font-medium outline-none transition-all resize-y ${inputClass}`}
                     />
                   </div>
 
-                  {/* Due Date (Bulan) */}
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                      Due Date (Bulan)
+                  {/* 3. Due Date (Opsi Bulan) */}
+                  <div className="md:col-span-3 space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>3. Due Date (Opsi Bulan)</span>
                     </label>
-                    <input
-                      type="text"
-                      value={item.dueDate}
+                    <select
+                      value={item.dueDate || ''}
                       onChange={(e) => handleUpdateFinding(index, 'dueDate', e.target.value)}
-                      placeholder="Contoh: Nov 2026 / Bulan ke-2"
-                      className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
-                    />
+                      className={`w-full px-3 py-2.5 rounded-xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+                    >
+                      <option value="">-- Pilih Bulan Target --</option>
+                      {monthOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                      {item.dueDate && !monthOptions.includes(item.dueDate) && (
+                        <option value={item.dueDate}>{item.dueDate}</option>
+                      )}
+                    </select>
                     <span className="text-[10px] text-slate-400 block">
-                      Target bulan perbaikan
+                      Target bulan penyelesaian perbaikan
                     </span>
                   </div>
                 </div>
@@ -648,37 +619,10 @@ export default function WilayahObservationEvaluator({
               onClick={handleAddFinding}
               className="w-full py-3 rounded-2xl border border-dashed border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/5 transition-colors text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              Tambah Baris Temuan Baru
+              <Plus className="w-4 h-4" /> Tambah Poin Temuan Lainnya
             </button>
           </div>
         )}
-      </div>
-
-      {/* BOTTOM ACTION BAR */}
-      <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-4 shadow-sm`}>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Clock className="w-4 h-4" />
-          <span>Pastikan seluruh bagian observasi kualitatif telah terisi dengan jelas sebelum menyimpan.</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onBack}
-            disabled={saving}
-            className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            Kembali
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2.5 rounded-2xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md shadow-purple-500/20 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <Save className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
-            {saving ? 'Menyimpan...' : 'Simpan Laporan Observasi'}
-          </button>
-        </div>
       </div>
     </div>
   );
