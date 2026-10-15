@@ -501,14 +501,8 @@ export default function WilayahObservationEvaluator({
               Tidak Ada Temuan Ketidakcapaian Khusus
             </p>
             <p className="text-[11px] text-slate-400 max-w-md mx-auto">
-              Jika pelaksanaan program berjalan sesuai target, Anda dapat melanjutkan tanpa menambah temuan. Atau klik tombol di bawah untuk menambahkan catatan temuan.
+              Jika pelaksanaan program berjalan sesuai target, Anda dapat melanjutkan tanpa menambah temuan. Jika terdapat kendala yang perlu ditindaklanjuti, silakan gunakan tombol <strong>+ Tambah Temuan</strong> di pojok kanan atas.
             </p>
-            <button
-              onClick={handleAddFinding}
-              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" /> Tambah Temuan Sekarang
-            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -615,13 +609,6 @@ export default function WilayahObservationEvaluator({
                 </div>
               </div>
             ))}
-
-            <button
-              onClick={handleAddFinding}
-              className="w-full py-3 rounded-2xl border border-dashed border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/5 transition-colors text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Tambah Poin Temuan Lainnya
-            </button>
           </div>
         )}
       </div>
