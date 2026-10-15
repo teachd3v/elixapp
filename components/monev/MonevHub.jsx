@@ -5,7 +5,7 @@ import {
   Award, SlidersHorizontal, BookOpen, Compass, Search, Filter,
   Building2, CheckCircle2, Clock, ChevronRight, UserCheck, Plus,
   TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText, MessageSquare,
-  GraduationCap, ClipboardList, AlertTriangle, Users
+  GraduationCap, ClipboardList, AlertTriangle, Users, Download
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
@@ -19,6 +19,12 @@ import AwardeeInterviewEvaluator from './AwardeeInterviewEvaluator';
 import AwardeeInterviewDetailModal from './AwardeeInterviewDetailModal';
 import { useDialog } from '../DialogProvider';
 import { getPerformanceCategory, getTeachingCategory } from '../../lib/monev';
+import {
+  exportMonevPerformanceRecapToExcel,
+  exportMonevTeachingRecapToExcel,
+  exportMonevObservationRecapToExcel,
+  exportMonevInterviewRecapToExcel
+} from '../../lib/exportExcel';
 
 export default function MonevHub({ darkMode }) {
   const { confirm, alert } = useDialog();
@@ -27,9 +33,15 @@ export default function MonevHub({ darkMode }) {
   const [mentors, setMentors] = useState([]);
   const [loadingMentors, setLoadingMentors] = useState(true);
 
-  // Search & Filter (Mentor Performance & Teaching)
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedWilayah, setSelectedWilayah] = useState('ALL');
+  // Search & Filter (1. Performa Mentor)
+  const [performanceSearchQuery, setPerformanceSearchQuery] = useState('');
+  const [performanceWilayahFilter, setPerformanceWilayahFilter] = useState('ALL');
+  const [performanceStatusFilter, setPerformanceStatusFilter] = useState('ALL');
+
+  // Search & Filter (2. Kompetensi Mengajar)
+  const [teachingSearchQuery, setTeachingSearchQuery] = useState('');
+  const [teachingWilayahFilter, setTeachingWilayahFilter] = useState('ALL');
+  const [teachingStatusFilter, setTeachingStatusFilter] = useState('ALL');
 
   // Evaluator View State (Performa)
   const [evaluatingMentor, setEvaluatingMentor] = useState(null);
@@ -50,6 +62,7 @@ export default function MonevHub({ darkMode }) {
   const [selectedWilayahForObservation, setSelectedWilayahForObservation] = useState(null);
   const [detailObservation, setDetailObservation] = useState(null);
   const [observationSearchQuery, setObservationSearchQuery] = useState('');
+  const [observationWilayahFilter, setObservationWilayahFilter] = useState('ALL');
   const [observationStatusFilter, setObservationStatusFilter] = useState('ALL');
 
   // Evaluator View State (Instrumen 4: Indepth Interview Awardee)
@@ -142,6 +155,9 @@ export default function MonevHub({ darkMode }) {
 
   // Wilayah list for filter dropdown
   const wilayahOptions = useMemo(() => {
+    if (wilayahList && wilayahList.length > 0) {
+      return wilayahList.map((w) => ({ id: w.id, name: w.name }));
+    }
     const map = new Map();
     for (const m of mentors) {
       if (m.wilayah?.id) {
@@ -149,22 +165,52 @@ export default function MonevHub({ darkMode }) {
       }
     }
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [mentors]);
+  }, [wilayahList, mentors]);
 
-  // Filtered mentors
-  const filteredMentors = useMemo(() => {
+  // Filtered mentors (1. Performa Mentor)
+  const filteredPerformanceMentors = useMemo(() => {
     return mentors.filter((m) => {
       const matchSearch =
-        !searchQuery.trim() ||
-        (m.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (m.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (m.wilayah?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        !performanceSearchQuery.trim() ||
+        (m.user?.name || '').toLowerCase().includes(performanceSearchQuery.toLowerCase()) ||
+        (m.user?.email || '').toLowerCase().includes(performanceSearchQuery.toLowerCase()) ||
+        (m.wilayah?.name || '').toLowerCase().includes(performanceSearchQuery.toLowerCase());
 
-      const matchWilayah = selectedWilayah === 'ALL' || m.wilayah?.id === selectedWilayah;
+      const matchWilayah = performanceWilayahFilter === 'ALL' || m.wilayah?.id === performanceWilayahFilter;
 
-      return matchSearch && matchWilayah;
+      const hasEval = (m.performanceEvaluations || []).length > 0;
+      const matchStatus =
+        performanceStatusFilter === 'ALL' ||
+        (performanceStatusFilter === 'EVALUATED' && hasEval) ||
+        (performanceStatusFilter === 'UNEVALUATED' && !hasEval);
+
+      return matchSearch && matchWilayah && matchStatus;
     });
-  }, [mentors, searchQuery, selectedWilayah]);
+  }, [mentors, performanceSearchQuery, performanceWilayahFilter, performanceStatusFilter]);
+
+  // Filtered mentors (2. Kompetensi Mengajar)
+  const filteredTeachingMentors = useMemo(() => {
+    return mentors.filter((m) => {
+      const matchSearch =
+        !teachingSearchQuery.trim() ||
+        (m.user?.name || '').toLowerCase().includes(teachingSearchQuery.toLowerCase()) ||
+        (m.user?.email || '').toLowerCase().includes(teachingSearchQuery.toLowerCase()) ||
+        (m.wilayah?.name || '').toLowerCase().includes(teachingSearchQuery.toLowerCase());
+
+      const matchWilayah = teachingWilayahFilter === 'ALL' || m.wilayah?.id === teachingWilayahFilter;
+
+      const hasEval = (m.teachingEvaluations || []).length > 0;
+      const matchStatus =
+        teachingStatusFilter === 'ALL' ||
+        (teachingStatusFilter === 'EVALUATED' && hasEval) ||
+        (teachingStatusFilter === 'UNEVALUATED' && !hasEval);
+
+      return matchSearch && matchWilayah && matchStatus;
+    });
+  }, [mentors, teachingSearchQuery, teachingWilayahFilter, teachingStatusFilter]);
+
+  // Fallback alias for backward compatibility if referenced
+  const filteredMentors = filteredPerformanceMentors;
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -346,14 +392,66 @@ export default function MonevHub({ darkMode }) {
         w.name.toLowerCase().includes(observationSearchQuery.toLowerCase()) ||
         (w.mentorNames && w.mentorNames.some((n) => n.toLowerCase().includes(observationSearchQuery.toLowerCase())));
 
+      const matchWilayah =
+        observationWilayahFilter === 'ALL' || w.id === observationWilayahFilter;
+
       const matchStatus =
         observationStatusFilter === 'ALL' ||
         (observationStatusFilter === 'OBSERVED' && w.hasObservation) ||
         (observationStatusFilter === 'UNOBSERVED' && !w.hasObservation);
 
-      return matchSearch && matchStatus;
+      return matchSearch && matchWilayah && matchStatus;
     });
-  }, [wilayahObservationCards, observationSearchQuery, observationStatusFilter]);
+  }, [wilayahObservationCards, observationSearchQuery, observationWilayahFilter, observationStatusFilter]);
+
+  // Export handlers
+  const handleExportPerformanceExcel = () => {
+    try {
+      exportMonevPerformanceRecapToExcel({
+        mentors: filteredPerformanceMentors.length > 0 ? filteredPerformanceMentors : mentors,
+        filename: 'Rekap_Performa_Mentor.xlsx',
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengekspor data performa mentor.', 'Error Export', 'error');
+    }
+  };
+
+  const handleExportTeachingExcel = () => {
+    try {
+      exportMonevTeachingRecapToExcel({
+        mentors: filteredTeachingMentors.length > 0 ? filteredTeachingMentors : mentors,
+        filename: 'Rekap_Kompetensi_Mengajar.xlsx',
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengekspor data kompetensi mengajar.', 'Error Export', 'error');
+    }
+  };
+
+  const handleExportObservationExcel = () => {
+    try {
+      exportMonevObservationRecapToExcel({
+        wilayahCards: filteredWilayahCards.length > 0 ? filteredWilayahCards : wilayahObservationCards,
+        filename: 'Rekap_Observasi_Wilayah.xlsx',
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengekspor data observasi wilayah.', 'Error Export', 'error');
+    }
+  };
+
+  const handleExportInterviewExcel = () => {
+    try {
+      exportMonevInterviewRecapToExcel({
+        awardees: filteredAwardees.length > 0 ? filteredAwardees : awardees,
+        filename: 'Rekap_Wawancara_Awardee.xlsx',
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengekspor data wawancara awardee.', 'Error Export', 'error');
+    }
+  };
 
   // Delete Interview Record Handler
   const handleDeleteInterviewRecord = async (recordId) => {
@@ -721,34 +819,61 @@ export default function MonevHub({ darkMode }) {
             </div>
           </div>
 
-          {/* SEARCH & WILAYAH FILTER BAR */}
-          <div className={`border rounded-3xl p-4 ${card} flex flex-col sm:flex-row items-center justify-between gap-3`}>
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari mentor, email, atau wilayah..."
-                className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs border outline-none font-medium ${inputClass}`}
-              />
+          {/* SEARCH & FILTER BAR */}
+          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
+            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={performanceSearchQuery}
+                  onChange={(e) => setPerformanceSearchQuery(e.target.value)}
+                  placeholder="Cari mentor, email, atau wilayah..."
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all ${inputClass}`}
+                />
+              </div>
+
+              {/* Filter Wilayah */}
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={performanceWilayahFilter}
+                  onChange={(e) => setPerformanceWilayahFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
+                  {wilayahOptions.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter Status */}
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={performanceStatusFilter}
+                  onChange={(e) => setPerformanceStatusFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Status ({mentors.length})</option>
+                  <option value="EVALUATED">Sudah Dinilai ({stats.evaluated})</option>
+                  <option value="UNEVALUATED">Belum Dinilai ({stats.unEvaluated})</option>
+                </select>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-              <select
-                value={selectedWilayah}
-                onChange={(e) => setSelectedWilayah(e.target.value)}
-                className={`w-full sm:w-56 p-2.5 rounded-2xl text-xs font-bold border outline-none cursor-pointer ${inputClass}`}
-              >
-                <option value="ALL">Semua Wilayah ({mentors.length})</option>
-                {wilayahOptions.map((w) => (
-                  <option key={w.id} value={w.id} className="dark:bg-slate-900">
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Tombol Export Excel */}
+            <button
+              type="button"
+              onClick={handleExportPerformanceExcel}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
+              title="Ekspor rekap performa mentor ke Excel"
+            >
+              <Download className="w-4 h-4" />
+              Export Excel
+            </button>
           </div>
 
           {/* MENTORS LIST */}
@@ -757,17 +882,17 @@ export default function MonevHub({ darkMode }) {
               <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-xs text-slate-400 font-semibold">Memuat data mentor & performa...</p>
             </div>
-          ) : filteredMentors.length === 0 ? (
+          ) : filteredPerformanceMentors.length === 0 ? (
             <div className={`border rounded-3xl p-12 text-center space-y-2 ${card}`}>
               <Building2 className="w-10 h-10 text-slate-400 mx-auto opacity-50" />
               <h4 className="font-black text-sm">Tidak Ada Mentor Ditemukan</h4>
               <p className="text-xs text-slate-400">
-                Coba ubah kata kunci pencarian atau filter wilayah di atas.
+                Coba ubah kata kunci pencarian atau filter di atas.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMentors.map((m) => {
+              {filteredPerformanceMentors.map((m) => {
                 const evals = m.performanceEvaluations || [];
                 const latestEval = evals[0] || null;
                 const hasEvaluated = !!latestEval;
@@ -927,44 +1052,71 @@ export default function MonevHub({ darkMode }) {
             </div>
           </div>
 
-          {/* SEARCH & WILAYAH FILTER BAR */}
-          <div className={`border rounded-3xl p-4 ${card} flex flex-col sm:flex-row items-center justify-between gap-3`}>
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari mentor, email, atau wilayah..."
-                className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs border outline-none font-medium ${inputClass}`}
-              />
+          {/* SEARCH & FILTER BAR */}
+          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
+            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={teachingSearchQuery}
+                  onChange={(e) => setTeachingSearchQuery(e.target.value)}
+                  placeholder="Cari mentor, email, atau wilayah..."
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all ${inputClass}`}
+                />
+              </div>
+
+              {/* Filter Wilayah */}
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={teachingWilayahFilter}
+                  onChange={(e) => setTeachingWilayahFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
+                  {wilayahOptions.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter Status */}
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={teachingStatusFilter}
+                  onChange={(e) => setTeachingStatusFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Status ({mentors.length})</option>
+                  <option value="EVALUATED">Sudah Diobservasi ({teachingStats.evaluated})</option>
+                  <option value="UNEVALUATED">Belum Diobservasi ({teachingStats.unEvaluated})</option>
+                </select>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-              <select
-                value={selectedWilayah}
-                onChange={(e) => setSelectedWilayah(e.target.value)}
-                className={`w-full sm:w-56 p-2.5 rounded-2xl text-xs font-bold border outline-none cursor-pointer ${inputClass}`}
-              >
-                <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
-                {wilayahOptions.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Tombol Export Excel */}
+            <button
+              type="button"
+              onClick={handleExportTeachingExcel}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
+              title="Ekspor rekap kompetensi mengajar ke Excel"
+            >
+              <Download className="w-4 h-4" />
+              Export Excel
+            </button>
           </div>
 
           {/* MENTOR CARDS GRID */}
-          {filteredMentors.length === 0 ? (
+          {filteredTeachingMentors.length === 0 ? (
             <div className={`border rounded-3xl p-12 text-center text-slate-400 ${card}`}>
-              Tidak ada data mentor yang cocok dengan pencarian atau filter wilayah saat ini.
+              Tidak ada data mentor yang cocok dengan pencarian atau filter saat ini.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMentors.map((m) => {
+              {filteredTeachingMentors.map((m) => {
                 const evals = m.teachingEvaluations || [];
                 const hasEvaluated = evals.length > 0;
                 const latestEval = hasEvaluated ? evals[0] : null;
@@ -1143,11 +1295,11 @@ export default function MonevHub({ darkMode }) {
             </div>
           </div>
 
-          {/* FILTER BAR & SETTINGS SHORTCUT */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-4`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+          {/* SEARCH & FILTER BAR */}
+          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
+            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
               {/* Search */}
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
@@ -1158,8 +1310,24 @@ export default function MonevHub({ darkMode }) {
                 />
               </div>
 
+              {/* Filter Wilayah */}
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={observationWilayahFilter}
+                  onChange={(e) => setObservationWilayahFilter(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
+                  {wilayahList.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Status Filter */}
-              <div className="relative w-52 shrink-0 hidden sm:block">
+              <div className="relative w-full sm:w-48 shrink-0">
                 <select
                   value={observationStatusFilter}
                   onChange={(e) => setObservationStatusFilter(e.target.value)}
@@ -1172,12 +1340,15 @@ export default function MonevHub({ darkMode }) {
               </div>
             </div>
 
+            {/* Tombol Export Excel */}
             <button
-              onClick={() => setActiveSubTab('instrument_observation')}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              type="button"
+              onClick={handleExportObservationExcel}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
+              title="Ekspor rekap observasi wilayah ke Excel"
             >
-              <SlidersHorizontal className="w-4 h-4 text-purple-500" />
-              Kelola Instrumen Observasi
+              <Download className="w-4 h-4" />
+              Export Excel
             </button>
           </div>
 
@@ -1398,11 +1569,11 @@ export default function MonevHub({ darkMode }) {
             </div>
           </div>
 
-          {/* FILTER & SEARCH BAR */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-4`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+          {/* SEARCH & FILTER BAR */}
+          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
+            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
               {/* Search */}
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
@@ -1414,15 +1585,15 @@ export default function MonevHub({ darkMode }) {
               </div>
 
               {/* Filter Wilayah */}
-              <div className="relative w-44 shrink-0 hidden sm:block">
+              <div className="relative w-full sm:w-48 shrink-0">
                 <select
                   value={awardeeWilayahFilter}
                   onChange={(e) => setAwardeeWilayahFilter(e.target.value)}
                   className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
                 >
-                  <option value="ALL">Semua Wilayah</option>
+                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
                   {wilayahList.map((w) => (
-                    <option key={w.id} value={w.id}>
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
                       {w.name}
                     </option>
                   ))}
@@ -1430,25 +1601,28 @@ export default function MonevHub({ darkMode }) {
               </div>
 
               {/* Filter Status */}
-              <div className="relative w-44 shrink-0 hidden md:block">
+              <div className="relative w-full sm:w-48 shrink-0">
                 <select
                   value={awardeeInterviewStatusFilter}
                   onChange={(e) => setAwardeeInterviewStatusFilter(e.target.value)}
                   className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
                 >
-                  <option value="ALL">Semua Status</option>
-                  <option value="INTERVIEWED">Sudah Diwawancara</option>
-                  <option value="NOT_INTERVIEWED">Belum Diwawancara</option>
+                  <option value="ALL">Semua Status ({awardees.length})</option>
+                  <option value="INTERVIEWED">Sudah Diwawancara ({interviewStats.interviewed})</option>
+                  <option value="NOT_INTERVIEWED">Belum Diwawancara ({interviewStats.unInterviewed})</option>
                 </select>
               </div>
             </div>
 
+            {/* Tombol Export Excel */}
             <button
-              onClick={() => setActiveSubTab('instrument_interview')}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              type="button"
+              onClick={handleExportInterviewExcel}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
+              title="Ekspor rekap wawancara awardee ke Excel"
             >
-              <SlidersHorizontal className="w-4 h-4 text-emerald-500" />
-              Kelola Instrumen Pertanyaan
+              <Download className="w-4 h-4" />
+              Export Excel
             </button>
           </div>
 
