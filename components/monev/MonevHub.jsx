@@ -5,7 +5,8 @@ import {
   Award, SlidersHorizontal, BookOpen, Compass, Search, Filter,
   Building2, CheckCircle2, Clock, ChevronRight, UserCheck, Plus,
   TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText, MessageSquare,
-  GraduationCap, ClipboardList, AlertTriangle, Users, Download
+  GraduationCap, ClipboardList, AlertTriangle, Users, Download,
+  ChevronUp, ChevronDown, X
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
@@ -30,6 +31,7 @@ export default function MonevHub({ darkMode }) {
   const { confirm, alert } = useDialog();
 
   const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation' | 'instrument_observation' | 'interview' | 'instrument_interview'
+  const [showScorecards, setShowScorecards] = useState(true);
   const [mentors, setMentors] = useState([]);
   const [loadingMentors, setLoadingMentors] = useState(true);
 
@@ -619,227 +621,290 @@ export default function MonevHub({ darkMode }) {
   return (
     <div className="space-y-6">
       {/* MONEV SUB-NAVIGATION TABS */}
-      {/* MONEV SUB-NAVIGATION TABS (CLEAN 1-ROW SEGMENTED) */}
-      <div className={`border rounded-2xl p-2 ${card} flex items-center justify-between gap-3 overflow-x-auto no-scrollbar`}>
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Mode Switcher: Input Penilaian vs Pengaturan Instrumen */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800 shrink-0">
-            <button
-              onClick={() => {
-                if (activeSubTab.startsWith('instrument_')) {
-                  setActiveSubTab('performance');
-                }
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                !activeSubTab.startsWith('instrument_')
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
-              <span>Input Penilaian</span>
-            </button>
+      {/* UNIFIED MONEV TOP CONTROL & STATS CARD */}
+      <div className={`border rounded-3xl p-5 md:p-6 shadow-sm ${card}`}>
+        {/* Navigation Header */}
+        <div className={`flex items-center justify-between gap-3 overflow-x-auto no-scrollbar ${!activeSubTab.startsWith('instrument_') ? 'pb-5 border-b border-slate-100 dark:border-slate-800' : ''}`}>
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Mode Switcher: Input Penilaian vs Pengaturan Instrumen */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800 shrink-0">
+              <button
+                onClick={() => {
+                  if (activeSubTab.startsWith('instrument_')) {
+                    setActiveSubTab('performance');
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                  !activeSubTab.startsWith('instrument_')
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
+                <span>Input Penilaian</span>
+              </button>
 
-            <button
-              onClick={() => {
-                if (!activeSubTab.startsWith('instrument_')) {
-                  setActiveSubTab('instrument_performance');
-                }
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeSubTab.startsWith('instrument_')
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
-              <span>Pengaturan Instrumen</span>
-            </button>
+              <button
+                onClick={() => {
+                  if (!activeSubTab.startsWith('instrument_')) {
+                    setActiveSubTab('instrument_performance');
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeSubTab.startsWith('instrument_')
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+                <span>Pengaturan Instrumen</span>
+              </button>
+            </div>
+
+            {/* Subtle Vertical Divider */}
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
+
+            {/* Sub-Instrument Pills */}
+            <div className="flex items-center gap-1 shrink-0">
+              {!activeSubTab.startsWith('instrument_') ? (
+                <>
+                  <button
+                    onClick={() => setActiveSubTab('performance')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'performance'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    1. Performa Mentor
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('teaching')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'teaching'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    2. Kompetensi Mengajar
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('observation')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'observation'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    3. Observasi Wilayah
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('interview')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'interview'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    4. Wawancara Awardee
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setActiveSubTab('instrument_performance')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'instrument_performance'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Instrumen 1 (Performa)
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('instrument_teaching')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'instrument_teaching'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Instrumen 2 (Mengajar)
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('instrument_observation')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'instrument_observation'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Instrumen 3 (Observasi)
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('instrument_interview')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'instrument_interview'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Instrumen 4 (Wawancara)
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Subtle Vertical Divider */}
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
-
-          {/* Sub-Instrument Pills */}
-          <div className="flex items-center gap-1 shrink-0">
-            {!activeSubTab.startsWith('instrument_') ? (
-              <>
-                <button
-                  onClick={() => setActiveSubTab('performance')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'performance'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  1. Performa Mentor
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('teaching')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'teaching'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  2. Kompetensi Mengajar
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('observation')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'observation'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  3. Observasi Wilayah
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('interview')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'interview'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  4. Wawancara Awardee
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setActiveSubTab('instrument_performance')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'instrument_performance'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  Instrumen 1 (Performa)
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('instrument_teaching')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'instrument_teaching'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  Instrumen 2 (Mengajar)
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('instrument_observation')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'instrument_observation'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  Instrumen 3 (Observasi)
-                </button>
-
-                <button
-                  onClick={() => setActiveSubTab('instrument_interview')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeSubTab === 'instrument_interview'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  Instrumen 4 (Wawancara)
-                </button>
-              </>
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            {!activeSubTab.startsWith('instrument_') && (
+              <button
+                onClick={() => setShowScorecards(!showScorecards)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                  darkMode
+                    ? 'bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`}
+                title={showScorecards ? "Sembunyikan Ringkasan Statistik" : "Tampilkan Ringkasan Statistik"}
+              >
+                {showScorecards ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                <span className="hidden sm:inline">{showScorecards ? 'Tutup Ringkasan' : 'Buka Ringkasan'}</span>
+              </button>
             )}
+
+            <button
+              onClick={() => {
+                loadMentors();
+                loadObservations();
+                loadWilayahList();
+                loadAwardees();
+              }}
+              disabled={loadingMentors || loadingObservations || loadingAwardees}
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 cursor-pointer shrink-0"
+              title="Segarkan Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${(loadingMentors || loadingObservations || loadingAwardees) ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            loadMentors();
-            loadObservations();
-            loadWilayahList();
-            loadAwardees();
-          }}
-          disabled={loadingMentors || loadingObservations || loadingAwardees}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 cursor-pointer shrink-0 ml-auto"
-          title="Segarkan Data"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${(loadingMentors || loadingObservations || loadingAwardees) ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+        {/* 1. PERFORMA MENTOR CONTROLS */}
+        {activeSubTab === 'performance' && (
+          <div className="pt-6 space-y-5">
+            {showScorecards && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block">Total Mentor</span>
+                    <Users className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black mt-1 block">
+                    {stats.total} <span className="text-xs font-semibold text-slate-400">Akun</span>
+                  </span>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: stats.total > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-slate-500 block mt-1.5">Seluruh mentor terdaftar</span>
+                </div>
 
-      {/* SUB-TAB 1: PENILAIAN PERFORMA MENTOR */}
-      {activeSubTab === 'performance' && (
-        <div className="space-y-6">
-          {/* STATS OVERVIEW CARDS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Mentor</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black">{stats.total}</span>
-                <span className="text-xs text-slate-400 font-semibold">Akun</span>
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-emerald-900/10 border-emerald-900/30' : 'bg-emerald-50/60 border-emerald-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sudah Dinilai</span>
+                    <span className="text-xs font-black text-emerald-600">
+                      {stats.total > 0 ? Math.round((stats.evaluated / stats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                    {stats.evaluated} <span className="text-xs font-bold text-emerald-600/70">/ {stats.total} Mentor</span>
+                  </span>
+                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-emerald-500 h-full rounded-full transition-all" 
+                      style={{ width: `${stats.total > 0 ? Math.round((stats.evaluated / stats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 block mt-1.5">
+                    {stats.total > 0 ? Math.round((stats.evaluated / stats.total) * 100) : 0}% evaluasi terlaksana
+                  </span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-amber-900/10 border-amber-900/30' : 'bg-amber-50/60 border-amber-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Belum Dinilai</span>
+                    <span className="text-xs font-black text-amber-600">
+                      {stats.total > 0 ? Math.round((stats.unEvaluated / stats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-amber-600 mt-1 block">
+                    {stats.unEvaluated} <span className="text-xs font-bold text-amber-600/70">Mentor</span>
+                  </span>
+                  <div className="w-full bg-amber-100 dark:bg-amber-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-amber-500 h-full rounded-full transition-all" 
+                      style={{ width: `${stats.total > 0 ? Math.round((stats.unEvaluated / stats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80 block mt-1.5">Menunggu penilaian</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-blue-900/10 border-blue-900/30' : 'bg-blue-50/60 border-blue-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Rata-rata Skor</span>
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black text-blue-600 mt-1 block">
+                    {stats.avgScore} <span className="text-xs font-bold text-blue-600/70">/ 100</span>
+                  </span>
+                  <div className="w-full bg-blue-100 dark:bg-blue-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-blue-500 h-full rounded-full transition-all" 
+                      style={{ width: `${Math.min(100, Math.max(0, parseFloat(stats.avgScore) || 0))}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-blue-600/80 dark:text-blue-400/80 block mt-1.5">Skor performa rata-rata</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Sudah Dinilai</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-emerald-500">{stats.evaluated}</span>
-                <span className="text-xs text-emerald-600/70 font-semibold">Mentor</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Dinilai</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-amber-500">{stats.unEvaluated}</span>
-                <span className="text-xs text-amber-600/70 font-semibold">Mentor</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Rata-rata Skor</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-blue-500 font-mono">{stats.avgScore}</span>
-                <span className="text-xs text-blue-600/70 font-semibold">/ 100</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SEARCH & FILTER BAR */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
-              {/* Search */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
               <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={performanceSearchQuery}
                   onChange={(e) => setPerformanceSearchQuery(e.target.value)}
                   placeholder="Cari mentor, email, atau wilayah..."
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all ${inputClass}`}
+                  className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[38px]`}
                 />
+                {performanceSearchQuery && (
+                  <button
+                    onClick={() => setPerformanceSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {/* Filter Wilayah */}
-              <div className="relative w-full sm:w-48 shrink-0">
+              <div className="w-full sm:w-auto min-w-[150px]">
                 <select
                   value={performanceWilayahFilter}
                   onChange={(e) => setPerformanceWilayahFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
                 >
                   <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
                   {wilayahOptions.map((w) => (
@@ -850,32 +915,443 @@ export default function MonevHub({ darkMode }) {
                 </select>
               </div>
 
-              {/* Filter Status */}
-              <div className="relative w-full sm:w-48 shrink-0">
+              <div className="w-full sm:w-auto min-w-[150px]">
                 <select
                   value={performanceStatusFilter}
                   onChange={(e) => setPerformanceStatusFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
                 >
                   <option value="ALL">Semua Status ({mentors.length})</option>
                   <option value="EVALUATED">Sudah Dinilai ({stats.evaluated})</option>
                   <option value="UNEVALUATED">Belum Dinilai ({stats.unEvaluated})</option>
                 </select>
               </div>
+
+              <button
+                type="button"
+                onClick={handleExportPerformanceExcel}
+                className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 h-[38px]"
+                title="Ekspor rekap performa mentor ke Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
             </div>
-
-            {/* Tombol Export Excel */}
-            <button
-              type="button"
-              onClick={handleExportPerformanceExcel}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
-              title="Ekspor rekap performa mentor ke Excel"
-            >
-              <Download className="w-4 h-4" />
-              Export Excel
-            </button>
           </div>
+        )}
 
+        {/* 2. KOMPETENSI MENGAJAR CONTROLS */}
+        {activeSubTab === 'teaching' && (
+          <div className="pt-6 space-y-5">
+            {showScorecards && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block">Total Mentor</span>
+                    <Users className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black mt-1 block">
+                    {teachingStats.total} <span className="text-xs font-semibold text-slate-400">Akun</span>
+                  </span>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: teachingStats.total > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-slate-500 block mt-1.5">Seluruh mentor terdaftar</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-emerald-900/10 border-emerald-900/30' : 'bg-emerald-50/60 border-emerald-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sudah Diobservasi</span>
+                    <span className="text-xs font-black text-emerald-600">
+                      {teachingStats.total > 0 ? Math.round((teachingStats.evaluated / teachingStats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                    {teachingStats.evaluated} <span className="text-xs font-bold text-emerald-600/70">/ {teachingStats.total} Mentor</span>
+                  </span>
+                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-emerald-500 h-full rounded-full transition-all" 
+                      style={{ width: `${teachingStats.total > 0 ? Math.round((teachingStats.evaluated / teachingStats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 block mt-1.5">
+                    {teachingStats.total > 0 ? Math.round((teachingStats.evaluated / teachingStats.total) * 100) : 0}% observasi terlaksana
+                  </span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-amber-900/10 border-amber-900/30' : 'bg-amber-50/60 border-amber-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Belum Diobservasi</span>
+                    <span className="text-xs font-black text-amber-600">
+                      {teachingStats.total > 0 ? Math.round((teachingStats.unEvaluated / teachingStats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-amber-600 mt-1 block">
+                    {teachingStats.unEvaluated} <span className="text-xs font-bold text-amber-600/70">Mentor</span>
+                  </span>
+                  <div className="w-full bg-amber-100 dark:bg-amber-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-amber-500 h-full rounded-full transition-all" 
+                      style={{ width: `${teachingStats.total > 0 ? Math.round((teachingStats.unEvaluated / teachingStats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80 block mt-1.5">Menunggu observasi</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-blue-900/10 border-blue-900/30' : 'bg-blue-50/60 border-blue-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Rata-rata Capaian</span>
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black text-blue-600 mt-1 block">
+                    {teachingStats.avgPct} <span className="text-xs font-bold text-blue-600/70">%</span>
+                  </span>
+                  <div className="w-full bg-blue-100 dark:bg-blue-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-blue-500 h-full rounded-full transition-all" 
+                      style={{ width: `${Math.min(100, Math.max(0, parseFloat(teachingStats.avgPct) || 0))}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-blue-600/80 dark:text-blue-400/80 block mt-1.5">Persentase skor capaian</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={teachingSearchQuery}
+                  onChange={(e) => setTeachingSearchQuery(e.target.value)}
+                  placeholder="Cari mentor, email, atau wilayah..."
+                  className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[38px]`}
+                />
+                {teachingSearchQuery && (
+                  <button
+                    onClick={() => setTeachingSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={teachingWilayahFilter}
+                  onChange={(e) => setTeachingWilayahFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
+                  {wilayahOptions.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={teachingStatusFilter}
+                  onChange={(e) => setTeachingStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Status ({mentors.length})</option>
+                  <option value="EVALUATED">Sudah Diobservasi ({teachingStats.evaluated})</option>
+                  <option value="UNEVALUATED">Belum Diobservasi ({teachingStats.unEvaluated})</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportTeachingExcel}
+                className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 h-[38px]"
+                title="Ekspor rekap kompetensi mengajar ke Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. OBSERVASI WILAYAH CONTROLS */}
+        {activeSubTab === 'observation' && (
+          <div className="pt-6 space-y-5">
+            {showScorecards && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block">Total Wilayah</span>
+                    <Building2 className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black mt-1 block">
+                    {observationStats.totalWilayah} <span className="text-xs font-semibold text-slate-400">Wilayah</span>
+                  </span>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: observationStats.totalWilayah > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-slate-500 block mt-1.5">Seluruh wilayah binaan</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-emerald-900/10 border-emerald-900/30' : 'bg-emerald-50/60 border-emerald-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Wilayah Terobservasi</span>
+                    <span className="text-xs font-black text-emerald-600">
+                      {observationStats.totalWilayah > 0 ? Math.round((observationStats.totalEvaluatedWilayah / observationStats.totalWilayah) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                    {observationStats.totalEvaluatedWilayah} <span className="text-xs font-bold text-emerald-600/70">/ {observationStats.totalWilayah} Wilayah</span>
+                  </span>
+                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-emerald-500 h-full rounded-full transition-all" 
+                      style={{ width: `${observationStats.totalWilayah > 0 ? Math.round((observationStats.totalEvaluatedWilayah / observationStats.totalWilayah) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 block mt-1.5">
+                    {observationStats.totalWilayah > 0 ? Math.round((observationStats.totalEvaluatedWilayah / observationStats.totalWilayah) * 100) : 0}% wilayah telah diobservasi
+                  </span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-amber-900/10 border-amber-900/30' : 'bg-amber-50/60 border-amber-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Belum Diobservasi</span>
+                    <span className="text-xs font-black text-amber-600">
+                      {observationStats.totalWilayah > 0 ? Math.round((observationStats.unEvaluatedWilayah / observationStats.totalWilayah) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-amber-600 mt-1 block">
+                    {observationStats.unEvaluatedWilayah} <span className="text-xs font-bold text-amber-600/70">Wilayah</span>
+                  </span>
+                  <div className="w-full bg-amber-100 dark:bg-amber-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-amber-500 h-full rounded-full transition-all" 
+                      style={{ width: `${observationStats.totalWilayah > 0 ? Math.round((observationStats.unEvaluatedWilayah / observationStats.totalWilayah) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80 block mt-1.5">Belum memiliki laporan</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-indigo-900/10 border-indigo-900/30' : 'bg-indigo-50/60 border-indigo-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Temuan Terbuka</span>
+                    <AlertTriangle className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <span className="text-2xl font-black text-indigo-600 mt-1 block">
+                    {observationStats.totalFindings} <span className="text-xs font-bold text-indigo-600/70">Catatan</span>
+                  </span>
+                  <div className="w-full bg-indigo-100 dark:bg-indigo-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-indigo-500 h-full rounded-full transition-all" style={{ width: observationStats.totalFindings > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-indigo-600/80 dark:text-indigo-400/80 block mt-1.5">Poin temuan perbaikan</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari nama wilayah atau mentor..."
+                  value={observationSearchQuery}
+                  onChange={(e) => setObservationSearchQuery(e.target.value)}
+                  className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[38px]`}
+                />
+                {observationSearchQuery && (
+                  <button
+                    onClick={() => setObservationSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={observationWilayahFilter}
+                  onChange={(e) => setObservationWilayahFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
+                  {wilayahList.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={observationStatusFilter}
+                  onChange={(e) => setObservationStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Status ({wilayahList.length})</option>
+                  <option value="OBSERVED">Sudah Diobservasi ({observationStats.totalEvaluatedWilayah})</option>
+                  <option value="UNOBSERVED">Belum Diobservasi ({observationStats.unEvaluatedWilayah})</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportObservationExcel}
+                className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 h-[38px]"
+                title="Ekspor rekap observasi wilayah ke Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 4. WAWANCARA AWARDEE CONTROLS */}
+        {activeSubTab === 'interview' && (
+          <div className="pt-6 space-y-5">
+            {showScorecards && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block">Total Awardee</span>
+                    <Users className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-2xl font-black mt-1 block">
+                    {interviewStats.total} <span className="text-xs font-semibold text-slate-400">Siswa</span>
+                  </span>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: interviewStats.total > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-slate-500 block mt-1.5">Seluruh awardee aktif</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-emerald-900/10 border-emerald-900/30' : 'bg-emerald-50/60 border-emerald-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sudah Diwawancara</span>
+                    <span className="text-xs font-black text-emerald-600">
+                      {interviewStats.total > 0 ? Math.round((interviewStats.interviewed / interviewStats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                    {interviewStats.interviewed} <span className="text-xs font-bold text-emerald-600/70">/ {interviewStats.total} Siswa</span>
+                  </span>
+                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-emerald-500 h-full rounded-full transition-all" 
+                      style={{ width: `${interviewStats.total > 0 ? Math.round((interviewStats.interviewed / interviewStats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 block mt-1.5">
+                    {interviewStats.total > 0 ? Math.round((interviewStats.interviewed / interviewStats.total) * 100) : 0}% wawancara selesai
+                  </span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-amber-900/10 border-amber-900/30' : 'bg-amber-50/60 border-amber-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Belum Diwawancara</span>
+                    <span className="text-xs font-black text-amber-600">
+                      {interviewStats.total > 0 ? Math.round((interviewStats.unInterviewed / interviewStats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-amber-600 mt-1 block">
+                    {interviewStats.unInterviewed} <span className="text-xs font-bold text-amber-600/70">Siswa</span>
+                  </span>
+                  <div className="w-full bg-amber-100 dark:bg-amber-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-amber-500 h-full rounded-full transition-all" 
+                      style={{ width: `${interviewStats.total > 0 ? Math.round((interviewStats.unInterviewed / interviewStats.total) * 100) : 0}%` }} 
+                    />
+                  </div>
+                  <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80 block mt-1.5">Menunggu sesi wawancara</span>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-indigo-900/10 border-indigo-900/30' : 'bg-indigo-50/60 border-indigo-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Total Sesi</span>
+                    <MessageSquare className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <span className="text-2xl font-black text-indigo-600 mt-1 block">
+                    {interviewStats.totalInterviewsCount} <span className="text-xs font-bold text-indigo-600/70">Lembar</span>
+                  </span>
+                  <div className="w-full bg-indigo-100 dark:bg-indigo-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div className="bg-indigo-500 h-full rounded-full transition-all" style={{ width: interviewStats.totalInterviewsCount > 0 ? '100%' : '0%' }} />
+                  </div>
+                  <span className="text-[10px] text-indigo-600/80 dark:text-indigo-400/80 block mt-1.5">Total arsip rekaman</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari nama awardee, sekolah, jurusan, atau wilayah..."
+                  value={awardeeSearchQuery}
+                  onChange={(e) => setAwardeeSearchQuery(e.target.value)}
+                  className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[38px]`}
+                />
+                {awardeeSearchQuery && (
+                  <button
+                    onClick={() => setAwardeeSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={awardeeWilayahFilter}
+                  onChange={(e) => setAwardeeWilayahFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
+                  {wilayahList.map((w) => (
+                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full sm:w-auto min-w-[150px]">
+                <select
+                  value={awardeeInterviewStatusFilter}
+                  onChange={(e) => setAwardeeInterviewStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
+                >
+                  <option value="ALL">Semua Status ({awardees.length})</option>
+                  <option value="INTERVIEWED">Sudah Diwawancara ({interviewStats.interviewed})</option>
+                  <option value="NOT_INTERVIEWED">Belum Diwawancara ({interviewStats.unInterviewed})</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportInterviewExcel}
+                className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 h-[38px]"
+                title="Ekspor rekap wawancara awardee ke Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* SUB-TAB 1: PENILAIAN PERFORMA MENTOR (LIST) */}
+      {activeSubTab === 'performance' && (
+        <div className="space-y-6">
           {/* MENTORS LIST */}
           {loadingMentors ? (
             <div className={`border rounded-3xl p-12 text-center ${card}`}>
@@ -1017,98 +1493,6 @@ export default function MonevHub({ darkMode }) {
       {/* SUB-TAB 3: PENILAIAN KOMPETENSI MENGAJAR MENTOR */}
       {activeSubTab === 'teaching' && (
         <div className="space-y-6">
-          {/* STATS OVERVIEW CARDS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Mentor</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black">{teachingStats.total}</span>
-                <span className="text-xs text-slate-400 font-semibold">Akun</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Sudah Diobservasi</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-emerald-500">{teachingStats.evaluated}</span>
-                <span className="text-xs text-emerald-600/70 font-semibold">Mentor</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diobservasi</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-amber-500">{teachingStats.unEvaluated}</span>
-                <span className="text-xs text-amber-600/70 font-semibold">Mentor</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Rata-rata Skor Capaian</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-blue-500 font-mono">{teachingStats.avgPct}</span>
-                <span className="text-xs text-blue-600/70 font-semibold">%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SEARCH & FILTER BAR */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={teachingSearchQuery}
-                  onChange={(e) => setTeachingSearchQuery(e.target.value)}
-                  placeholder="Cari mentor, email, atau wilayah..."
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all ${inputClass}`}
-                />
-              </div>
-
-              {/* Filter Wilayah */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={teachingWilayahFilter}
-                  onChange={(e) => setTeachingWilayahFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Wilayah ({wilayahOptions.length})</option>
-                  {wilayahOptions.map((w) => (
-                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter Status */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={teachingStatusFilter}
-                  onChange={(e) => setTeachingStatusFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl text-xs font-semibold border outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Status ({mentors.length})</option>
-                  <option value="EVALUATED">Sudah Diobservasi ({teachingStats.evaluated})</option>
-                  <option value="UNEVALUATED">Belum Diobservasi ({teachingStats.unEvaluated})</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tombol Export Excel */}
-            <button
-              type="button"
-              onClick={handleExportTeachingExcel}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
-              title="Ekspor rekap kompetensi mengajar ke Excel"
-            >
-              <Download className="w-4 h-4" />
-              Export Excel
-            </button>
-          </div>
-
           {/* MENTOR CARDS GRID */}
           {filteredTeachingMentors.length === 0 ? (
             <div className={`border rounded-3xl p-12 text-center text-slate-400 ${card}`}>
@@ -1252,106 +1636,6 @@ export default function MonevHub({ darkMode }) {
       {/* SUB-TAB 5: INSTRUMEN 3 (OBSERVASI MONEV WILAYAH) */}
       {activeSubTab === 'observation' && (
         <div className="space-y-6">
-          {/* STATS OVERVIEW CARDS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Wilayah</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black">{observationStats.totalWilayah}</span>
-                <span className="text-xs text-slate-400 font-semibold">Wilayah</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Wilayah Terobservasi</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-emerald-500">
-                  {observationStats.totalEvaluatedWilayah}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">
-                  / {observationStats.totalWilayah}
-                </span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diobservasi</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-amber-500">
-                  {observationStats.unEvaluatedWilayah}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">Wilayah</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Temuan Terbuka</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-indigo-500">
-                  {observationStats.totalFindings}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">Catatan</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SEARCH & FILTER BAR */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nama wilayah atau mentor..."
-                  value={observationSearchQuery}
-                  onChange={(e) => setObservationSearchQuery(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
-                />
-              </div>
-
-              {/* Filter Wilayah */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={observationWilayahFilter}
-                  onChange={(e) => setObservationWilayahFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
-                  {wilayahList.map((w) => (
-                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={observationStatusFilter}
-                  onChange={(e) => setObservationStatusFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Status ({wilayahList.length})</option>
-                  <option value="OBSERVED">Sudah Diobservasi ({observationStats.totalEvaluatedWilayah})</option>
-                  <option value="UNOBSERVED">Belum Diobservasi ({observationStats.unEvaluatedWilayah})</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tombol Export Excel */}
-            <button
-              type="button"
-              onClick={handleExportObservationExcel}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
-              title="Ekspor rekap observasi wilayah ke Excel"
-            >
-              <Download className="w-4 h-4" />
-              Export Excel
-            </button>
-          </div>
-
           {/* WILAYAH CARDS GRID */}
           {loadingObservations ? (
             <div className={`p-12 text-center border rounded-3xl ${card}`}>
@@ -1528,104 +1812,6 @@ export default function MonevHub({ darkMode }) {
       {/* SUB-TAB 6: INSTRUMEN 4 (INDEPTH INTERVIEW AWARDEE) */}
       {activeSubTab === 'interview' && (
         <div className="space-y-6">
-          {/* STATS OVERVIEW CARDS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Awardee</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black">{interviewStats.total}</span>
-                <span className="text-xs text-slate-400 font-semibold">Siswa</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Sudah Diwawancara</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-emerald-500">
-                  {interviewStats.interviewed}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">Awardee</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diwawancara</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-amber-500">
-                  {interviewStats.unInterviewed}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">Awardee</span>
-              </div>
-            </div>
-
-            <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Sesi Wawancara</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-indigo-500">
-                  {interviewStats.totalInterviewsCount}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">Lembar</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SEARCH & FILTER BAR */}
-          <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-3`}>
-            <div className="flex items-center gap-3 flex-1 min-w-[280px] flex-wrap sm:flex-nowrap">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nama awardee, sekolah, jurusan, atau wilayah..."
-                  value={awardeeSearchQuery}
-                  onChange={(e) => setAwardeeSearchQuery(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
-                />
-              </div>
-
-              {/* Filter Wilayah */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={awardeeWilayahFilter}
-                  onChange={(e) => setAwardeeWilayahFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Wilayah ({wilayahList.length})</option>
-                  {wilayahList.map((w) => (
-                    <option key={w.id} value={w.id} className="dark:bg-slate-900">
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter Status */}
-              <div className="relative w-full sm:w-48 shrink-0">
-                <select
-                  value={awardeeInterviewStatusFilter}
-                  onChange={(e) => setAwardeeInterviewStatusFilter(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
-                >
-                  <option value="ALL">Semua Status ({awardees.length})</option>
-                  <option value="INTERVIEWED">Sudah Diwawancara ({interviewStats.interviewed})</option>
-                  <option value="NOT_INTERVIEWED">Belum Diwawancara ({interviewStats.unInterviewed})</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tombol Export Excel */}
-            <button
-              type="button"
-              onClick={handleExportInterviewExcel}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
-              title="Ekspor rekap wawancara awardee ke Excel"
-            >
-              <Download className="w-4 h-4" />
-              Export Excel
-            </button>
-          </div>
-
           {/* AWARDEE CARDS GRID */}
           {loadingAwardees ? (
             <div className={`p-12 text-center border rounded-3xl ${card}`}>
