@@ -49,6 +49,7 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [wilayahList, setWilayahList] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ title: '', date: '', time: '', category: 'KLASIKAL', endDate: '', awardeeId: '', awardeeIds: [] });
   const [editing, setEditing] = useState(null); // session object or null (new)
@@ -66,9 +67,13 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   };
 
   const groupSessionsByWilayah = (list) => {
-    const groups = {};
+    const groups = { Nasional: [] };
+    for (const w of wilayahList) {
+      const cleanName = w.name.replace(/^Wilayah\s+/i, '');
+      if (!groups[cleanName]) groups[cleanName] = [];
+    }
     for (const s of list) {
-      const key = s.scope === 'NASIONAL' ? 'Nasional' : (s.wilayah?.name || 'Wilayah Lainnya');
+      const key = s.scope === 'NASIONAL' ? 'Nasional' : (s.wilayah?.name?.replace(/^Wilayah\s+/i, '') || 'Wilayah Lainnya');
       if (!groups[key]) groups[key] = [];
       groups[key].push(s);
     }
@@ -108,10 +113,14 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      const list = await fetchJson('/api/sessions');
-      setSessions(list);
+      const [list, wl] = await Promise.all([
+        fetchJson('/api/sessions'),
+        fetchJson('/api/wilayah').catch(() => []),
+      ]);
+      setSessions(list || []);
+      setWilayahList(wl || []);
       // Fetch attendance summary in parallel — a lightweight per-session GET.
-      const summaries = await Promise.all(list.map(async (s) => {
+      const summaries = await Promise.all((list || []).map(async (s) => {
         try {
           const rows = await fetchJson(`/api/sessions/${s.id}/attendance`);
           if (isAwardee) return [s.id, { my: rows[0] || null }];
@@ -516,7 +525,7 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {canReview && (
+                          {canReview && groupSessions.length > 0 && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -554,7 +563,7 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
                       <div className="p-2.5 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 max-h-96 overflow-y-auto">
                         {groupSessions.length === 0 ? (
                           <p className="text-[11px] text-slate-400 italic py-3 text-center">
-                            Belum ada sesi {wilayah.toLowerCase() === 'nasional' ? 'nasional' : `di wilayah ${wilayah}`}.
+                            Belum ada sesi {wilayah.toLowerCase() === 'nasional' ? 'nasional' : `di wilayah ${wilayah}`}{sectionName === 'upcoming' ? ' mendatang' : ''}.
                           </p>
                         ) : (
                           groupSessions.map((s) => (
@@ -572,15 +581,17 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
 
         return (
           <>
-            {upcoming.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Mendatang ({upcoming.length})</p>
-                {renderWilayahAccordion(upcoming, 'upcoming')}
-              </div>
-            )}
+            <div className="space-y-3">
+              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">
+                Mendatang ({upcoming.length})
+              </p>
+              {renderWilayahAccordion(upcoming, 'upcoming')}
+            </div>
             {past.length > 0 && (
               <div className="space-y-3">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">Riwayat ({past.length})</p>
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-1">
+                  Riwayat ({past.length})
+                </p>
                 {renderWilayahAccordion(past, 'past')}
               </div>
             )}
