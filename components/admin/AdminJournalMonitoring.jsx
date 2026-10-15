@@ -5,7 +5,7 @@ import {
   BookOpen, Users, MapPin, Sparkles, Search, Filter, Calendar, Clock,
   Video, Building2, FileSpreadsheet, Eye, X, Image as ImageIcon,
   LayoutGrid, Table as TableIcon, ExternalLink, AlertCircle, CheckCircle2,
-  RotateCcw, FileText, Loader2, ArrowUpDown
+  RotateCcw, FileText, Loader2, ArrowUpDown, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { exportMentorJournalsToExcel, formatDateDDMMYYYY } from '../../lib/exportExcel';
 import { JOURNAL_ACTIVITY_OPTIONS } from '../MentorJournalManager';
@@ -58,6 +58,7 @@ export default function AdminJournalMonitoring({ darkMode }) {
 
   // View state: 'feed' (default) or 'table'
   const [viewMode, setViewMode] = useState('feed');
+  const [showStats, setShowStats] = useState(true);
 
   // Modal detail & preview states
   const [selectedJournal, setSelectedJournal] = useState(null);
@@ -149,115 +150,143 @@ export default function AdminJournalMonitoring({ darkMode }) {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header & Quick Stat Cards */}
-      <div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      {/* 1. Unified Control, Scorecard & Filter Card */}
+      <div className={`border rounded-3xl p-5 md:p-6 shadow-sm ${cardBase}`}>
+        {/* Header Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
                 <BookOpen className="w-5 h-5" />
               </span>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight">Monitoring Jurnal Mentor</h2>
+              <h2 className="text-lg md:text-xl font-black">Monitoring Jurnal Mentor</h2>
             </div>
-            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Pantau laporan aktivitas harian, capaian, dan evaluasi berkala dari mentor seluruh wilayah.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-auto">
+          <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
+            {/* Collapse Scorecard Detail Toggle */}
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                darkMode
+                  ? 'bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-slate-300'
+                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+              }`}
+              title={showStats ? "Sembunyikan Ringkasan Statistik" : "Tampilkan Ringkasan Statistik"}
+            >
+              {showStats ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+              <span className="hidden sm:inline">{showStats ? 'Tutup Ringkasan' : 'Buka Ringkasan'}</span>
+            </button>
+
+            {/* Export Excel Button */}
             <button
               onClick={handleExportExcel}
               disabled={loading || data.journals.length === 0}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center gap-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               title="Unduh data terfilter ke format spreadsheet Excel"
             >
-              <FileSpreadsheet className="w-4 h-4" /> Ekspor Excel ({data.journals.length})
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Ekspor Excel ({data.journals.length})</span>
             </button>
           </div>
         </div>
 
-        {/* 4 Top Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {/* Total Jurnal */}
-          <div className={`p-4 rounded-2xl border transition-all ${cardBase}`}>
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total Jurnal</span>
-              <BookOpen className="w-4 h-4 text-blue-500" />
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black">{data.summary.totalJournals}</span>
-              <span className="text-xs font-semibold text-slate-400">entri</span>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1">Tercatat dalam filter saat ini</p>
-          </div>
-
-          {/* Mentor Aktif */}
-          <div className={`p-4 rounded-2xl border transition-all ${cardBase}`}>
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Mentor Kontributor</span>
-              <Users className="w-4 h-4 text-amber-500" />
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black">{data.summary.uniqueMentorsCount}</span>
-              <span className="text-xs font-semibold text-slate-400">/ {data.summary.totalMentorsCount} Mentor</span>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1">
-              {data.summary.totalMentorsCount > 0
-                ? `${Math.round((data.summary.uniqueMentorsCount / data.summary.totalMentorsCount) * 100)}% mentor aktif menulis`
-                : 'Belum ada data'}
-            </p>
-          </div>
-
-          {/* Wilayah Teraktif */}
-          <div className={`p-4 rounded-2xl border transition-all ${cardBase}`}>
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Wilayah Teraktif</span>
-              <MapPin className="w-4 h-4 text-emerald-500" />
-            </div>
-            <div className="flex items-baseline gap-1 truncate">
-              <span className="text-lg font-black truncate">{data.summary.mostActiveWilayah}</span>
-              {data.summary.mostActiveWilayahCount > 0 && (
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  ({data.summary.mostActiveWilayahCount})
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1">Aktivitas terlapor terbanyak</p>
-          </div>
-
-          {/* Kegiatan Terbanyak */}
-          <div className={`p-4 rounded-2xl border transition-all ${cardBase}`}>
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Kegiatan Dominan</span>
-              <Sparkles className="w-4 h-4 text-purple-500" />
-            </div>
-            <div className="flex items-baseline gap-1 truncate">
-              <span className="text-base font-black truncate" title={data.summary.topActivity}>
-                {data.summary.topActivity}
+        {/* 4 Top Metric Cards (Collapsible) */}
+        {showStats && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {/* Total Jurnal */}
+            <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider block">Total Jurnal</span>
+                <BookOpen className="w-4 h-4 text-blue-500" />
+              </div>
+              <span className="text-2xl font-black mt-1 block">
+                {data.summary.totalJournals} <span className="text-xs font-semibold text-slate-400">entri</span>
               </span>
-              {data.summary.topActivityCount > 0 && (
-                <span className="text-xs font-bold text-purple-600 dark:text-purple-400 shrink-0">
-                  ({data.summary.topActivityCount})
-                </span>
-              )}
+              <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: data.summary.totalJournals > 0 ? '100%' : '0%' }} />
+              </div>
+              <span className="text-[10px] text-slate-500 block mt-1.5">Tercatat dalam filter saat ini</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">Program paling sering dijalankan</p>
-          </div>
-        </div>
-      </div>
 
-      {/* 2. Omni-Filter Bar */}
-      <div className={`p-4 rounded-2xl border space-y-3 ${cardBase}`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Mentor Kontributor */}
+            <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-amber-900/10 border-amber-900/30' : 'bg-amber-50/60 border-amber-100'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Mentor Kontributor</span>
+                <span className="text-xs font-black text-amber-600">
+                  {data.summary.totalMentorsCount > 0 ? Math.round((data.summary.uniqueMentorsCount / data.summary.totalMentorsCount) * 100) : 0}%
+                </span>
+              </div>
+              <span className="text-2xl font-black text-amber-600 mt-1 block">
+                {data.summary.uniqueMentorsCount} <span className="text-xs font-bold text-amber-600/70">/ {data.summary.totalMentorsCount} Mentor</span>
+              </span>
+              <div className="w-full bg-amber-100 dark:bg-amber-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                <div 
+                  className="bg-amber-500 h-full rounded-full transition-all" 
+                  style={{ width: `${data.summary.totalMentorsCount > 0 ? Math.min(100, Math.round((data.summary.uniqueMentorsCount / data.summary.totalMentorsCount) * 100)) : 0}%` }} 
+                />
+              </div>
+              <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80 block mt-1.5">
+                {data.summary.totalMentorsCount > 0
+                  ? `${Math.round((data.summary.uniqueMentorsCount / data.summary.totalMentorsCount) * 100)}% mentor aktif menulis`
+                  : 'Belum ada data'}
+              </span>
+            </div>
+
+            {/* Wilayah Teraktif */}
+            <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-emerald-900/10 border-emerald-900/30' : 'bg-emerald-50/60 border-emerald-100'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Wilayah Teraktif</span>
+                <MapPin className="w-4 h-4 text-emerald-500" />
+              </div>
+              <span className="text-xl md:text-2xl font-black text-emerald-600 mt-1 block truncate">
+                {data.summary.mostActiveWilayah}{' '}
+                {data.summary.mostActiveWilayahCount > 0 && (
+                  <span className="text-xs md:text-sm font-bold text-emerald-600/80">({data.summary.mostActiveWilayahCount})</span>
+                )}
+              </span>
+              <div className="w-full bg-emerald-100 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: data.summary.mostActiveWilayahCount > 0 ? '100%' : '0%' }} />
+              </div>
+              <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 block mt-1.5">Aktivitas terlapor terbanyak</span>
+            </div>
+
+            {/* Kegiatan Dominan */}
+            <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-purple-900/10 border-purple-900/30' : 'bg-purple-50/60 border-purple-100'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">Kegiatan Dominan</span>
+                <Sparkles className="w-4 h-4 text-purple-500" />
+              </div>
+              <span className="text-xl md:text-2xl font-black text-purple-600 mt-1 block truncate" title={data.summary.topActivity}>
+                {data.summary.topActivity}{' '}
+                {data.summary.topActivityCount > 0 && (
+                  <span className="text-xs md:text-sm font-bold text-purple-600/80">({data.summary.topActivityCount})</span>
+                )}
+              </span>
+              <div className="w-full bg-purple-100 dark:bg-purple-950/60 h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-purple-500 h-full rounded-full transition-all" style={{ width: data.summary.topActivityCount > 0 ? '100%' : '0%' }} />
+              </div>
+              <span className="text-[10px] text-purple-600/80 dark:text-purple-400/80 block mt-1.5 truncate" title={data.summary.topActivity}>
+                Program paling sering dijalankan
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Toolbar (1 Single Row on Desktop) */}
+        <div className="flex flex-col 2xl:flex-row items-stretch 2xl:items-center gap-2.5">
           {/* Quick Search */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Cari mentor, kode, capaian..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
             {searchQuery && (
               <button
@@ -269,12 +298,25 @@ export default function AdminJournalMonitoring({ darkMode }) {
             )}
           </div>
 
-          {/* Wilayah Dropdown */}
-          <div>
+          {/* Filter Tipe Tempat (Dropdown) */}
+          <div className="w-full sm:w-auto min-w-[125px]">
+            <select
+              value={filterLocationType}
+              onChange={(e) => setFilterLocationType(e.target.value)}
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="ALL">Semua Tempat</option>
+              <option value="LURING">Luring</option>
+              <option value="DARING">Daring</option>
+            </select>
+          </div>
+
+          {/* Filter Wilayah Dropdown */}
+          <div className="w-full sm:w-auto min-w-[135px]">
             <select
               value={filterWilayah}
               onChange={(e) => handleWilayahChange(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="ALL">Semua Wilayah ({data.filterOptions.wilayahList.length})</option>
               {data.filterOptions.wilayahList.map((w) => (
@@ -283,12 +325,12 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Mentor Dropdown (Dynamic per Wilayah) */}
-          <div>
+          {/* Filter Mentor Dropdown */}
+          <div className="w-full sm:w-auto min-w-[135px]">
             <select
               value={filterMentor}
               onChange={(e) => setFilterMentor(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="ALL">Semua Mentor ({availableMentors.length})</option>
               {availableMentors.map((m) => (
@@ -299,70 +341,57 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Kegiatan Dropdown */}
-          <div>
+          {/* Filter Kegiatan Dropdown */}
+          <div className="w-full sm:w-auto min-w-[150px]">
             <select
               value={filterActivity}
               onChange={(e) => setFilterActivity(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="ALL">Semua Jenis Kegiatan (16)</option>
+              <option value="ALL">Semua Kegiatan (16)</option>
               {JOURNAL_ACTIVITY_OPTIONS.map((act) => (
                 <option key={act} value={act}>{act}</option>
               ))}
             </select>
           </div>
-        </div>
 
-        {/* Second Row: Location Type + View Mode Switcher + Reset */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-bold text-slate-400">Tipe Tempat:</span>
-            {['ALL', 'LURING', 'DARING'].map((loc) => (
-              <button
-                key={loc}
-                onClick={() => setFilterLocationType(loc)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  filterLocationType === loc
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {loc === 'ALL' ? 'Semua' : loc}
-              </button>
-            ))}
-
-            {hasActiveFilters && (
-              <button
-                onClick={resetFilters}
-                className="ml-2 px-3 py-1 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-500/10 flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <RotateCcw className="w-3 h-3" /> Reset Filter
-              </button>
-            )}
-          </div>
+          {/* Reset Filters (hanya jika ada filter aktif) */}
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="px-2.5 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-200 dark:border-rose-900/40 flex items-center justify-center gap-1 cursor-pointer transition-colors shrink-0"
+              title="Reset seluruh filter"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
 
           {/* View Mode Switcher: Cards vs Table */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 border border-slate-200/60 dark:border-slate-700/60 self-start 2xl:self-auto">
             <button
               onClick={() => setViewMode('feed')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 viewMode === 'feed'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
+              title="Tampilan Kartu Feed"
             >
-              <LayoutGrid className="w-3.5 h-3.5" /> Kartu Feed
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Kartu Feed</span>
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
+              title="Tampilan Tabel Ringkas"
             >
-              <TableIcon className="w-3.5 h-3.5" /> Tabel Ringkas
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Tabel Ringkas</span>
             </button>
           </div>
         </div>
