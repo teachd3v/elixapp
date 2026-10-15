@@ -296,59 +296,104 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
                 {b.users.length === 0 ? (
                   <p className="text-[11px] text-slate-400 italic pl-6">Belum ada.</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
                     {b.users.map((u) => {
                       const user = u.user || u;
                       const wilayah = wilayahRollup.find((w) => w.id === u.wilayahId)?.name;
                       return (
-                        <div key={u.id || user.id} className={`flex items-center gap-3 p-3 rounded-2xl border ${darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-white border-slate-100'}`}>
-                          <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                            {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" /> : <UserCheck className="w-4 h-4 text-slate-400" />}
+                        <div
+                          key={u.id || user.id}
+                          className={`p-3 rounded-2xl border transition-all flex flex-col justify-between items-center text-center gap-2 shadow-xs hover:shadow-sm ${
+                            darkMode
+                              ? 'bg-slate-800/30 border-slate-800 hover:border-slate-700'
+                              : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
+                          }`}
+                        >
+                          {/* Avatar */}
+                          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <UserCheck className="w-5 h-5 text-slate-400" />
+                            )}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="font-bold text-xs block truncate">{user.name}</span>
-                            <span className="text-[10px] text-slate-500 truncate block">{user.email}</span>
+
+                          {/* Name & Email */}
+                          <div className="w-full min-w-0">
+                            <span className="font-bold text-xs block truncate text-slate-900 dark:text-white" title={user.name}>
+                              {user.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate block mt-0.5" title={user.email}>
+                              {user.email}
+                            </span>
                           </div>
+
+                          {/* Wilayah Badge */}
                           {wilayah && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                              <MapPin className="w-3 h-3 inline mr-0.5" />{wilayah}
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate max-w-full block ${
+                                darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200/70 text-slate-600'
+                              }`}
+                              title={wilayah}
+                            >
+                              <MapPin className="w-2.5 h-2.5 inline mr-0.5 text-blue-500" />
+                              {wilayah.replace(/^Wilayah\s+/i, '')}
                             </span>
                           )}
+
+                          {/* Status SA / MA for Awardee */}
                           {b.role === 'AWARDEE' && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${u.hasFilledSA ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'}`}>
+                            <div className="flex items-center justify-center gap-1 w-full">
+                              <span
+                                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                                  u.hasFilledSA ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'
+                                }`}
+                                title={u.hasFilledSA ? 'Sudah SA' : 'Belum SA'}
+                              >
                                 SA {u.hasFilledSA ? '✓' : '✗'}
                               </span>
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${u.hasFilledMA ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-500'}`}>
+                              <span
+                                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                                  u.hasFilledMA ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-500'
+                                }`}
+                                title={u.hasFilledMA ? 'Sudah MA' : 'Belum MA'}
+                              >
                                 MA {u.hasFilledMA ? '✓' : '✗'}
                               </span>
                             </div>
                           )}
-                          {b.role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
+
+                          {/* Action Buttons (Icon Only, labels removed) */}
+                          <div className="flex items-center justify-center gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 w-full mt-auto">
+                            {b.role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
+                              <button
+                                type="button"
+                                onClick={() => resetAssessment(user.id, 'BOTH', user.name)}
+                                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                                title="Reset Data SA/MA"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <button
-                              onClick={() => resetAssessment(user.id, 'BOTH', user.name)}
-                              className="p-2 md:px-3 md:py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
-                              title="Reset Data SA/MA"
+                              type="button"
+                              onClick={() => setEditingUser({ user, currentRole: b.role })}
+                              className="p-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg transition-colors cursor-pointer"
+                              title="Ubah Role"
                             >
-                              <RotateCcw className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Reset SA/MA</span>
+                              <Edit className="w-3.5 h-3.5" />
                             </button>
-                          )}
-                          <button
-                            onClick={() => setEditingUser({ user, currentRole: b.role })}
-                            className="p-2 md:px-3 md:py-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
-                            title="Ubah role"
-                          >
-                            <Edit className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Ubah Role</span>
-                          </button>
-                          {user.id !== dbUser?.id && (
-                            <button
-                              onClick={() => deleteUser(user)}
-                              className="p-2 md:px-3 md:py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shrink-0"
-                              title="Hapus akun permanen"
-                            >
-                              <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" /> <span className="hidden md:inline">Hapus</span>
-                            </button>
-                          )}
+                            {user.id !== dbUser?.id && (
+                              <button
+                                type="button"
+                                onClick={() => deleteUser(user)}
+                                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                                title="Hapus Akun Permanen"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

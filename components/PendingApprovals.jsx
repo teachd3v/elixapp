@@ -120,45 +120,68 @@ export default function PendingApprovals({ darkMode }) {
       )}
 
       {pending.length > 0 && (
-        <div className="px-5 pb-5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        <div className="px-5 pb-5 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {pending.map(user => (
-            <div key={user.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-2xl gap-4">
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                  {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" /> : <UserCheck className="w-5 h-5 text-slate-400" />}
+            <div
+              key={user.id}
+              className="p-3.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-2xl flex flex-col justify-between items-center text-center gap-3 transition-all hover:shadow-xs"
+            >
+              <div className="flex flex-col items-center w-full min-w-0">
+                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0 mb-2">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <UserCheck className="w-6 h-6 text-slate-400" />
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <span className="font-bold block text-sm truncate">{user.name}</span>
-                  <span className="text-[11px] text-slate-500 truncate block">{user.email}</span>
-                </div>
+                <span className="font-bold text-xs block truncate w-full" title={user.name}>
+                  {user.name}
+                </span>
+                <span className="text-[10px] text-slate-500 truncate block w-full mt-0.5" title={user.email}>
+                  {user.email}
+                </span>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-0 border-slate-200 dark:border-slate-700 pt-3 sm:pt-0">
+
+              <div className="w-full space-y-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                 <select
                   value={selectedRole[user.id] || 'AWARDEE'}
                   onChange={(e) => setSelectedRole(prev => ({ ...prev, [user.id]: e.target.value }))}
                   disabled={submittingId === user.id}
-                  className={`text-xs font-bold rounded-xl px-3 py-2 border cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`}
+                  className={`w-full text-xs font-bold rounded-xl px-2.5 py-1.5 border cursor-pointer outline-none transition-all ${
+                    darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }`}
                 >
-                  {APPROVE_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  {APPROVE_ROLES.map(r => (
+                    <option key={r.value} value={r.value} className="dark:bg-slate-900">
+                      {r.label}
+                    </option>
+                  ))}
                 </select>
-                <button
-                  onClick={() => approve(user)}
-                  disabled={submittingId === user.id}
-                  className="px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition-colors disabled:opacity-50"
-                  title="Setujui akun ini"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{submittingId === user.id ? '...' : 'Setujui'}</span>
-                </button>
-                <button
-                  onClick={() => reject(user)}
-                  disabled={submittingId === user.id}
-                  className="px-3 py-2 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition-colors disabled:opacity-50"
-                  title="Tolak pendaftaran akun ini"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Tolak</span>
-                </button>
+
+                <div className="flex items-center gap-1.5 w-full">
+                  <button
+                    type="button"
+                    onClick={() => approve(user)}
+                    disabled={submittingId === user.id}
+                    className="flex-1 py-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer h-[34px]"
+                    title="Setujui akun ini"
+                  >
+                    {submittingId === user.id ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => reject(user)}
+                    disabled={submittingId === user.id}
+                    className="flex-1 py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer h-[34px]"
+                    title="Tolak pendaftaran akun ini"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
