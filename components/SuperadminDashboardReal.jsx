@@ -125,6 +125,7 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   const [cycleFilter, setCycleFilter] = useState('ALL');
   const [filterWilayah, setFilterWilayah] = useState('ALL');
   const [filterAwardee, setFilterAwardee] = useState('ALL');
+  const [directoryWilayahFilter, setDirectoryWilayahFilter] = useState('ALL');
   const [viewingProfile, setViewingProfile] = useState(null);
   const { confirm, alert } = useDialog();
 
@@ -261,13 +262,128 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
 
   // ---------- USERS TAB (approvals + real directory) ----------
   if (activeTab === 'users') {
-    // Normalize bucket entries so each row exposes `user` + optional `wilayahId`.
-    const roleBuckets = [
-      { role: 'SUPERADMIN', label: 'Superadmin', tone: 'bg-rose-500/10 text-rose-600',
-        users: superadmins.map((u) => ({ id: u.id, user: u })) },
-      { role: 'MENTOR', label: 'Mentor', tone: 'bg-amber-500/10 text-amber-600', users: mentors },
-      { role: 'AWARDEE', label: 'Awardee', tone: 'bg-sky-500/10 text-sky-600', users: awardees },
-    ];
+    // Clusters of Awardees per Wilayah
+    const awardeeClusters = [];
+    wilayahRollup.forEach((w) => {
+      const wAwardees = awardees.filter((a) => a.wilayahId === w.id);
+      if (wAwardees.length > 0) {
+        awardeeClusters.push({
+          wilayah: w,
+          users: wAwardees,
+        });
+      }
+    });
+    const unassignedAwardees = awardees.filter(
+      (a) => !a.wilayahId || !wilayahRollup.some((w) => w.id === a.wilayahId)
+    );
+    if (unassignedAwardees.length > 0) {
+      awardeeClusters.push({
+        wilayah: { id: 'unassigned', name: 'Belum Ditentukan Wilayah' },
+        users: unassignedAwardees,
+      });
+    }
+
+    const renderUserCard = (u, role, showWilayahBadge = true) => {
+      const user = u.user || u;
+      const wilayah = wilayahRollup.find((w) => w.id === u.wilayahId)?.name;
+      return (
+        <div
+          key={u.id || user.id}
+          className={`p-3 rounded-2xl border transition-all flex flex-col justify-between items-center text-center gap-2 shadow-xs hover:shadow-sm ${
+            darkMode
+              ? 'bg-slate-800/40 border-slate-800 hover:border-slate-700'
+              : 'bg-white border-slate-200/80 hover:border-slate-300'
+          }`}
+        >
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <UserCheck className="w-5 h-5 text-slate-400" />
+            )}
+          </div>
+
+          {/* Name & Email */}
+          <div className="w-full min-w-0">
+            <span className="font-bold text-xs block truncate text-slate-900 dark:text-white" title={user.name}>
+              {user.name}
+            </span>
+            <span className="text-[10px] text-slate-400 truncate block mt-0.5" title={user.email}>
+              {user.email}
+            </span>
+          </div>
+
+          {/* Wilayah Badge */}
+          {showWilayahBadge && wilayah && (
+            <span
+              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate max-w-full block ${
+                darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
+              }`}
+              title={wilayah}
+            >
+              <MapPin className="w-2.5 h-2.5 inline mr-0.5 text-blue-500" />
+              {wilayah.replace(/^Wilayah\s+/i, '')}
+            </span>
+          )}
+
+          {/* Status SA / MA for Awardee */}
+          {role === 'AWARDEE' && (
+            <div className="flex items-center justify-center gap-1 w-full">
+              <span
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                  u.hasFilledSA ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'
+                }`}
+                title={u.hasFilledSA ? 'Sudah SA' : 'Belum SA'}
+              >
+                SA {u.hasFilledSA ? '✓' : '✗'}
+              </span>
+              <span
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                  u.hasFilledMA ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-500'
+                }`}
+                title={u.hasFilledMA ? 'Sudah MA' : 'Belum MA'}
+              >
+                MA {u.hasFilledMA ? '✓' : '✗'}
+              </span>
+            </div>
+          )}
+
+          {/* Action Buttons (Icon Only) */}
+          <div className="flex items-center justify-center gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 w-full mt-auto">
+            {role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
+              <button
+                type="button"
+                onClick={() => resetAssessment(user.id, 'BOTH', user.name)}
+                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                title="Reset Data SA/MA"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setEditingUser({ user, currentRole: role })}
+              className="p-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg transition-colors cursor-pointer"
+              title="Ubah Role"
+            >
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+            {user.id !== dbUser?.id && (
+              <button
+                type="button"
+                onClick={() => deleteUser(user)}
+                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                title="Hapus Akun Permanen"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-6">
         <PendingApprovals darkMode={darkMode} />
@@ -285,122 +401,121 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
             ))}
           </div>
 
-          <div className="space-y-5">
-            {roleBuckets.map((b) => (
-              <div key={b.role}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className={`w-4 h-4 ${b.tone.split(' ')[1]}`} />
-                  <span className="text-xs font-black uppercase tracking-wider">{b.label}</span>
-                  <span className="text-[10px] font-bold text-slate-400">{b.users.length}</span>
+          <div className="space-y-6">
+            {/* 1. SUPERADMIN */}
+            <div>
+              <div className="flex items-center gap-2 mb-2.5">
+                <Shield className="w-4 h-4 text-rose-600" />
+                <span className="text-xs font-black uppercase tracking-wider">Superadmin</span>
+                <span className="text-[10px] font-bold text-slate-400">({superadmins.length})</span>
+              </div>
+              {superadmins.length === 0 ? (
+                <p className="text-[11px] text-slate-400 italic pl-6">Belum ada.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
+                  {superadmins.map((u) => renderUserCard({ id: u.id, user: u }, 'SUPERADMIN', false))}
                 </div>
-                {b.users.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic pl-6">Belum ada.</p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
-                    {b.users.map((u) => {
-                      const user = u.user || u;
-                      const wilayah = wilayahRollup.find((w) => w.id === u.wilayahId)?.name;
-                      return (
-                        <div
-                          key={u.id || user.id}
-                          className={`p-3 rounded-2xl border transition-all flex flex-col justify-between items-center text-center gap-2 shadow-xs hover:shadow-sm ${
-                            darkMode
-                              ? 'bg-slate-800/30 border-slate-800 hover:border-slate-700'
-                              : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
-                          }`}
-                        >
-                          {/* Avatar */}
-                          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
-                            {user.avatarUrl ? (
-                              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <UserCheck className="w-5 h-5 text-slate-400" />
-                            )}
-                          </div>
+              )}
+            </div>
 
-                          {/* Name & Email */}
-                          <div className="w-full min-w-0">
-                            <span className="font-bold text-xs block truncate text-slate-900 dark:text-white" title={user.name}>
-                              {user.name}
-                            </span>
-                            <span className="text-[10px] text-slate-400 truncate block mt-0.5" title={user.email}>
-                              {user.email}
-                            </span>
-                          </div>
+            {/* 2. MENTOR */}
+            <div>
+              <div className="flex items-center gap-2 mb-2.5">
+                <Shield className="w-4 h-4 text-amber-600" />
+                <span className="text-xs font-black uppercase tracking-wider">Mentor</span>
+                <span className="text-[10px] font-bold text-slate-400">({mentors.length})</span>
+              </div>
+              {mentors.length === 0 ? (
+                <p className="text-[11px] text-slate-400 italic pl-6">Belum ada.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
+                  {mentors.map((u) => renderUserCard(u, 'MENTOR', true))}
+                </div>
+              )}
+            </div>
 
-                          {/* Wilayah Badge */}
-                          {wilayah && (
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate max-w-full block ${
-                                darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200/70 text-slate-600'
-                              }`}
-                              title={wilayah}
-                            >
-                              <MapPin className="w-2.5 h-2.5 inline mr-0.5 text-blue-500" />
-                              {wilayah.replace(/^Wilayah\s+/i, '')}
-                            </span>
-                          )}
+            {/* 3. AWARDEE (CLUSTERED PER WILAYAH) */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-sky-600" />
+                  <span className="text-xs font-black uppercase tracking-wider">Awardee per Wilayah</span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                    {awardees.length} Siswa
+                  </span>
+                </div>
 
-                          {/* Status SA / MA for Awardee */}
-                          {b.role === 'AWARDEE' && (
-                            <div className="flex items-center justify-center gap-1 w-full">
-                              <span
-                                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
-                                  u.hasFilledSA ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'
-                                }`}
-                                title={u.hasFilledSA ? 'Sudah SA' : 'Belum SA'}
-                              >
-                                SA {u.hasFilledSA ? '✓' : '✗'}
-                              </span>
-                              <span
-                                className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
-                                  u.hasFilledMA ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-500'
-                                }`}
-                                title={u.hasFilledMA ? 'Sudah MA' : 'Belum MA'}
-                              >
-                                MA {u.hasFilledMA ? '✓' : '✗'}
-                              </span>
+                {/* Filter Wilayah Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+                  <button
+                    type="button"
+                    onClick={() => setDirectoryWilayahFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                      directoryWilayahFilter === 'ALL'
+                        ? 'bg-sky-500 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Semua Wilayah ({awardees.length})
+                  </button>
+                  {wilayahRollup.map((w) => {
+                    const count = awardees.filter((a) => a.wilayahId === w.id).length;
+                    if (count === 0) return null;
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setDirectoryWilayahFilter(w.id)}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                          directoryWilayahFilter === w.id
+                            ? 'bg-sky-500 text-white shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {w.name.replace(/^Wilayah\s+/i, '')} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {awardeeClusters.length === 0 ? (
+                <p className="text-[11px] text-slate-400 italic pl-6">Belum ada awardee.</p>
+              ) : (
+                <div className="space-y-4">
+                  {awardeeClusters
+                    .filter((cluster) => directoryWilayahFilter === 'ALL' || cluster.wilayah.id === directoryWilayahFilter)
+                    .map((cluster) => (
+                      <div
+                        key={cluster.wilayah.id}
+                        className={`p-4 rounded-3xl border transition-all ${
+                          darkMode ? 'bg-slate-800/20 border-slate-800/80' : 'bg-slate-50/70 border-slate-200/80'
+                        }`}
+                      >
+                        {/* Cluster Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                              <MapPin className="w-3.5 h-3.5" />
                             </div>
-                          )}
-
-                          {/* Action Buttons (Icon Only, labels removed) */}
-                          <div className="flex items-center justify-center gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 w-full mt-auto">
-                            {b.role === 'AWARDEE' && (u.hasFilledSA || u.hasFilledMA) && (
-                              <button
-                                type="button"
-                                onClick={() => resetAssessment(user.id, 'BOTH', user.name)}
-                                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
-                                title="Reset Data SA/MA"
-                              >
-                                <RotateCcw className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setEditingUser({ user, currentRole: b.role })}
-                              className="p-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg transition-colors cursor-pointer"
-                              title="Ubah Role"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            {user.id !== dbUser?.id && (
-                              <button
-                                type="button"
-                                onClick={() => deleteUser(user)}
-                                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
-                                title="Hapus Akun Permanen"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <h4 className="font-black text-xs text-slate-900 dark:text-white">
+                              {cluster.wilayah.name}
+                            </h4>
+                            <span className="text-[10px] font-bold text-slate-400">
+                              ({cluster.users.length} Siswa)
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
+
+                        {/* 8-Column Grid for Awardees in this Wilayah */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
+                          {cluster.users.map((u) => renderUserCard(u, 'AWARDEE', false))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
