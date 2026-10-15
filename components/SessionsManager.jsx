@@ -306,21 +306,37 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
           })()}
           {canReview && (
             <button
+              type="button"
               onClick={() => setReviewSession(s)}
-              className="px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 rounded-lg font-bold text-xs flex items-center gap-1"
+              className="p-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 rounded-lg transition-colors cursor-pointer"
+              title="Kelola & Review Absensi"
             >
-              <ClipboardCheck className="w-3.5 h-3.5" /> Absensi
+              <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}
           {canCreate && mine && (
             <>
-              <button onClick={() => openEdit(s)} disabled={busyId === s.id}
-                className="px-3 py-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg font-bold text-xs flex items-center gap-1 disabled:opacity-50">
-                <Edit className="w-3.5 h-3.5" /> Edit
+              <button
+                type="button"
+                onClick={() => openEdit(s)}
+                disabled={busyId === s.id}
+                className="p-1.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Edit Sesi"
+              >
+                <Edit className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => remove(s)} disabled={busyId === s.id}
-                className="px-3 py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center gap-1 disabled:opacity-50">
-                <Trash2 className="w-3.5 h-3.5" /> {busyId === s.id ? '...' : 'Hapus'}
+              <button
+                type="button"
+                onClick={() => remove(s)}
+                disabled={busyId === s.id}
+                className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Hapus Sesi"
+              >
+                {busyId === s.id ? (
+                  <div className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
               </button>
             </>
           )}
