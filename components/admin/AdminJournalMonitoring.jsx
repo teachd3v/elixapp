@@ -167,6 +167,18 @@ export default function AdminJournalMonitoring({ darkMode }) {
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
+            {/* Reset Filters (jika ada filter aktif) */}
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-200 dark:border-rose-900/40 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                title="Reset seluruh filter pencarian"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Filter</span>
+              </button>
+            )}
+
             {/* Collapse Scorecard Detail Toggle */}
             <button
               onClick={() => setShowStats(!showStats)}
@@ -276,17 +288,17 @@ export default function AdminJournalMonitoring({ darkMode }) {
           </div>
         )}
 
-        {/* Filter Toolbar (1 Single Row on Desktop) */}
-        <div className="flex flex-col 2xl:flex-row items-stretch 2xl:items-center gap-2.5">
-          {/* Quick Search */}
-          <div className="relative flex-1 min-w-[200px]">
+        {/* Filter Toolbar (Tepat 6 Kolom dalam 1 Baris di Layar Desktop) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 items-center">
+          {/* 1. Quick Search */}
+          <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari mentor, kode, capaian..."
+              placeholder="Cari mentor, kode..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[38px]"
             />
             {searchQuery && (
               <button
@@ -298,12 +310,12 @@ export default function AdminJournalMonitoring({ darkMode }) {
             )}
           </div>
 
-          {/* Filter Tipe Tempat (Dropdown) */}
-          <div className="w-full sm:w-auto min-w-[125px]">
+          {/* 2. Filter Tipe Tempat (Dropdown) */}
+          <div className="w-full">
             <select
               value={filterLocationType}
               onChange={(e) => setFilterLocationType(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
             >
               <option value="ALL">Semua Tempat</option>
               <option value="LURING">Luring</option>
@@ -311,12 +323,12 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Filter Wilayah Dropdown */}
-          <div className="w-full sm:w-auto min-w-[135px]">
+          {/* 3. Filter Wilayah Dropdown */}
+          <div className="w-full">
             <select
               value={filterWilayah}
               onChange={(e) => handleWilayahChange(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
             >
               <option value="ALL">Semua Wilayah ({data.filterOptions.wilayahList.length})</option>
               {data.filterOptions.wilayahList.map((w) => (
@@ -325,12 +337,12 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Filter Mentor Dropdown */}
-          <div className="w-full sm:w-auto min-w-[135px]">
+          {/* 4. Filter Mentor Dropdown */}
+          <div className="w-full">
             <select
               value={filterMentor}
               onChange={(e) => setFilterMentor(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
             >
               <option value="ALL">Semua Mentor ({availableMentors.length})</option>
               {availableMentors.map((m) => (
@@ -341,12 +353,12 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Filter Kegiatan Dropdown */}
-          <div className="w-full sm:w-auto min-w-[150px]">
+          {/* 5. Filter Kegiatan Dropdown */}
+          <div className="w-full">
             <select
               value={filterActivity}
               onChange={(e) => setFilterActivity(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer h-[38px]"
             >
               <option value="ALL">Semua Kegiatan (16)</option>
               {JOURNAL_ACTIVITY_OPTIONS.map((act) => (
@@ -355,44 +367,34 @@ export default function AdminJournalMonitoring({ darkMode }) {
             </select>
           </div>
 
-          {/* Reset Filters (hanya jika ada filter aktif) */}
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="px-2.5 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-200 dark:border-rose-900/40 flex items-center justify-center gap-1 cursor-pointer transition-colors shrink-0"
-              title="Reset seluruh filter"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          )}
-
-          {/* View Mode Switcher: Cards vs Table */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 border border-slate-200/60 dark:border-slate-700/60 self-start 2xl:self-auto">
-            <button
-              onClick={() => setViewMode('feed')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'feed'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-              title="Tampilan Kartu Feed"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Kartu Feed</span>
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-              title="Tampilan Tabel Ringkas"
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>Tabel Ringkas</span>
-            </button>
+          {/* 6. View Mode Switcher: Cards vs Table */}
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 w-full h-[38px]">
+              <button
+                onClick={() => setViewMode('feed')}
+                className={`flex-1 h-full rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'feed'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Tampilan Kartu Feed"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                <span>Feed</span>
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex-1 h-full rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Tampilan Tabel Ringkas"
+              >
+                <TableIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>Tabel</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
