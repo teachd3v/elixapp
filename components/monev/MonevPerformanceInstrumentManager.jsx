@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import {
   SlidersHorizontal, Plus, Trash2, Pencil, CheckCircle2,
   AlertCircle, RefreshCw, X, Layers, Target, ChevronDown,
-  Download, FileUp, FileSpreadsheet
+  Download, FileUp, FileSpreadsheet, Loader2, Check
 } from 'lucide-react';
 import { useDialog } from '../DialogProvider';
 import { exportMonevPerformanceTemplate } from '../../lib/exportExcel';
@@ -142,17 +142,6 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
       await alert('Tidak ada rencana kerja yang valid untuk diimpor.', 'Perhatian', 'error');
       return;
     }
-
-    const modeText =
-      importMode === 'REPLACE'
-        ? 'MENGGANTI SELURUH instrumen saat ini dengan data dari file Excel'
-        : 'MENAMBAHKAN rencana kerja baru ke instrumen yang sudah ada';
-
-    const ok = await confirm(
-      `Apakah kamu yakin ingin mengimpor ${parsedResult.plans.length} Rencana Kerja (${parsedResult.totalTargets} Target Kerja, Total Bobot: ${parsedResult.totalWeight}%)? Aksi ini akan ${modeText}.`,
-      'Konfirmasi Bulk Import'
-    );
-    if (!ok) return;
 
     setSubmittingImport(true);
     try {
@@ -350,6 +339,7 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
   };
 
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
+  const subCard = darkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80';
   const inputClass = darkMode
     ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500'
     : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-indigo-500';
@@ -799,224 +789,229 @@ export default function MonevPerformanceInstrumentManager({ darkMode }) {
 
       {/* MODAL BULK IMPORT EXCEL */}
       {importModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className={`w-full max-w-2xl border rounded-3xl p-6 shadow-2xl my-8 ${card}`}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className={`w-full max-w-2xl border rounded-3xl p-6 shadow-2xl my-auto space-y-5 ${card}`}>
+            {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
-                  <FileSpreadsheet className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                  <FileUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black">Bulk Import Instrumen via Excel</h3>
-                  <p className="text-xs text-slate-400">Unggah file spreadsheet Excel (.xlsx) untuk mengimpor rencana & target kerja sekaligus</p>
+                  <h3 className="text-base font-black">Bulk Import Instrumen Performa Mentor</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Impor master rencana kerja dan target kerja melalui spreadsheet Excel (.xlsx, .xls)
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setImportModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-5 mt-5">
-              {/* Box Info & Download Template */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between flex-wrap gap-3">
-                <div className="text-xs">
-                  <p className="font-bold text-slate-700 dark:text-slate-200">Format Template Resmi</p>
-                  <p className="text-[11px] text-slate-400">Pastikan file sesuai format template (kolom: Rencana Kerja, Target Kerja, Bobot, dsb).</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownloadTemplate}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" /> Unduh Template (.xlsx)
-                </button>
-              </div>
-
-              {/* Upload Drop Area */}
+            {/* Template Box */}
+            <div className={`p-4 rounded-2xl border ${subCard} flex items-center justify-between flex-wrap gap-3`}>
               <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5">
-                  Pilih File Excel (.xlsx / .xls)
-                </label>
-                <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-400 rounded-2xl p-6 text-center transition-colors">
-                  <input
-                    type="file"
-                    accept=".xlsx, .xls, .csv"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="flex flex-col items-center gap-2 pointer-events-none">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                      <FileUp className="w-6 h-6" />
-                    </div>
-                    {selectedFile ? (
-                      <div>
-                        <p className="text-xs font-black text-slate-800 dark:text-white">{selectedFile.name}</p>
-                        <p className="text-[10px] text-slate-400">{(selectedFile.size / 1024).toFixed(1)} KB · Klik atau seret file lain untuk mengganti</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          Klik untuk memilih file atau seret file ke sini
-                        </p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Mendukung format Microsoft Excel (.xlsx, .xls)</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <span className="text-xs font-black block">Format Template Resmi</span>
+                <span className="text-[11px] text-slate-400">
+                  Gunakan format kolom: <strong>No</strong>, <strong>Rencana Kerja</strong>, <strong>Target Kerja</strong>, <strong>Bobot (%)</strong>, dan <strong>Target Nilai</strong>.
+                </span>
               </div>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="px-3.5 py-2 rounded-xl text-xs font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Unduh Template (.xlsx)
+              </button>
+            </div>
 
-              {/* Parsing Indicator */}
-              {parsingFile && (
-                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-center flex items-center justify-center gap-2 text-xs font-bold text-slate-500">
-                  <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
-                  Membaca dan memvalidasi file Excel...
-                </div>
-              )}
+            {/* File Drop Area */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 block">Pilih File Spreadsheet</label>
+              <label
+                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
+                  selectedFile
+                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    : 'border-slate-300 dark:border-slate-700 hover:border-amber-500/50 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                }`}
+              >
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                {selectedFile ? (
+                  <div className="space-y-1">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                    <p className="text-xs font-black text-slate-700 dark:text-slate-200">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {(selectedFile.size / 1024).toFixed(1)} KB — Klik untuk mengganti file
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <FileUp className="w-8 h-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Klik atau seret file Excel ke sini
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Mendukung format .xlsx atau .xls
+                    </p>
+                  </div>
+                )}
+              </label>
+            </div>
 
-              {/* Parsed Result Preview */}
-              {parsedResult && (
-                <div className="space-y-4">
-                  {/* Status Badges */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-600 dark:text-slate-300">
-                        <strong>{parsedResult.plans.length}</strong> Rencana Kerja
-                      </span>
-                      <span>·</span>
-                      <span className="font-bold text-slate-600 dark:text-slate-300">
-                        <strong>{parsedResult.totalTargets}</strong> Target Kerja
+            {/* Parsing Indicator */}
+            {parsingFile && (
+              <div className="flex items-center justify-center gap-2 py-3 text-xs font-bold text-amber-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Membaca dan memvalidasi struktur file...
+              </div>
+            )}
+
+            {/* Parsing Result Summary Preview */}
+            {parsedResult && (
+              <div className="space-y-3">
+                <div className={`p-4 rounded-2xl border ${subCard} space-y-2`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black">Hasil Pratinjau Parsing</span>
+                    <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Siap Diimpor
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                      <span className="text-[10px] text-slate-400 block">Total Rencana</span>
+                      <span className="text-base font-black text-amber-500">
+                        {parsedResult.plans.length} Rencana
                       </span>
                     </div>
-
-                    <div>
-                      {parsedResult.totalWeight === 100 ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Total Bobot: 100% (Sempurna)
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 text-rose-500 border border-rose-500/20">
-                          <AlertCircle className="w-3.5 h-3.5" /> Total Bobot: {parsedResult.totalWeight}% (Harus 100%)
-                        </span>
-                      )}
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                      <span className="text-[10px] text-slate-400 block">Total Target</span>
+                      <span className="text-base font-black text-sky-500">
+                        {parsedResult.totalTargets} Target
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                      <span className="text-[10px] text-slate-400 block">Total Bobot</span>
+                      <span className={`text-base font-black ${parsedResult.totalWeight === 100 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {parsedResult.totalWeight}%
+                      </span>
                     </div>
                   </div>
 
-                  {/* Errors / Warnings */}
+                  {parsedResult.totalWeight !== 100 && (
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] flex items-center gap-1.5 font-bold">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      Catatan: Total bobot target saat ini {parsedResult.totalWeight}% (idealnya 100%).
+                    </div>
+                  )}
+
                   {parsedResult.errors?.length > 0 && (
-                    <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs space-y-1">
-                      <div className="flex items-center gap-1.5 font-bold mb-1">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
-                        Peringatan Validasi:
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] space-y-1">
+                      <div className="flex items-center gap-1 font-bold">
+                        <AlertCircle className="w-3.5 h-3.5" /> Peringatan Baris:
                       </div>
-                      <ul className="list-disc pl-5 space-y-0.5 text-[11px]">
-                        {parsedResult.errors.map((err, idx) => (
-                          <li key={idx}>{err}</li>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {parsedResult.errors.slice(0, 3).map((err, i) => (
+                          <li key={i}>{err}</li>
                         ))}
                       </ul>
                     </div>
                   )}
+                </div>
 
-                  {/* Accordion / Table Preview of Plans */}
-                  <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-48 overflow-y-auto text-xs">
-                    <div className="p-2.5 bg-slate-100 dark:bg-slate-800 font-black text-slate-500 text-[10px] uppercase tracking-wider">
-                      Pratinjau Data yang Akan Diimpor:
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {parsedResult.plans.map((p, idx) => (
-                        <div key={idx} className="p-3 bg-white dark:bg-slate-900">
-                          <div className="font-black text-slate-800 dark:text-white flex items-center justify-between">
-                            <span>{idx + 1}. {p.title}</span>
-                            <span className="text-[10px] font-mono text-slate-400 font-bold">{p.targets.length} target</span>
-                          </div>
-                          <ul className="mt-1.5 pl-4 list-disc text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                            {p.targets.map((t, tIdx) => (
-                              <li key={tIdx}>
-                                <strong>{t.title}</strong> — Bobot: <span className="font-mono font-bold text-amber-500">{t.weight}%</span> ({t.semesterScope === 'KEDUANYA' ? 'Sem 1 & 2' : t.semesterScope})
-                                {t.targetScoreSem1 != null && (
-                                  <span className="ml-1.5 text-blue-600 dark:text-blue-400 font-mono font-bold">
-                                    [Tgt Sem 1: {Number(t.targetScoreSem1).toFixed(2)}]
-                                  </span>
-                                )}
-                                {t.targetScoreSem2 != null && (
-                                  <span className="ml-1 text-purple-600 dark:text-purple-400 font-mono font-bold">
-                                    [Tgt Sem 2: {Number(t.targetScoreSem2).toFixed(2)}]
-                                  </span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Mode Selector */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-2">
-                      Metode Penerapan Impor:
+                {/* Import Mode Radio */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 block">Mode Impor</label>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <label
+                      className={`p-3 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                        importMode === 'REPLACE'
+                          ? 'border-amber-500 bg-amber-500/10 font-bold'
+                          : 'border-slate-200 dark:border-slate-800 opacity-60'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="importMode"
+                        value="REPLACE"
+                        checked={importMode === 'REPLACE'}
+                        onChange={() => setImportMode('REPLACE')}
+                        className="accent-amber-500"
+                      />
+                      <div>
+                        <span>Timpa Seluruh Data</span>
+                        <span className="block text-[10px] text-slate-400 font-normal">
+                          Hapus master instrumen lama dan ganti dengan file ini
+                        </span>
+                      </div>
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setImportMode('REPLACE')}
-                        className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                          importMode === 'REPLACE'
-                            ? 'border-amber-500 bg-amber-500/10 text-slate-900 dark:text-white ring-1 ring-amber-500'
-                            : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300'
-                        }`}
-                      >
-                        <div className="font-black text-xs flex items-center justify-between mb-1">
-                          <span>Ganti Seluruh Data</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">Rekomendasi</span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 leading-snug">
-                          Hapus seluruh instrumen saat ini dan ganti dengan data baru dari file Excel.
-                        </p>
-                      </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setImportMode('APPEND')}
-                        className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                          importMode === 'APPEND'
-                            ? 'border-amber-500 bg-amber-500/10 text-slate-900 dark:text-white ring-1 ring-amber-500'
-                            : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300'
-                        }`}
-                      >
-                        <div className="font-black text-xs mb-1">
-                          Tambahkan ke Data Ada
-                        </div>
-                        <p className="text-[10px] text-slate-400 leading-snug">
-                          Pertahankan instrumen lama dan tambahkan rencana kerja baru dari file Excel.
-                        </p>
-                      </button>
-                    </div>
+                    <label
+                      className={`p-3 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                        importMode === 'APPEND'
+                          ? 'border-amber-500 bg-amber-500/10 font-bold'
+                          : 'border-slate-200 dark:border-slate-800 opacity-60'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="importMode"
+                        value="APPEND"
+                        checked={importMode === 'APPEND'}
+                        onChange={() => setImportMode('APPEND')}
+                        className="accent-amber-500"
+                      />
+                      <div>
+                        <span>Tambahkan ke Data yang Ada</span>
+                        <span className="block text-[10px] text-slate-400 font-normal">
+                          Gabungkan rencana kerja baru di akhir daftar master
+                        </span>
+                      </div>
+                    </label>
                   </div>
                 </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setImportModalOpen(false)}
-                  className="w-1/2 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer text-slate-600 dark:text-slate-300"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitImport}
-                  disabled={!parsedResult || parsedResult.plans.length === 0 || submittingImport}
-                  className="w-1/2 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md hover:opacity-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-                >
-                  <FileUp className="w-4 h-4" />
-                  {submittingImport ? 'Mengimpor...' : `Impor Data Excel (${parsedResult?.plans?.length || 0} Rencana)`}
-                </button>
               </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={!parsedResult || parsedResult.plans.length === 0 || submittingImport}
+                onClick={handleSubmitImport}
+                className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:opacity-95 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {submittingImport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Memproses Impor...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Mulai Eksekusi Impor
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
