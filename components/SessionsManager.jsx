@@ -468,6 +468,9 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
       {(() => {
         const renderWilayahAccordion = (list, sectionName) => {
           const grouped = groupSessionsByWilayah(list);
+          if (!grouped['Nasional']) {
+            grouped['Nasional'] = [];
+          }
           const keys = Object.keys(grouped).sort((a, b) => {
             const isANasional = a.trim().toLowerCase() === 'nasional';
             const isBNasional = b.trim().toLowerCase() === 'nasional';
@@ -549,9 +552,15 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
 
                     {isExpanded && (
                       <div className="p-2.5 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 max-h-96 overflow-y-auto">
-                        {groupSessions.map((s) => (
-                          <SessionRow key={s.id} s={s} />
-                        ))}
+                        {groupSessions.length === 0 ? (
+                          <p className="text-[11px] text-slate-400 italic py-3 text-center">
+                            Belum ada sesi {wilayah.toLowerCase() === 'nasional' ? 'nasional' : `di wilayah ${wilayah}`}.
+                          </p>
+                        ) : (
+                          groupSessions.map((s) => (
+                            <SessionRow key={s.id} s={s} />
+                          ))
+                        )}
                       </div>
                     )}
                   </div>

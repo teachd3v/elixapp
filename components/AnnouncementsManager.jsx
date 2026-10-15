@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Megaphone, Plus, Trash2, X, AlertCircle, MapPin, Users, Calendar } from 'lucide-react';
+import { Megaphone, Plus, Trash2, X, AlertCircle, MapPin, Users, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useDialog } from './DialogProvider';
 
 async function fetchJson(url, options) {
@@ -25,6 +25,7 @@ const ROLE_LABEL = { ALL: 'Semua', AWARDEE: 'Awardee', MENTOR: 'Mentor' };
 export default function AnnouncementsManager({ darkMode, dbUser, role }) {
   const [items, setItems] = useState([]);
   const [wilayahList, setWilayahList] = useState([]);
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -40,14 +41,14 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
     try {
       const [list, wl] = await Promise.all([
         fetchJson('/api/announcements?scope=manage'),
-        isSuper ? fetchJson('/api/wilayah') : Promise.resolve([]),
+        fetchJson('/api/wilayah'),
       ]);
-      setItems(list);
-      setWilayahList(wl);
+      setItems(list || []);
+      setWilayahList(wl || []);
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load();   }, [role]);
+  useEffect(() => { load(); }, [role]);
 
   const openNew = () => {
     setForm({ title: '', message: '', targetRole: 'ALL', targetRegion: '' });
@@ -158,7 +159,7 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
                 <div>
                   <label className="text-xs font-bold text-slate-400 block mb-1">Target Wilayah</label>
                   <select className={`${inputCls} cursor-pointer`} value={form.targetRegion} onChange={(e) => setForm({ ...form, targetRegion: e.target.value })}>
-                    <option value="">Semua wilayah</option>
+                    <option value="">Nasional (Semua Wilayah)</option>
                     {wilayahList.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                   </select>
                 </div>
@@ -189,74 +190,158 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 items-stretch">
-        {items.map((a) => {
-          const mine = a.createdById === dbUser?.id;
-          return (
-            <div
-              key={a.id}
-              className={`border rounded-3xl p-4 transition-all shadow-xs hover:shadow-sm flex flex-col justify-between ${card}`}
-            >
-              <div>
-                {/* Header row: target badges & delete button */}
-                <div className="flex items-center justify-between gap-1.5 mb-2.5">
-                  <div className="flex items-center gap-1 flex-wrap min-w-0">
-                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      <Users className="w-2.5 h-2.5" /> {ROLE_LABEL[a.targetRole]}
-                    </span>
-                    {a.targetRegion ? (
+      {/* Grid 5 Kolom per Wilayah (Nasional selalu di Kolom 1) */}
+      {(() => {
+        const toggleWilayahGroup = (wilayahKey) => {
+          setExpandedGroups((prev) => ({ ...prev, [wilayahKey]: !prev[wilayahKey] }));
+        };
+
+        // Group announcements by wilayah & Nasional
+        const grouped = { Nasional: [] };
+        for (const w of wilayahList) {
+          const cleanName = w.name.replace(/^Wilayah\s+/i, '');
+          if (!grouped[cleanName]) grouped[cleanName] = [];
+        }
+
+        for (const a of items) {
+          if (!a.targetRegion) {
+            grouped.Nasional.push(a);
+          } else {
+            const cleanName = (a.targetRegionName || 'Wilayah Lainnya').replace(/^Wilayah\s+/i, '');
+            if (!grouped[cleanName]) grouped[cleanName] = [];
+            grouped[cleanName].push(a);
+          }
+        }
+
+        // Keys: 'Nasional' ALWAYS in Column 1, followed by alphabetical order of other regions
+        const keys = Object.keys(grouped).sort((a, b) => {
+          const isANasional = a.trim().toLowerCase() === 'nasional';
+          const isBNasional = b.trim().toLowerCase() === 'nasional';
+          if (isANasional && !isBNasional) return -1;
+          if (!isANasional && isBNasional) return 1;
+          return a.localeCompare(b, 'id', { sensitivity: 'base' });
+        });
+
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
+            {keys.map((wilayah) => {
+              const groupItems = grouped[wilayah] || [];
+              const isExpanded = !!expandedGroups[wilayah];
+              const isNasional = wilayah.toLowerCase() === 'nasional';
+
+              return (
+                <div
+                  key={wilayah}
+                  className={`border rounded-2xl overflow-hidden transition-all shadow-xs hover:shadow-sm ${
+                    darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/80 bg-white'
+                  }`}
+                >
+                  <div
+                    onClick={() => toggleWilayahGroup(wilayah)}
+                    className={`p-3.5 flex flex-col justify-between gap-2.5 cursor-pointer select-none transition-colors ${
+                      darkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`p-1.5 rounded-lg shrink-0 ${
+                            isNasional
+                              ? 'bg-violet-500/10 text-violet-500'
+                              : 'bg-emerald-500/10 text-emerald-500'
+                          }`}
+                        >
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <span className="font-bold text-xs truncate text-slate-800 dark:text-white" title={wilayah}>
+                          {wilayah}
+                        </span>
+                      </div>
+
+                      <div className="text-slate-400 p-0.5 shrink-0">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between w-full pt-1.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px]">
+                      <span className="text-slate-400 font-medium">Total Pengumuman</span>
                       <span
-                        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 truncate max-w-[120px]"
-                        title={`Wilayah ${a.targetRegionName || '—'}`}
+                        className={`font-bold px-2 py-0.5 rounded-full ${
+                          darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                        }`}
                       >
-                        <MapPin className="w-2.5 h-2.5 shrink-0" /> {a.targetRegionName?.replace(/^Wilayah\s+/i, '') || 'Wilayah'}
+                        {groupItems.length} info
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        <MapPin className="w-2.5 h-2.5" /> Nasional
-                      </span>
-                    )}
+                    </div>
                   </div>
 
-                  {(mine || isSuper) && (
-                    <button
-                      type="button"
-                      onClick={() => remove(a)}
-                      disabled={busyId === a.id}
-                      className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer shrink-0 disabled:opacity-50"
-                      title="Hapus Pengumuman"
-                    >
-                      {busyId === a.id ? (
-                        <div className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                  {isExpanded && (
+                    <div className="p-2.5 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 max-h-96 overflow-y-auto">
+                      {groupItems.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic py-3 text-center">
+                          {isNasional ? 'Belum ada pengumuman nasional.' : `Belum ada pengumuman di wilayah ${wilayah}.`}
+                        </p>
                       ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
+                        groupItems.map((a) => {
+                          const mine = a.createdById === dbUser?.id;
+                          return (
+                            <div
+                              key={a.id}
+                              className={`flex flex-col gap-2 p-3 rounded-xl border ${
+                                darkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/70'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                  <Users className="w-2.5 h-2.5" /> {ROLE_LABEL[a.targetRole]}
+                                </span>
+                                {(mine || isSuper) && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      remove(a);
+                                    }}
+                                    disabled={busyId === a.id}
+                                    className="p-1 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                                    title="Hapus Pengumuman"
+                                  >
+                                    {busyId === a.id ? (
+                                      <div className="w-3 h-3 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-3 h-3" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+
+                              <h5 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-2 leading-snug" title={a.title}>
+                                {a.title}
+                              </h5>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-line">
+                                {a.message}
+                              </p>
+
+                              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[9px] text-slate-400">
+                                <span className="truncate max-w-[100px]" title={a.createdByName ? `Oleh: ${a.createdByName}` : ''}>
+                                  {a.createdByName ? `${a.createdByName}${mine ? ' (kamu)' : ''}` : 'Admin'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 shrink-0">
+                                  <Calendar className="w-2.5 h-2.5" /> {fmtDate(a.createdAt)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
-                    </button>
+                    </div>
                   )}
                 </div>
-
-                {/* Title & Message */}
-                <h4 className="font-bold text-xs text-slate-900 dark:text-white mb-1.5 line-clamp-2 leading-snug" title={a.title}>
-                  {a.title}
-                </h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-line mb-3">
-                  {a.message}
-                </p>
-              </div>
-
-              {/* Footer: Author and Date */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 mt-auto">
-                <span className="truncate max-w-[110px]" title={a.createdByName ? `Oleh: ${a.createdByName}` : ''}>
-                  {a.createdByName ? `${a.createdByName}${mine ? ' (kamu)' : ''}` : 'Admin'}
-                </span>
-                <span className="inline-flex items-center gap-1 shrink-0">
-                  <Calendar className="w-2.5 h-2.5" /> {fmtDate(a.createdAt)}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
