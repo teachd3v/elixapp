@@ -39,7 +39,7 @@ export default function WilayahObservationEvaluator({
     initialObservation?.mentorPerformanceSummary || ''
   );
 
-  // Bagian B states: [{ id, finding, recommendation, dueDate }]
+  // Bagian B states: [{ id, category, finding, recommendation, dueDate }]
   const [findings, setFindings] = useState(() => {
     if (initialObservation?.findings && Array.isArray(initialObservation.findings) && initialObservation.findings.length > 0) {
       return initialObservation.findings;
@@ -47,8 +47,15 @@ export default function WilayahObservationEvaluator({
     return [];
   });
 
+  const [sectionAAnswers, setSectionAAnswers] = useState(() => {
+    return (initialObservation?.sectionAAnswers && typeof initialObservation.sectionAAnswers === 'object')
+      ? initialObservation.sectionAAnswers
+      : {};
+  });
+
   const [observers, setObservers] = useState([]);
   const [evaluatedById, setEvaluatedById] = useState(initialObservation?.evaluatedById || '');
+  const [masterAspects, setMasterAspects] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -68,11 +75,49 @@ export default function WilayahObservationEvaluator({
         console.error(err);
       }
     }
+
+    async function fetchMasterAspects() {
+      try {
+        const res = await fetch('/api/admin/monev/observation-aspects');
+        if (res.ok) {
+          const d = await res.json();
+          if (isMounted) {
+            setMasterAspects(d || []);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     fetchObservers();
+    fetchMasterAspects();
     return () => {
       isMounted = false;
     };
   }, [initialObservation]);
+
+  // Section A & B filtered aspects
+  const sectionAAspects = useMemo(() => {
+    return masterAspects.filter((a) => a.section !== 'SECTION_B');
+  }, [masterAspects]);
+
+  const sectionBAspects = useMemo(() => {
+    return masterAspects.filter((a) => a.section === 'SECTION_B');
+  }, [masterAspects]);
+
+  // Match default standard aspects
+  const realizationAspect = useMemo(() => {
+    return sectionAAspects.find(a => a.title.toLowerCase().includes('realisasi')) || sectionAAspects[0] || null;
+  }, [sectionAAspects]);
+
+  const mentorAspect = useMemo(() => {
+    return sectionAAspects.find(a => a.title.toLowerCase().includes('performa') || a.title.toLowerCase().includes('mentor')) || sectionAAspects[1] || null;
+  }, [sectionAAspects]);
+
+  const additionalSectionAAspects = useMemo(() => {
+    return sectionAAspects.filter(a => a.id !== realizationAspect?.id && a.id !== mentorAspect?.id);
+  }, [sectionAAspects, realizationAspect, mentorAspect]);
 
   // Get info of currently selected wilayah
   const selectedWilayah = useMemo(() => {
@@ -85,6 +130,7 @@ export default function WilayahObservationEvaluator({
       ...prev,
       {
         id: `finding-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        category: sectionBAspects[0]?.title || '',
         finding: '',
         recommendation: '',
         dueDate: '',
@@ -133,6 +179,7 @@ export default function WilayahObservationEvaluator({
         observationDate,
         programRealization: programRealization.trim(),
         mentorPerformanceSummary: mentorPerformanceSummary.trim(),
+        sectionAAnswers,
         findings: findings.filter(f => f.finding?.trim() || f.recommendation?.trim()),
         evaluatedById: evaluatedById || undefined,
       };
@@ -344,6 +391,24 @@ export default function WilayahObservationEvaluator({
               Mengacu pada keseluruhan instrumen monev
             </span>
           </div>
+
+          {realizationAspect?.indicators && realizationAspect.indicators.length > 0 && (
+            <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
+              <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                Poin Panduan Observasi Lapangan:
+              </span>
+              <div className="space-y-1">
+                {realizationAspect.indicators.map((ind, i) => (
+                  <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
+                    • <strong>{ind.title}</strong>
+                    {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             Berikan kesimpulan komprehensif mengenai capaian target kegiatan, dinamika pembinaan, kehadiran awardee, kepatuhan kurikulum, serta sarana/prasarana pendukung di wilayah ini.
           </p>
@@ -367,6 +432,24 @@ export default function WilayahObservationEvaluator({
               Mengacu pada Instrumen Penilaian Mentor & Mengajar Mentor
             </span>
           </div>
+
+          {mentorAspect?.indicators && mentorAspect.indicators.length > 0 && (
+            <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
+              <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                Poin Panduan Observasi Lapangan:
+              </span>
+              <div className="space-y-1">
+                {mentorAspect.indicators.map((ind, i) => (
+                  <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
+                    • <strong>{ind.title}</strong>
+                    {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             Berikan kesimpulan umum terkait kedisiplinan administratif (jurnal), kepemimpinan mentor dalam mendampingi awardee, serta kompetensi pedagogik saat memandu sesi pembinaan.
           </p>
@@ -378,6 +461,49 @@ export default function WilayahObservationEvaluator({
             className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
           />
         </div>
+
+        {/* Aspek Tambahan Bagian A jika dikonfigurasi */}
+        {additionalSectionAAspects.map((asp, aIdx) => (
+          <div key={asp.id || aIdx} className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="flex items-baseline justify-between gap-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <span>{asp.title}</span>
+              </label>
+              {asp.description && (
+                <span className="text-[11px] text-slate-400 line-clamp-1">
+                  {asp.description}
+                </span>
+              )}
+            </div>
+
+            {asp.indicators && asp.indicators.length > 0 && (
+              <div className={`p-3 rounded-2xl border text-[11px] space-y-1.5 ${subCard}`}>
+                <span className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Poin Panduan Observasi Lapangan:
+                </span>
+                <div className="space-y-1">
+                  {asp.indicators.map((ind, i) => (
+                    <div key={ind.id || i} className="text-slate-500 dark:text-slate-400">
+                      • <strong>{ind.title}</strong>
+                      {ind.guideNotes ? ` — ${ind.guideNotes}` : ''}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <textarea
+              rows={4}
+              value={sectionAAnswers[asp.title] || ''}
+              onChange={(e) =>
+                setSectionAAnswers((prev) => ({ ...prev, [asp.title]: e.target.value }))
+              }
+              placeholder={`Tuliskan kesimpulan observasi mengenai ${asp.title.toLowerCase()}...`}
+              className={`w-full p-4 rounded-2xl border text-xs font-medium leading-relaxed outline-none transition-all resize-y ${inputClass}`}
+            />
+          </div>
+        ))}
       </div>
 
       {/* BAGIAN B: TEMUAN KETIDAKCAPAIAN TARGET PROGRAM */}
@@ -449,6 +575,27 @@ export default function WilayahObservationEvaluator({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  {/* Kategori Target (dari Aspek Bagian B) */}
+                  {sectionBAspects.length > 0 && (
+                    <div className="md:col-span-12 space-y-1">
+                      <label className="block text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                        Kategori Target Program (Acuan Aspek Bagian B)
+                      </label>
+                      <select
+                        value={item.category || ''}
+                        onChange={(e) => handleUpdateFinding(index, 'category', e.target.value)}
+                        className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold outline-none cursor-pointer ${inputClass}`}
+                      >
+                        <option value="">-- Kategori Umum (Tanpa Kategori Khusus) --</option>
+                        {sectionBAspects.map((asp) => (
+                          <option key={asp.id} value={asp.title}>
+                            {asp.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Temuan */}
                   <div className="md:col-span-5 space-y-1">
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">

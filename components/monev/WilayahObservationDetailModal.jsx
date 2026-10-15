@@ -126,6 +126,26 @@ export default function WilayahObservationDetailModal({
                 {observation.mentorPerformanceSummary || '—'}
               </div>
             </div>
+
+            {/* Aspek Tambahan Bagian A jika ada */}
+            {observation.sectionAAnswers && typeof observation.sectionAAnswers === 'object' && Object.keys(observation.sectionAAnswers).length > 0 && (
+              <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                {Object.entries(observation.sectionAAnswers).map(([title, val], idx) => {
+                  if (!val || typeof val !== 'string') return null;
+                  return (
+                    <div key={idx} className="space-y-1.5">
+                      <h4 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-blue-500" />
+                        {title}
+                      </h4>
+                      <div className={`p-4 rounded-2xl border ${subCard} leading-relaxed font-normal whitespace-pre-wrap text-slate-700 dark:text-slate-300`}>
+                        {val}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* BAGIAN B: TEMUAN KETIDAKCAPAIAN TARGET PROGRAM */}
@@ -172,7 +192,12 @@ export default function WilayahObservationDetailModal({
                           {idx + 1}
                         </td>
                         <td className="py-3 px-3 font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
-                          {f.finding || '—'}
+                          {f.category && (
+                            <span className="inline-block mb-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                              {f.category}
+                            </span>
+                          )}
+                          <div>{f.finding || '—'}</div>
                         </td>
                         <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
                           {f.recommendation || '—'}

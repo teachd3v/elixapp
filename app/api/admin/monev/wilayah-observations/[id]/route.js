@@ -54,6 +54,7 @@ export async function PUT(request, { params }) {
     observationDate,
     programRealization,
     mentorPerformanceSummary,
+    sectionAAnswers,
     findings,
     evaluatedById,
   } = body;
@@ -69,10 +70,12 @@ export async function PUT(request, { params }) {
     if (observationDate !== undefined) dataToUpdate.observationDate = new Date(observationDate);
     if (programRealization !== undefined) dataToUpdate.programRealization = programRealization.trim();
     if (mentorPerformanceSummary !== undefined) dataToUpdate.mentorPerformanceSummary = mentorPerformanceSummary.trim();
+    if (sectionAAnswers !== undefined) dataToUpdate.sectionAAnswers = sectionAAnswers;
     if (evaluatedById !== undefined && evaluatedById) dataToUpdate.evaluatedById = evaluatedById;
     if (findings !== undefined && Array.isArray(findings)) {
       dataToUpdate.findings = findings.map((f, idx) => ({
         id: f.id || `finding-${idx + 1}-${Date.now()}`,
+        category: f.category ? String(f.category).trim() : '',
         finding: String(f.finding || '').trim(),
         recommendation: String(f.recommendation || '').trim(),
         dueDate: String(f.dueDate || '').trim(),

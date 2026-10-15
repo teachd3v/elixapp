@@ -13,6 +13,7 @@ import MonevTeachingInstrumentManager from './MonevTeachingInstrumentManager';
 import MentorTeachingEvaluator from './MentorTeachingEvaluator';
 import WilayahObservationEvaluator from './WilayahObservationEvaluator';
 import WilayahObservationDetailModal from './WilayahObservationDetailModal';
+import MonevObservationInstrumentManager from './MonevObservationInstrumentManager';
 import MonevInterviewInstrumentManager from './MonevInterviewInstrumentManager';
 import AwardeeInterviewEvaluator from './AwardeeInterviewEvaluator';
 import AwardeeInterviewDetailModal from './AwardeeInterviewDetailModal';
@@ -22,7 +23,7 @@ import { getPerformanceCategory, getTeachingCategory } from '../../lib/monev';
 export default function MonevHub({ darkMode }) {
   const { confirm, alert } = useDialog();
 
-  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation' | 'interview' | 'instrument_interview'
+  const [activeSubTab, setActiveSubTab] = useState('performance'); // 'performance' | 'instrument_performance' | 'teaching' | 'instrument_teaching' | 'observation' | 'instrument_observation' | 'interview' | 'instrument_interview'
   const [mentors, setMentors] = useState([]);
   const [loadingMentors, setLoadingMentors] = useState(true);
 
@@ -617,6 +618,18 @@ export default function MonevHub({ darkMode }) {
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   Instrumen 2 (Mengajar)
+                </button>
+
+                <button
+                  onClick={() => setActiveSubTab('instrument_observation')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeSubTab === 'instrument_observation'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Instrumen 3 (Observasi)
                 </button>
 
                 <button
@@ -1537,6 +1550,11 @@ export default function MonevHub({ darkMode }) {
             </div>
           )}
         </div>
+      )}
+
+      {/* PENGATURAN INSTRUMEN OBSERVASI WILAYAH */}
+      {activeSubTab === 'instrument_observation' && (
+        <MonevObservationInstrumentManager darkMode={darkMode} />
       )}
 
       {/* SUB-TAB 7: PENGATURAN INSTRUMEN WAWANCARA */}

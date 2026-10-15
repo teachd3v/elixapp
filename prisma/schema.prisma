@@ -535,6 +535,38 @@ model MentorTeachingEvaluation {
 // INSTRUMEN 3: LAPORAN OBSERVASI MONEV WILAYAH
 // ==========================================
 
+model WilayahObservationAspect {
+  id          String                    @id @default(uuid())
+  section     String                    @default("SECTION_A") // "SECTION_A" (Perkembangan Program) atau "SECTION_B" (Temuan Target Program)
+  title       String                    // Judul Aspek / Kategori
+  description String?                   @db.Text // Deskripsi / tujuan pengamatan
+  order       Int                       @default(0) // Nomor urut
+
+  indicators  WilayahObservationIndicator[]
+
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  @@index([section])
+  @@index([order])
+}
+
+model WilayahObservationIndicator {
+  id          String                   @id @default(uuid())
+  aspectId    String
+  aspect      WilayahObservationAspect @relation(fields: [aspectId], references: [id], onDelete: Cascade)
+
+  title       String                   // Poin Panduan / Pertanyaan Evaluasi / Target Pengamatan
+  guideNotes  String?                  @db.Text // Petunjuk teknis pengamatan bagi observer
+  order       Int                      @default(0)
+
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  @@index([aspectId])
+  @@index([order])
+}
+
 model WilayahMonevObservation {
   id                       String        @id @default(uuid())
   
@@ -547,9 +579,10 @@ model WilayahMonevObservation {
   // Bagian A. Perkembangan Program
   programRealization       String        @db.Text // Kesimpulan Pelaksanaan Program mengacu pada keseluruhan Instrumen Monev
   mentorPerformanceSummary String        @db.Text // Kesimpulan Performa Mentor mengacu pada Instrumen Penilaian Mentor dan Mengajar Mentor
+  sectionAAnswers          Json?         @default("{}") // Jawaban dinamis per indikator/aspek Bagian A: { [indicatorId]: string }
 
   // Bagian B. Temuan Ketidakcapaian Target Program
-  // Array of: [{ id: string, finding: string, recommendation: string, dueDate: string }]
+  // Array of: [{ id: string, category?: string, finding: string, recommendation: string, dueDate: string }]
   findings                 Json          @default("[]")
 
   evaluatedById            String

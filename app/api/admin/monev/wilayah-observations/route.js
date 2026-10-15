@@ -58,6 +58,7 @@ export async function POST(request) {
     observationDate,
     programRealization,
     mentorPerformanceSummary,
+    sectionAAnswers,
     findings,
     evaluatedById,
   } = body;
@@ -79,6 +80,7 @@ export async function POST(request) {
   const sanitizedFindings = Array.isArray(findings)
     ? findings.map((f, idx) => ({
         id: f.id || `finding-${idx + 1}-${Date.now()}`,
+        category: f.category ? String(f.category).trim() : '',
         finding: String(f.finding || '').trim(),
         recommendation: String(f.recommendation || '').trim(),
         dueDate: String(f.dueDate || '').trim(),
@@ -93,6 +95,7 @@ export async function POST(request) {
         observationDate: observationDate ? new Date(observationDate) : new Date(),
         programRealization: programRealization.trim(),
         mentorPerformanceSummary: mentorPerformanceSummary.trim(),
+        sectionAAnswers: sectionAAnswers || {},
         findings: sanitizedFindings,
         evaluatedById: evaluatedById || me.id,
       },
