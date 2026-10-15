@@ -713,8 +713,8 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
         ))}
       </div>
 
-      {/* Quick-access shortcut cards for hidden menu items */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* Quick-access shortcut cards (disembunyikan di desktop karena sudah ada di DesktopNav) */}
+      <div className="grid md:hidden grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { id: 'monitoring', label: 'Monitoring SA & MA', icon: ClipboardList, gradient: 'from-emerald-500 to-teal-600' },
           { id: 'journals', label: 'Jurnal Mentor', icon: BookOpen, gradient: 'from-blue-600 to-indigo-600' },
