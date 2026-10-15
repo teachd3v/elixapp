@@ -83,7 +83,7 @@ export default function AwardeeInterviewDetailModal({
                 {record.awardee?.user?.name || 'Awardee'}
               </h2>
               <p className="text-xs text-slate-400">
-                Wilayah {record.awardee?.wilayah?.name || '—'} · {record.periodName}
+                {(record.awardee?.school || record.awardee?.university) ? `${record.awardee?.school || record.awardee?.university} · ` : ''}Wilayah {record.awardee?.wilayah?.name || '—'} · {record.periodName}
               </p>
             </div>
           </div>

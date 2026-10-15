@@ -520,11 +520,11 @@ export default function MonevHub({ darkMode }) {
       const q = awardeeSearchQuery.toLowerCase();
       const name = a.user?.name?.toLowerCase() || '';
       const email = a.user?.email?.toLowerCase() || '';
-      const univ = a.university?.toLowerCase() || '';
+      const school = (a.school || a.university || '').toLowerCase();
       const major = a.major?.toLowerCase() || '';
       const wName = a.wilayah?.name?.toLowerCase() || '';
 
-      return name.includes(q) || email.includes(q) || univ.includes(q) || major.includes(q) || wName.includes(q);
+      return name.includes(q) || email.includes(q) || school.includes(q) || major.includes(q) || wName.includes(q);
     });
   }, [awardees, awardeeWilayahFilter, awardeeInterviewStatusFilter, awardeeSearchQuery]);
 
@@ -1534,7 +1534,7 @@ export default function MonevHub({ darkMode }) {
               <span className="text-xs font-bold text-slate-400 block mb-1">Total Awardee</span>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-black">{interviewStats.total}</span>
-                <span className="text-xs text-slate-400 font-semibold">Mahasiswa</span>
+                <span className="text-xs text-slate-400 font-semibold">Siswa</span>
               </div>
             </div>
 
@@ -1577,7 +1577,7 @@ export default function MonevHub({ darkMode }) {
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Cari nama awardee, universitas, jurusan, atau wilayah..."
+                  placeholder="Cari nama awardee, sekolah, jurusan, atau wilayah..."
                   value={awardeeSearchQuery}
                   onChange={(e) => setAwardeeSearchQuery(e.target.value)}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
@@ -1694,10 +1694,10 @@ export default function MonevHub({ darkMode }) {
                         </span>
                       </div>
 
-                      {/* University & Major info */}
+                      {/* School & Major info */}
                       <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5 mb-3">
                         <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
-                          {a.university || 'Belum mengisi universitas'}
+                          {a.school || a.university || 'Belum mengisi asal sekolah'}
                         </p>
                         <p className="text-[11px] truncate">
                           {a.major ? `${a.major}` : ''}

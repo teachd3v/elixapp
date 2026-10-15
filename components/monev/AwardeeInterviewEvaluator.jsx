@@ -280,7 +280,7 @@ export default function AwardeeInterviewEvaluator({
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
-                <span>{awardee.university || 'Universitas'}</span>
+                <span>{awardee.school || awardee.university || 'Asal Sekolah'}</span>
                 {awardee.major && <span>· Jurusan {awardee.major}</span>}
                 {awardee.generation && <span>· Angkatan {awardee.generation}</span>}
               </p>
