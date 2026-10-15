@@ -56,13 +56,13 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
   const [busyId, setBusyId] = useState(null);
   const { confirm, alert } = useDialog();
 
-  // Wilayah accordion collapse state & Excel export state
-  const [collapsedGroups, setCollapsedGroups] = useState({});
+  // Wilayah accordion expanded state & Excel export state (default closed/collapsed)
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [exportingAll, setExportingAll] = useState(false);
 
   const toggleWilayahGroup = (section, wilayah) => {
     const id = `${section}-${wilayah}`;
-    setCollapsedGroups(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedGroups(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const groupSessionsByWilayah = (list) => {
@@ -222,40 +222,48 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
     const myAtt = isAwardee ? summary?.my : null;
     const verified = myAtt && myAtt.status !== 'MENUNGGU_KONFIRMASI';
     return (
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`flex flex-col gap-2 p-3 rounded-xl border ${darkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/70'}`}>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${s.category === 'INDIVIDU' ? 'bg-fuchsia-500/10 text-fuchsia-600' : (s.scope === 'NASIONAL' ? 'bg-violet-500/10 text-violet-600' : 'bg-emerald-500/10 text-emerald-600')}`}>
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.category === 'INDIVIDU' ? 'bg-fuchsia-500/10 text-fuchsia-600' : (s.scope === 'NASIONAL' ? 'bg-violet-500/10 text-violet-600' : 'bg-emerald-500/10 text-emerald-600')}`}>
               {s.category === 'INDIVIDU' ? 'Individu' : (s.scope === 'NASIONAL' ? 'Nasional' : 'Wilayah')}
             </span>
-            {s.wilayah?.name && s.category === 'KLASIKAL' && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
-                <MapPin className="w-3 h-3" /> {s.wilayah.name}
+            {s.wilayah?.name && s.category === 'KLASIKAL' && s.scope !== 'NASIONAL' && (
+              <span className="inline-flex items-center gap-1 text-[9px] text-slate-500">
+                <MapPin className="w-2.5 h-2.5" /> {s.wilayah.name.replace(/^Wilayah\s+/i, '')}
               </span>
             )}
             {isAwardee && myAtt && (
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${STATUS_TONE[myAtt.status]}`}>
-                {myAtt.status === 'HADIR' ? <CheckCircle2 className="w-3 h-3" /> : myAtt.status === 'ALFA' ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${STATUS_TONE[myAtt.status]}`}>
+                {myAtt.status === 'HADIR' ? <CheckCircle2 className="w-2.5 h-2.5" /> : myAtt.status === 'ALFA' ? <XCircle className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
                 {STATUS_LABEL[myAtt.status]}
               </span>
             )}
             {canReview && summary && (
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${summary.pending > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-500/10 text-slate-500'}`}>
-                <Users className="w-3 h-3" /> {summary.total} absensi{summary.pending > 0 ? ` · ${summary.pending} menunggu` : ''}
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${summary.pending > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-500/10 text-slate-500'}`}>
+                <Users className="w-2.5 h-2.5" /> {summary.total} absensi{summary.pending > 0 ? ` · ${summary.pending} mnggu` : ''}
               </span>
             )}
           </div>
-          <p className="font-bold text-sm mb-1">{s.title}</p>
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+          <p className="font-bold text-xs mb-1 line-clamp-2 leading-snug">{s.title}</p>
+          <div className="flex flex-col gap-0.5 text-[10px] text-slate-500">
             <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
+              <Calendar className="w-3 h-3 shrink-0" />
               {s.category === 'INDIVIDU' ? `${fmtDate(s.date)} - ${fmtDate(s.endDate)}` : fmtDate(s.date)}
             </span>
-            {s.category === 'KLASIKAL' && s.endDate && <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{fmtTime(s.date)} - {fmtTime(s.endDate)}</span>}
-            {s.category === 'INDIVIDU' && s.awardee && <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{s.awardee.user?.name}</span>}
+            {s.category === 'KLASIKAL' && s.endDate && (
+              <span className="inline-flex items-center gap-1">
+                <Clock className="w-3 h-3 shrink-0" />{fmtTime(s.date)} - {fmtTime(s.endDate)}
+              </span>
+            )}
+            {s.category === 'INDIVIDU' && s.awardee && (
+              <span className="inline-flex items-center gap-1">
+                <User className="w-3 h-3 shrink-0" />{s.awardee.user?.name}
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 shrink-0 flex-wrap">
           {isAwardee && (() => {
             const attnOpen = isAttendanceOpen(s, now);
             const excOpen  = isExcuseOpen(s, myAtt?.status, now);
@@ -336,19 +344,23 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
         <div className="flex items-center gap-2">
           {canReview && sessions.length > 0 && (
             <button
+              type="button"
               onClick={handleExportAll}
               disabled={exportingAll}
-              className="p-2.5 md:px-3.5 md:py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
-              title="Export Semua Data Presensi ke Excel"
+              className="p-2.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl font-bold text-xs flex items-center justify-center transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+              title={exportingAll ? 'Mengekspor data ke Excel...' : 'Export Semua Data Presensi ke Excel'}
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span className="hidden md:inline">{exportingAll ? 'Mengekspor...' : 'Export Excel Presensi'}</span>
             </button>
           )}
           {canCreate && !formOpen && (
-            <button onClick={openNew}
-              className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
-              <Plus className="w-4 h-4" /> <span className="hidden md:inline">Tambah Sesi</span>
+            <button
+              type="button"
+              onClick={openNew}
+              className="p-2.5 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-sm hover:opacity-95 transition-all cursor-pointer"
+              title="Tambah Sesi Baru"
+            >
+              <Plus className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -456,54 +468,87 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
       {(() => {
         const renderWilayahAccordion = (list, sectionName) => {
           const grouped = groupSessionsByWilayah(list);
-          const keys = Object.keys(grouped);
+          const keys = Object.keys(grouped).sort((a, b) => {
+            const isANasional = a.trim().toLowerCase() === 'nasional';
+            const isBNasional = b.trim().toLowerCase() === 'nasional';
+            if (isANasional && !isBNasional) return -1;
+            if (!isANasional && isBNasional) return 1;
+            return a.localeCompare(b, 'id', { sensitivity: 'base' });
+          });
 
           return (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
               {keys.map((wilayah) => {
                 const groupSessions = grouped[wilayah];
                 const groupId = `${sectionName}-${wilayah}`;
-                const isCollapsed = !!collapsedGroups[groupId];
+                const isExpanded = !!expandedGroups[groupId];
 
                 return (
-                  <div key={groupId} className={`border rounded-2xl overflow-hidden transition-colors ${darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                  <div
+                    key={groupId}
+                    className={`border rounded-2xl overflow-hidden transition-all shadow-xs hover:shadow-sm ${
+                      darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/80 bg-white'
+                    }`}
+                  >
                     <div
                       onClick={() => toggleWilayahGroup(sectionName, wilayah)}
-                      className={`p-3.5 flex items-center justify-between cursor-pointer select-none transition-colors ${darkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                      className={`p-3.5 flex flex-col justify-between gap-2.5 cursor-pointer select-none transition-colors ${
+                        darkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50/80'
+                      }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`p-1.5 rounded-lg ${wilayah === 'Nasional' ? 'bg-violet-500/10 text-violet-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                          <MapPin className="w-4 h-4" />
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className={`p-1.5 rounded-lg shrink-0 ${
+                              wilayah.toLowerCase() === 'nasional'
+                                ? 'bg-violet-500/10 text-violet-500'
+                                : 'bg-emerald-500/10 text-emerald-500'
+                            }`}
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </div>
+                          <span className="font-bold text-xs truncate text-slate-800 dark:text-white" title={wilayah}>
+                            {wilayah}
+                          </span>
                         </div>
-                        <span className="font-bold text-xs truncate text-slate-800 dark:text-white">{wilayah}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {canReview && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportSessionsAttendanceList({
+                                  sessions: groupSessions,
+                                  filename: `Presensi_${wilayah.replace(/[^a-zA-Z0-9]/g, '_')}_${sectionName}.xlsx`,
+                                }).catch((err) => alert(err.message || 'Gagal export data', 'Gagal'));
+                              }}
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors cursor-pointer"
+                              title={`Export presensi ${wilayah} ke Excel`}
+                            >
+                              <FileSpreadsheet className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <div className="text-slate-400 p-0.5">
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between w-full pt-1.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px]">
+                        <span className="text-slate-400 font-medium">Total Sesi</span>
+                        <span
+                          className={`font-bold px-2 py-0.5 rounded-full ${
+                            darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
                           {groupSessions.length} sesi
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {canReview && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportSessionsAttendanceList({
-                                sessions: groupSessions,
-                                filename: `Presensi_${wilayah.replace(/[^a-zA-Z0-9]/g, '_')}_${sectionName}.xlsx`
-                              }).catch((err) => alert(err.message || 'Gagal export data', 'Gagal'));
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-[10px] flex items-center gap-1 transition-colors"
-                            title={`Export presensi wilayah ${wilayah} ke Excel`}
-                          >
-                            <FileSpreadsheet className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Excel</span>
-                          </button>
-                        )}
-                        {isCollapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
-                      </div>
                     </div>
 
-                    {!isCollapsed && (
-                      <div className="p-3 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 mt-1">
+                    {isExpanded && (
+                      <div className="p-2.5 pt-0 space-y-2 border-t border-slate-100 dark:border-slate-800/60 max-h-96 overflow-y-auto">
                         {groupSessions.map((s) => (
                           <SessionRow key={s.id} s={s} />
                         ))}
