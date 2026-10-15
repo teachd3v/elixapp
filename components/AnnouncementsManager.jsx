@@ -107,9 +107,13 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
           </div>
         </div>
         {!formOpen && (
-          <button onClick={openNew}
-            className="p-2.5 md:px-4 md:py-2 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 shrink-0 shadow-md">
-            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Kirim Pengumuman</span>
+          <button
+            type="button"
+            onClick={openNew}
+            className="p-2.5 bg-gradient-to-br from-[#0f2942] via-sky-800 to-amber-400 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-sm hover:opacity-95 transition-all cursor-pointer"
+            title="Kirim Pengumuman Baru"
+          >
+            <Plus className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -181,46 +185,73 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
         <div className={`border rounded-3xl p-10 text-center ${card}`}>
           <Megaphone className="w-10 h-10 text-slate-300 mx-auto mb-3" />
           <p className="text-sm font-bold mb-1">Belum ada pengumuman</p>
-          <p className="text-xs text-slate-500">Klik "Kirim Pengumuman" untuk mulai.</p>
+          <p className="text-xs text-slate-500">Klik tombol "+" untuk mulai membuat pengumuman.</p>
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 items-stretch">
         {items.map((a) => {
           const mine = a.createdById === dbUser?.id;
           return (
-            <div key={a.id} className={`border rounded-3xl p-5 ${card}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      <Users className="w-3 h-3" /> {ROLE_LABEL[a.targetRole]}
+            <div
+              key={a.id}
+              className={`border rounded-3xl p-4 transition-all shadow-xs hover:shadow-sm flex flex-col justify-between ${card}`}
+            >
+              <div>
+                {/* Header row: target badges & delete button */}
+                <div className="flex items-center justify-between gap-1.5 mb-2.5">
+                  <div className="flex items-center gap-1 flex-wrap min-w-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      <Users className="w-2.5 h-2.5" /> {ROLE_LABEL[a.targetRole]}
                     </span>
                     {a.targetRegion ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600">
-                        <MapPin className="w-3 h-3" /> Wilayah {a.targetRegionName || '—'}
+                      <span
+                        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 truncate max-w-[120px]"
+                        title={`Wilayah ${a.targetRegionName || '—'}`}
+                      >
+                        <MapPin className="w-2.5 h-2.5 shrink-0" /> {a.targetRegionName?.replace(/^Wilayah\s+/i, '') || 'Wilayah'}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-600">
-                        <MapPin className="w-3 h-3" /> Nasional
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                        <MapPin className="w-2.5 h-2.5" /> Nasional
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1 text-[10px] text-slate-500">
-                      <Calendar className="w-3 h-3" /> {fmtDate(a.createdAt)}
-                    </span>
                   </div>
-                  <h4 className="font-bold text-sm mb-1">{a.title}</h4>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-line">{a.message}</p>
-                  {a.createdByName && (
-                    <p className="text-[10px] text-slate-400 mt-2">oleh {a.createdByName}{mine ? ' (kamu)' : ''}</p>
+
+                  {(mine || isSuper) && (
+                    <button
+                      type="button"
+                      onClick={() => remove(a)}
+                      disabled={busyId === a.id}
+                      className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                      title="Hapus Pengumuman"
+                    >
+                      {busyId === a.id ? (
+                        <div className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   )}
                 </div>
-                {(mine || isSuper) && (
-                  <button onClick={() => remove(a)} disabled={busyId === a.id}
-                    className="px-3 py-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg font-bold text-xs flex items-center gap-1 disabled:opacity-50 shrink-0">
-                    <Trash2 className="w-3.5 h-3.5" /> {busyId === a.id ? '...' : 'Hapus'}
-                  </button>
-                )}
+
+                {/* Title & Message */}
+                <h4 className="font-bold text-xs text-slate-900 dark:text-white mb-1.5 line-clamp-2 leading-snug" title={a.title}>
+                  {a.title}
+                </h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-line mb-3">
+                  {a.message}
+                </p>
+              </div>
+
+              {/* Footer: Author and Date */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 mt-auto">
+                <span className="truncate max-w-[110px]" title={a.createdByName ? `Oleh: ${a.createdByName}` : ''}>
+                  {a.createdByName ? `${a.createdByName}${mine ? ' (kamu)' : ''}` : 'Admin'}
+                </span>
+                <span className="inline-flex items-center gap-1 shrink-0">
+                  <Calendar className="w-2.5 h-2.5" /> {fmtDate(a.createdAt)}
+                </span>
               </div>
             </div>
           );
