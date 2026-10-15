@@ -5,7 +5,7 @@ import {
   Award, SlidersHorizontal, BookOpen, Compass, Search, Filter,
   Building2, CheckCircle2, Clock, ChevronRight, UserCheck, Plus,
   TrendingUp, RefreshCw, Trash2, Edit3, Eye, FileText, MessageSquare,
-  GraduationCap, ClipboardList
+  GraduationCap, ClipboardList, AlertTriangle, Users
 } from 'lucide-react';
 import MonevPerformanceInstrumentManager from './MonevPerformanceInstrumentManager';
 import MentorPerformanceEvaluator from './MentorPerformanceEvaluator';
@@ -47,9 +47,10 @@ export default function MonevHub({ darkMode }) {
   const [wilayahList, setWilayahList] = useState([]);
   const [creatingObservation, setCreatingObservation] = useState(false);
   const [editingObservation, setEditingObservation] = useState(null);
+  const [selectedWilayahForObservation, setSelectedWilayahForObservation] = useState(null);
   const [detailObservation, setDetailObservation] = useState(null);
   const [observationSearchQuery, setObservationSearchQuery] = useState('');
-  const [observationWilayahFilter, setObservationWilayahFilter] = useState('ALL');
+  const [observationStatusFilter, setObservationStatusFilter] = useState('ALL');
 
   // Evaluator View State (Instrumen 4: Indepth Interview Awardee)
   const [awardees, setAwardees] = useState([]);
@@ -298,6 +299,7 @@ export default function MonevHub({ darkMode }) {
     const totalWilayah = wilayahList.length || 0;
     const evaluatedWilayahIds = new Set(observations.map((o) => o.wilayahId));
     const totalEvaluatedWilayah = evaluatedWilayahIds.size;
+    const unEvaluatedWilayah = Math.max(0, totalWilayah - totalEvaluatedWilayah);
     const totalObservations = observations.length;
     let totalFindings = 0;
     for (const o of observations) {
@@ -308,35 +310,50 @@ export default function MonevHub({ darkMode }) {
     return {
       totalWilayah,
       totalEvaluatedWilayah,
+      unEvaluatedWilayah,
       totalObservations,
       totalFindings,
     };
   }, [wilayahList, observations]);
 
-  // Filtered observations
-  const filteredObservations = useMemo(() => {
-    return observations.filter((obs) => {
-      const matchWilayah =
-        observationWilayahFilter === 'ALL' || obs.wilayahId === observationWilayahFilter;
-      if (!matchWilayah) return false;
+  // Wilayah cards with observation status
+  const wilayahObservationCards = useMemo(() => {
+    return wilayahList.map((w) => {
+      const wObsList = observations
+        .filter((o) => o.wilayahId === w.id)
+        .sort((a, b) => new Date(b.observationDate || b.createdAt) - new Date(a.observationDate || a.createdAt));
+      const latestObs = wObsList[0] || null;
+      const hasObservation = !!latestObs;
+      const totalFindings = wObsList.reduce((acc, curr) => {
+        const fList = Array.isArray(curr.findings) ? curr.findings : [];
+        return acc + fList.length;
+      }, 0);
 
-      if (!observationSearchQuery.trim()) return true;
-      const q = observationSearchQuery.toLowerCase();
-      const wName = obs.wilayah?.name?.toLowerCase() || '';
-      const period = obs.periodName?.toLowerCase() || '';
-      const observer = obs.evaluatedBy?.name?.toLowerCase() || '';
-      const prog = obs.programRealization?.toLowerCase() || '';
-      const perf = obs.mentorPerformanceSummary?.toLowerCase() || '';
-
-      return (
-        wName.includes(q) ||
-        period.includes(q) ||
-        observer.includes(q) ||
-        prog.includes(q) ||
-        perf.includes(q)
-      );
+      return {
+        ...w,
+        observations: wObsList,
+        latestObs,
+        hasObservation,
+        totalFindings,
+      };
     });
-  }, [observations, observationWilayahFilter, observationSearchQuery]);
+  }, [wilayahList, observations]);
+
+  const filteredWilayahCards = useMemo(() => {
+    return wilayahObservationCards.filter((w) => {
+      const matchSearch =
+        !observationSearchQuery.trim() ||
+        w.name.toLowerCase().includes(observationSearchQuery.toLowerCase()) ||
+        (w.mentorNames && w.mentorNames.some((n) => n.toLowerCase().includes(observationSearchQuery.toLowerCase())));
+
+      const matchStatus =
+        observationStatusFilter === 'ALL' ||
+        (observationStatusFilter === 'OBSERVED' && w.hasObservation) ||
+        (observationStatusFilter === 'UNOBSERVED' && !w.hasObservation);
+
+      return matchSearch && matchStatus;
+    });
+  }, [wilayahObservationCards, observationSearchQuery, observationStatusFilter]);
 
   // Delete Interview Record Handler
   const handleDeleteInterviewRecord = async (recordId) => {
@@ -464,13 +481,16 @@ export default function MonevHub({ darkMode }) {
       <WilayahObservationEvaluator
         wilayahList={wilayahList}
         initialObservation={editingObservation}
+        initialWilayahId={selectedWilayahForObservation?.id || editingObservation?.wilayahId}
         onBack={() => {
           setCreatingObservation(false);
           setEditingObservation(null);
+          setSelectedWilayahForObservation(null);
         }}
         onSaved={() => {
           setCreatingObservation(false);
           setEditingObservation(null);
+          setSelectedWilayahForObservation(null);
           loadObservations();
         }}
         darkMode={darkMode}
@@ -1093,7 +1113,7 @@ export default function MonevHub({ darkMode }) {
             <div className={`border rounded-3xl p-5 ${card}`}>
               <span className="text-xs font-bold text-slate-400 block mb-1">Wilayah Terobservasi</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-purple-500">
+                <span className="text-3xl font-black text-emerald-500">
                   {observationStats.totalEvaluatedWilayah}
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">
@@ -1103,19 +1123,19 @@ export default function MonevHub({ darkMode }) {
             </div>
 
             <div className={`border rounded-3xl p-5 ${card}`}>
-              <span className="text-xs font-bold text-slate-400 block mb-1">Total Laporan</span>
+              <span className="text-xs font-bold text-slate-400 block mb-1">Belum Diobservasi</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-indigo-500">
-                  {observationStats.totalObservations}
+                <span className="text-3xl font-black text-amber-500">
+                  {observationStats.unEvaluatedWilayah}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">Dokumen</span>
+                <span className="text-xs text-slate-400 font-semibold">Wilayah</span>
               </div>
             </div>
 
             <div className={`border rounded-3xl p-5 ${card}`}>
               <span className="text-xs font-bold text-slate-400 block mb-1">Temuan Terbuka</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-amber-500">
+                <span className="text-3xl font-black text-indigo-500">
                   {observationStats.totalFindings}
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">Catatan</span>
@@ -1123,7 +1143,7 @@ export default function MonevHub({ darkMode }) {
             </div>
           </div>
 
-          {/* FILTER & ACTION BAR */}
+          {/* FILTER BAR & SETTINGS SHORTCUT */}
           <div className={`border rounded-3xl p-4 sm:p-5 ${card} flex items-center justify-between flex-wrap gap-4`}>
             <div className="flex items-center gap-3 flex-1 min-w-[280px]">
               {/* Search */}
@@ -1131,191 +1151,201 @@ export default function MonevHub({ darkMode }) {
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Cari wilayah, periode, temuan, atau observer..."
+                  placeholder="Cari nama wilayah atau mentor..."
                   value={observationSearchQuery}
                   onChange={(e) => setObservationSearchQuery(e.target.value)}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all ${inputClass}`}
                 />
               </div>
 
-              {/* Filter Wilayah */}
-              <div className="relative w-48 shrink-0 hidden sm:block">
+              {/* Status Filter */}
+              <div className="relative w-52 shrink-0 hidden sm:block">
                 <select
-                  value={observationWilayahFilter}
-                  onChange={(e) => setObservationWilayahFilter(e.target.value)}
+                  value={observationStatusFilter}
+                  onChange={(e) => setObservationStatusFilter(e.target.value)}
                   className={`w-full px-3.5 py-2.5 rounded-2xl border text-xs font-semibold outline-none transition-all cursor-pointer ${inputClass}`}
                 >
-                  <option value="ALL">Semua Wilayah</option>
-                  {wilayahList.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
+                  <option value="ALL">Semua Status ({wilayahList.length})</option>
+                  <option value="OBSERVED">Sudah Diobservasi ({observationStats.totalEvaluatedWilayah})</option>
+                  <option value="UNOBSERVED">Belum Diobservasi ({observationStats.unEvaluatedWilayah})</option>
                 </select>
               </div>
             </div>
 
-            {/* Create New Observation Button */}
             <button
-              onClick={() => {
-                setEditingObservation(null);
-                setCreatingObservation(true);
-              }}
-              className="px-5 py-2.5 rounded-2xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md shadow-purple-500/20 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              onClick={() => setActiveSubTab('instrument_observation')}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Buat Laporan Observasi
+              <SlidersHorizontal className="w-4 h-4 text-purple-500" />
+              Kelola Instrumen Observasi
             </button>
           </div>
 
-          {/* OBSERVATIONS FEED / LIST */}
+          {/* WILAYAH CARDS GRID */}
           {loadingObservations ? (
             <div className={`p-12 text-center border rounded-3xl ${card}`}>
               <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mx-auto mb-2" />
-              <p className="text-xs text-slate-400 font-semibold">Memuat laporan observasi wilayah...</p>
+              <p className="text-xs text-slate-400 font-semibold">Memuat daftar wilayah binaan...</p>
             </div>
-          ) : filteredObservations.length === 0 ? (
+          ) : filteredWilayahCards.length === 0 ? (
             <div className={`p-12 text-center border rounded-3xl ${card} space-y-3`}>
               <div className="w-14 h-14 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mx-auto">
-                <Compass className="w-7 h-7" />
+                <Building2 className="w-7 h-7" />
               </div>
               <h3 className="text-sm font-black text-slate-700 dark:text-slate-200">
-                Belum Ada Laporan Observasi Wilayah
+                Tidak Ada Wilayah yang Cocok
               </h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                {observationSearchQuery || observationWilayahFilter !== 'ALL'
-                  ? 'Tidak ada laporan observasi yang cocok dengan filter pencarian.'
-                  : 'Mulai buat catatan observasi perkembangan program dan temuan target wilayah binaan.'}
+                {observationSearchQuery || observationStatusFilter !== 'ALL'
+                  ? 'Tidak ada wilayah binaan yang sesuai dengan filter pencarian.'
+                  : 'Belum ada data wilayah binaan yang terdaftar pada sistem.'}
               </p>
-              <button
-                onClick={() => {
-                  setEditingObservation(null);
-                  setCreatingObservation(true);
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-purple-600 text-white hover:bg-purple-700 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Buat Laporan Sekarang
-              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {filteredObservations.map((obs) => {
-                const obsFindings = Array.isArray(obs.findings) ? obs.findings : [];
-                const obsDate = obs.observationDate
-                  ? new Date(obs.observationDate).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })
-                  : '—';
-
-                return (
-                  <div
-                    key={obs.id}
-                    className={`border rounded-3xl p-5 sm:p-6 ${card} hover:border-purple-500/30 transition-all space-y-4 shadow-sm`}
-                  >
-                    {/* Card Header */}
-                    <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black">
-                          <Building2 className="w-5 h-5" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredWilayahCards.map((w) => (
+                <div
+                  key={w.id}
+                  className={`border rounded-3xl p-5 sm:p-6 ${card} hover:border-purple-500/40 transition-all flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md`}
+                >
+                  {/* Top Wilayah Header & Status Badge */}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black shrink-0">
+                          <Building2 className="w-6 h-6" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                              Wilayah {obs.wilayah?.name || 'Program'}
-                            </h3>
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                              {obs.periodName}
+                        <div className="min-w-0">
+                          <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight truncate">
+                            Wilayah {w.name}
+                          </h3>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                            <Users className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                            <span className="truncate">
+                              {w.mentorNames && w.mentorNames.length > 0
+                                ? w.mentorNames.join(', ')
+                                : 'Belum ada mentor'}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 mt-0.5">
-                            Tanggal Observasi: {obsDate} · Observer: {obs.evaluatedBy?.name || 'Admin'}
-                          </p>
                         </div>
                       </div>
 
-                      {/* Top Action buttons */}
-                      <div className="flex items-center gap-1.5">
+                      {w.hasObservation ? (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Terobservasi
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Belum Diobservasi
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Middle Card: Observation Details / Empty State */}
+                    {w.hasObservation ? (
+                      <div className={`p-3.5 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-700/60' : 'bg-slate-50 border-slate-200/60'} space-y-2 text-xs`}>
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span className="font-bold text-slate-700 dark:text-slate-300">
+                            {w.latestObs.periodName || 'Periode Monev'}
+                          </span>
+                          <span>
+                            {new Date(w.latestObs.observationDate || w.latestObs.createdAt).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+
+                        {w.latestObs.programRealization && (
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed font-medium">
+                            "{w.latestObs.programRealization}"
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                          {w.totalFindings > 0 ? (
+                            <span className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              {w.totalFindings} Temuan Masalah
+                            </span>
+                          ) : (
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Target Tercapai Baik
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400">
+                            Observer: {w.latestObs.evaluatedBy?.name || 'Admin'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1">
+                        <Compass className="w-5 h-5 text-slate-400 mx-auto" />
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          Belum Ada Laporan Observasi
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Pilih wilayah ini untuk memulai pengisian observasi
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
+                    {w.hasObservation ? (
+                      <>
                         <button
-                          onClick={() => setDetailObservation(obs)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
-                          title="Lihat Rincian Laporan"
+                          onClick={() => setDetailObservation(w.latestObs)}
+                          className="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           Rincian
                         </button>
+
                         <button
-                          onClick={() => setEditingObservation(obs)}
-                          className="p-1.5 rounded-xl text-purple-600 hover:bg-purple-500/10 transition-colors cursor-pointer"
-                          title="Edit Laporan"
+                          onClick={() => {
+                            setSelectedWilayahForObservation(w);
+                            setEditingObservation(w.latestObs);
+                            setCreatingObservation(false);
+                          }}
+                          className="p-2 rounded-xl text-purple-600 hover:bg-purple-500/10 border border-purple-500/20 transition-colors cursor-pointer"
+                          title="Edit Laporan Observasi"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
+
                         <button
-                          onClick={() => handleDeleteObservation(obs.id)}
-                          className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                          title="Hapus Laporan"
+                          onClick={() => {
+                            setSelectedWilayahForObservation(w);
+                            setEditingObservation(null);
+                            setCreatingObservation(true);
+                          }}
+                          className="py-2 px-3 rounded-xl text-xs font-black bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          title="Buat Laporan Observasi Baru untuk Wilayah Ini"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
+                          Observasi
                         </button>
-                      </div>
-                    </div>
-
-                    {/* Card Body: Snippets of Bagian A */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                      <div className={`p-3.5 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-700/60' : 'bg-slate-50 border-slate-200/60'} space-y-1`}>
-                        <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider flex items-center gap-1">
-                          <FileText className="w-3 h-3" /> Realisasi Pelaksanaan Program
-                        </span>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium line-clamp-2 leading-relaxed">
-                          {obs.programRealization}
-                        </p>
-                      </div>
-
-                      <div className={`p-3.5 rounded-2xl border ${darkMode ? 'bg-slate-800/40 border-slate-700/60' : 'bg-slate-50 border-slate-200/60'} space-y-1`}>
-                        <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider flex items-center gap-1">
-                          <UserCheck className="w-3 h-3" /> Performa Mentor
-                        </span>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium line-clamp-2 leading-relaxed">
-                          {obs.mentorPerformanceSummary}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Card Footer: Summary of Bagian B (Findings) */}
-                    <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-                      <div className="flex items-center gap-2">
-                        {obsFindings.length > 0 ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            <Clock className="w-3.5 h-3.5" />
-                            {obsFindings.length} Temuan Ketidakcapaian Target
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Target Program Tercapai Optimal
-                          </span>
-                        )}
-
-                        {obsFindings.length > 0 && obsFindings[0].finding && (
-                          <span className="text-slate-400 text-[11px] hidden lg:inline truncate max-w-md">
-                            Catatan: {obsFindings[0].finding}
-                          </span>
-                        )}
-                      </div>
-
+                      </>
+                    ) : (
                       <button
-                        onClick={() => setDetailObservation(obs)}
-                        className="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
+                        onClick={() => {
+                          setSelectedWilayahForObservation(w);
+                          setEditingObservation(null);
+                          setCreatingObservation(true);
+                        }}
+                        className="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md shadow-purple-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        Buka Laporan Lengkap <ChevronRight className="w-3 h-3" />
+                        <Compass className="w-4 h-4" />
+                        Observasi Wilayah Ini
                       </button>
-                    </div>
+                    )}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>

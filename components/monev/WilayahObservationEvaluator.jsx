@@ -16,6 +16,7 @@ const MONTH_NAMES = [
 export default function WilayahObservationEvaluator({
   wilayahList = [],
   initialObservation = null,
+  initialWilayahId = null,
   onBack,
   onSaved,
   darkMode,
@@ -24,7 +25,7 @@ export default function WilayahObservationEvaluator({
 
   const [saving, setSaving] = useState(false);
   const [selectedWilayahId, setSelectedWilayahId] = useState(
-    initialObservation?.wilayahId || (wilayahList[0]?.id || '')
+    initialObservation?.wilayahId || initialWilayahId || (wilayahList[0]?.id || '')
   );
   const [periodName, setPeriodName] = useState(
     initialObservation?.periodName || `Semester 1 - ${new Date().getFullYear()}`
