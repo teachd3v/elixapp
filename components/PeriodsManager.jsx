@@ -128,9 +128,9 @@ export default function PeriodsManager({ darkMode }) {
 
         {error && <div className="bg-rose-500/10 text-rose-500 p-3 rounded-xl text-sm font-bold mb-4">{error}</div>}
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
           {periods.length === 0 ? (
-            <div className="text-center p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+            <div className="col-span-full text-center p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
                <Calendar className="w-8 h-8 text-slate-400 mx-auto mb-3" />
                <p className="text-sm font-bold text-slate-500">Belum ada siklus penilaian.</p>
             </div>
@@ -139,33 +139,61 @@ export default function PeriodsManager({ darkMode }) {
               const sd = new Date(p.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
               const ed = new Date(p.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
               return (
-                <div key={p.id} className={`p-4 border rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${p.isActive ? (darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200') : (darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50 border-slate-100')}`}>
+                <div
+                  key={p.id}
+                  className={`p-4 border rounded-2xl flex flex-col justify-between gap-3 transition-all shadow-xs hover:shadow-sm ${
+                    p.isActive
+                      ? (darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50/80 border-blue-200')
+                      : (darkMode ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50/80 border-slate-200/80')
+                  }`}
+                >
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-bold text-base">{p.name}</h3>
-                      {p.isActive && <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Aktif</span>}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <h3 className="font-bold text-sm truncate text-slate-900 dark:text-white" title={p.name}>{p.name}</h3>
+                      {p.isActive && (
+                        <span className="bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shrink-0">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Aktif
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{sd} — {ed}</span>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-[11px] truncate">{sd} — {ed}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {!p.isActive && (
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 mt-auto">
+                    {!p.isActive ? (
                       <button 
+                        type="button"
                         onClick={() => handleActivate(p.id)} 
                         disabled={activatingId === p.id}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700'} ${activatingId === p.id ? 'opacity-50 cursor-wait' : ''}`}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700'} ${activatingId === p.id ? 'opacity-50 cursor-wait' : ''}`}
                       >
-                        {activatingId === p.id ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Proses...</> : 'Set Aktif'}
+                        {activatingId === p.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Proses...</> : 'Set Aktif'}
                       </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">Sedang Berjalan</span>
                     )}
-                    <button onClick={() => handleOpenModal(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(p.id, p.isActive)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenModal(p)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer"
+                        title="Edit Siklus"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p.id, p.isActive)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Hapus Siklus"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
