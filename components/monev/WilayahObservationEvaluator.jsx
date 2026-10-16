@@ -301,12 +301,12 @@ export default function WilayahObservationEvaluator({
         </div>
       </div>
 
-      {/* 1. PARAMETER OBSERVASI WILAYAH */}
+      {/* IDENTIFIKASI LAPORAN */}
       <div className={`border rounded-3xl p-5 sm:p-6 ${card} space-y-4 shadow-sm`}>
         <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
           <Building2 className="w-5 h-5 text-purple-500" />
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
-            1. Parameter Observasi Wilayah
+            Identifikasi Laporan
           </h2>
         </div>
 
