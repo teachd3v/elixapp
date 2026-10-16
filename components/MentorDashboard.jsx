@@ -104,7 +104,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   if (activeTab === 'sessions') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate awardees={data?.awardees || []} />
+        <SessionsManager darkMode={darkMode} dbUser={dbUser} role={role} canCreate awardees={data?.awardees || []} wilayah={data?.wilayah} />
       </div>
     );
   }

@@ -44,18 +44,33 @@ function fmtTime(iso) {
 // Manages Sesi Pembinaan for the current user. Read-only for AWARDEE;
 // CRUD for MENTOR (WILAYAH sessions) and SUPERADMIN (NASIONAL sessions).
 // The server enforces scope + authorization; this UI just reflects it.
-export default function SessionsManager({ darkMode, dbUser, role, canCreate = false, awardees = [] }) {
+export default function SessionsManager({ darkMode, dbUser, role, canCreate = false, awardees = [], wilayah: propWilayah }) {
   console.log('SESSIONS MANAGER RENDER:', { role, awardeeCount: awardees.length });
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [wilayahList, setWilayahList] = useState([]);
+  const [currentWilayah, setCurrentWilayah] = useState(propWilayah || null);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ title: '', date: '', time: '', category: 'KLASIKAL', endDate: '', awardeeId: '', awardeeIds: [] });
   const [editing, setEditing] = useState(null); // session object or null (new)
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const { confirm, alert } = useDialog();
+
+  useEffect(() => {
+    if (propWilayah) {
+      setCurrentWilayah(propWilayah);
+    } else if (role === 'mentor' || role === 'awardee') {
+      fetchJson('/api/profile')
+        .then((d) => {
+          if (d?.profile?.wilayah) {
+            setCurrentWilayah(d.profile.wilayah);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [propWilayah, role]);
 
   // Wilayah accordion expanded state & Excel export state (default closed/collapsed)
   const [expandedGroups, setExpandedGroups] = useState({});
@@ -68,6 +83,31 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
 
   const groupSessionsByWilayah = (list) => {
     const groups = { Nasional: [] };
+
+    // Untuk Mentor & Awardee: hanya tampilkan Nasional dan Wilayahnya sendiri
+    if (role === 'mentor' || role === 'awardee') {
+      const myWilayah = (
+        currentWilayah?.name ||
+        sessions.find(s => s.scope !== 'NASIONAL' && s.wilayah?.name)?.wilayah?.name ||
+        ''
+      ).replace(/^Wilayah\s+/i, '').trim();
+
+      if (myWilayah) {
+        groups[myWilayah] = [];
+      }
+
+      for (const s of list) {
+        const key = s.scope === 'NASIONAL' ? 'Nasional' : (s.wilayah?.name?.replace(/^Wilayah\s+/i, '') || 'Wilayah Lainnya');
+        if (key === 'Nasional' || (myWilayah && key.toLowerCase() === myWilayah.toLowerCase())) {
+          const targetKey = key === 'Nasional' ? 'Nasional' : myWilayah;
+          if (!groups[targetKey]) groups[targetKey] = [];
+          groups[targetKey].push(s);
+        }
+      }
+      return groups;
+    }
+
+    // Role SUPERADMIN: tampilkan seluruh wilayah
     for (const w of wilayahList) {
       const cleanName = w.name.replace(/^Wilayah\s+/i, '');
       if (!groups[cleanName]) groups[cleanName] = [];
@@ -505,7 +545,11 @@ export default function SessionsManager({ darkMode, dbUser, role, canCreate = fa
           });
 
           return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
+            <div className={`grid gap-3 items-start ${
+              keys.length <= 2
+                ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl'
+                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'
+            }`}>
               {keys.map((wilayah) => {
                 const groupSessions = grouped[wilayah];
                 const groupId = `${sectionName}-${wilayah}`;
