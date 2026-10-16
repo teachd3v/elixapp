@@ -77,7 +77,7 @@ export default function AwardeeInterviewDetailModal({
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase">
                   Dossier Wawancara Indepth
                 </span>
-                <span className="text-xs text-slate-400">· Instrumen 4</span>
+                <span className="text-xs text-slate-400">· Instrumen 3</span>
               </div>
               <h2 className="text-lg font-black mt-0.5">
                 {record.awardee?.user?.name || 'Awardee'}

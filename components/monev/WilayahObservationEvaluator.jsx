@@ -272,12 +272,12 @@ export default function WilayahObservationEvaluator({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase">
-                Instrumen 3 Monev
+                Instrumen 4 Monev
               </span>
-              <span className="text-xs text-slate-400 hidden sm:inline">· Observasi Wilayah</span>
+              <span className="text-xs text-slate-400 hidden sm:inline">· Laporan Akhir</span>
             </div>
             <h1 className="text-lg sm:text-xl font-black mt-0.5">
-              {initialObservation ? 'Edit Laporan Observasi Wilayah' : 'Laporan Observasi Monev Wilayah'}
+              {initialObservation ? 'Edit Laporan Akhir' : 'Laporan Akhir Monev Wilayah'}
             </h1>
           </div>
         </div>

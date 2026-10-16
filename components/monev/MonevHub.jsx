@@ -693,18 +693,6 @@ export default function MonevHub({ darkMode }) {
                   </button>
 
                   <button
-                    onClick={() => setActiveSubTab('observation')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      activeSubTab === 'observation'
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                    3. Observasi Wilayah
-                  </button>
-
-                  <button
                     onClick={() => setActiveSubTab('interview')}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                       activeSubTab === 'interview'
@@ -713,7 +701,19 @@ export default function MonevHub({ darkMode }) {
                     }`}
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    4. Wawancara Awardee
+                    3. Wawancara Awardee
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('observation')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'observation'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    4. Laporan Akhir
                   </button>
                 </>
               ) : (
@@ -743,18 +743,6 @@ export default function MonevHub({ darkMode }) {
                   </button>
 
                   <button
-                    onClick={() => setActiveSubTab('instrument_observation')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      activeSubTab === 'instrument_observation'
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    Instrumen 3 (Observasi)
-                  </button>
-
-                  <button
                     onClick={() => setActiveSubTab('instrument_interview')}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                       activeSubTab === 'instrument_interview'
@@ -763,7 +751,19 @@ export default function MonevHub({ darkMode }) {
                     }`}
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
-                    Instrumen 4 (Wawancara)
+                    Instrumen 3 (Wawancara)
+                  </button>
+
+                  <button
+                    onClick={() => setActiveSubTab('instrument_observation')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeSubTab === 'instrument_observation'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-sm shadow-amber-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Instrumen 4 (Laporan Akhir)
                   </button>
                 </>
               )}

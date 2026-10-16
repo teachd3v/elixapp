@@ -41,9 +41,9 @@ export default function WilayahObservationDetailModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase">
-                  Instrumen 3 Monev
+                  Instrumen 4 Monev
                 </span>
-                <span className="text-xs text-slate-400">· Observasi Wilayah</span>
+                <span className="text-xs text-slate-400">· Laporan Akhir</span>
               </div>
               <h2 className="text-lg font-black mt-0.5">
                 Wilayah {observation.wilayah?.name || 'Program'}

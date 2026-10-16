@@ -97,7 +97,7 @@ export default function AwardeeMonevView({ darkMode, dbUser }) {
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                Instrumen 4: Indepth Interview
+                Instrumen 3: Indepth Interview
               </span>
               {data.awardee?.wilayah?.name && (
                 <span className="text-xs text-slate-400">
