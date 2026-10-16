@@ -405,28 +405,30 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
   return (
     <div className="space-y-6 pb-32">
       {/* Header Banner */}
-      <div className={`border rounded-3xl p-6 ${cardClass}`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-              <BookOpen className="w-6 h-6" />
+      <div className={`border rounded-3xl p-5 sm:p-6 ${cardClass}`}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-black tracking-tight">Jurnal Aktivitas Mentor</h2>
+                <h2 className="text-lg sm:text-xl font-black tracking-tight">Jurnal Mentor</h2>
                 {wilayah?.name && (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     Wilayah {wilayah.name}
                   </span>
                 )}
+                {dbUser?.name && (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    {dbUser.name}
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Catatan harian (*day-by-day*) pelaksanaan kegiatan pembinaan, capaian, evaluasi masalah, dan rencana perbaikan.
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {journals.length > 0 && (
               <button
                 onClick={() =>
@@ -436,37 +438,35 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
                     wilayahName: wilayah?.name,
                   })
                 }
-                className="px-4 py-2.5 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                className="p-2.5 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center justify-center cursor-pointer"
+                title="Export Excel"
               >
-                <Download className="w-4 h-4" /> Export Excel
+                <Download className="w-4 h-4" />
               </button>
             )}
             <button
               onClick={openCreateModal}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+              className="p-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 hover:opacity-95 transition-all flex items-center justify-center shrink-0 cursor-pointer"
+              title="Tulis Jurnal Baru"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" /> Tulis Jurnal Baru
+              <Plus className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
-          <div className="p-3.5 rounded-2xl bg-indigo-500/5 border border-indigo-500/15">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 block">Total Jurnal</span>
-            <p className="text-2xl font-black mt-1">{stats.total}</p>
+        {/* Summary Stats (3 Kolom) */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-5 pt-5 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-indigo-500/5 border border-indigo-500/15">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-500 block">Total Jurnal</span>
+            <p className="text-xl sm:text-2xl font-black mt-1">{stats.total}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/15">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 block">Bulan Ini</span>
-            <p className="text-2xl font-black mt-1">{stats.thisMonth}</p>
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/15">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-500 block">Kegiatan Luring</span>
+            <p className="text-xl sm:text-2xl font-black mt-1">{stats.luring}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/15">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 block">Kegiatan Luring</span>
-            <p className="text-2xl font-black mt-1">{stats.luring}</p>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-sky-500/5 border border-sky-500/15">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-sky-500 block">Kegiatan Daring</span>
-            <p className="text-2xl font-black mt-1">{stats.daring}</p>
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-sky-500/5 border border-sky-500/15">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-sky-500 block">Kegiatan Daring</span>
+            <p className="text-xl sm:text-2xl font-black mt-1">{stats.daring}</p>
           </div>
         </div>
       </div>
@@ -514,25 +514,17 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
           <p className="text-xs text-slate-400 font-semibold">Memuat riwayat jurnal mentor...</p>
         </div>
       ) : filteredJournals.length === 0 ? (
-        <div className={`border rounded-3xl p-12 text-center space-y-3 ${cardClass}`}>
-          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto">
-            <BookOpen className="w-7 h-7" />
+        <div className={`border rounded-3xl p-10 sm:p-12 text-center space-y-2.5 ${cardClass}`}>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto">
+            <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
-          <h3 className="text-base font-black">
+          <h3 className="text-sm sm:text-base font-black">
             {journals.length === 0 ? 'Belum Ada Catatan Jurnal' : 'Tidak Ada Jurnal yang Cocok'}
           </h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            {journals.length === 0
-              ? 'Mulai dokumentasikan aktivitas harianmu sebagai mentor dengan menekan tombol "Tulis Jurnal Baru" di atas.'
-              : 'Coba ubah filter kegiatan atau kata kunci pencarianmu.'}
-          </p>
-          {journals.length === 0 && (
-            <button
-              onClick={openCreateModal}
-              className="mt-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all inline-flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Buat Jurnal Pertama
-            </button>
+          {journals.length > 0 && (
+            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+              Coba ubah filter kegiatan atau kata kunci pencarianmu.
+            </p>
           )}
         </div>
       ) : (
