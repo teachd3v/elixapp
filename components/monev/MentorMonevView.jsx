@@ -78,57 +78,25 @@ export default function MentorMonevView({ darkMode, dbUser }) {
   return (
     <div className="space-y-6 pb-32">
       {/* HEADER BANNER */}
-      <div className={`border rounded-3xl p-6 sm:p-8 relative overflow-hidden ${card}`}>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                Portal Hasil Monev Mentor
-              </span>
-              {data.mentor?.wilayah?.name && (
-                <span className="text-xs text-slate-400">
-                  · Wilayah {data.mentor.wilayah.name}
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Evaluasi & Refleksi Pembimbingan
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Hasil penilaian performa kerja, observasi kompetensi mengajar, dan catatan monitoring wilayah yang dirilis oleh observer pusat sebagai kompas pertumbuhan dan perbaikan berkelanjutan.
-            </p>
-          </div>
+      <div className={`border rounded-3xl p-5 sm:p-6 relative overflow-hidden ${card}`}>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight mb-4">
+          Hasil Monev
+        </h1>
 
-          <div className="flex items-center gap-3 shrink-0 p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Mentor Terdaftar</span>
-              <span className="font-black text-sm block truncate max-w-[180px]">
-                {data.mentor?.user?.name || dbUser?.name || 'Mentor'}
-              </span>
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
-                Wilayah {data.mentor?.wilayah?.name || '—'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* SUB-TABS NAVIGATION */}
-        <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+        {/* SUB-TABS NAVIGATION (3 KOLOM) */}
+        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={() => setActiveSubTab('performance')}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
               activeSubTab === 'performance'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <Award className="w-4 h-4" />
-            Performa Kerja
+            <Award className="w-4 h-4 shrink-0" />
+            <span className="truncate">Performa Kerja</span>
             {data.performanceEvaluations.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
                 {data.performanceEvaluations.length}
               </span>
             )}
@@ -136,16 +104,16 @@ export default function MentorMonevView({ darkMode, dbUser }) {
 
           <button
             onClick={() => setActiveSubTab('teaching')}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
               activeSubTab === 'teaching'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <BookOpen className="w-4 h-4" />
-            Kompetensi Mengajar
+            <BookOpen className="w-4 h-4 shrink-0" />
+            <span className="truncate">Kompetensi Mengajar</span>
             {data.teachingEvaluations.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
                 {data.teachingEvaluations.length}
               </span>
             )}
@@ -153,16 +121,16 @@ export default function MentorMonevView({ darkMode, dbUser }) {
 
           <button
             onClick={() => setActiveSubTab('wilayah')}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
               activeSubTab === 'wilayah'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <Compass className="w-4 h-4" />
-            Observasi Wilayah
+            <FileText className="w-4 h-4 shrink-0" />
+            <span className="truncate">Laporan Akhir</span>
             {data.wilayahObservations.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
                 {data.wilayahObservations.length}
               </span>
             )}
@@ -176,14 +144,11 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       {activeSubTab === 'performance' && (
         <div className="space-y-6">
           {data.performanceEvaluations.length === 0 ? (
-            <div className={`border rounded-3xl p-12 text-center flex flex-col items-center gap-3 ${card}`}>
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Award className="w-7 h-7" />
+            <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <Award className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <h3 className="text-base font-black">Belum Ada Penilaian Performa</h3>
-              <p className="text-xs opacity-60 max-w-md leading-relaxed">
-                Observer pusat belum merilis dokumen evaluasi performa kerja mentor untuk akun ini. Hasil penilaian akan otomatis tampil di sini setelah diverifikasi.
-              </p>
             </div>
           ) : (
             <>
@@ -430,14 +395,11 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       {activeSubTab === 'teaching' && (
         <div className="space-y-6">
           {data.teachingEvaluations.length === 0 ? (
-            <div className={`border rounded-3xl p-12 text-center flex flex-col items-center gap-3 ${card}`}>
-              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <BookOpen className="w-7 h-7" />
+            <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <h3 className="text-base font-black">Belum Ada Penilaian Mengajar</h3>
-              <p className="text-xs opacity-60 max-w-md leading-relaxed">
-                Observasi sesi mengajar atau microteaching belum dilaksanakan atau belum dirilis oleh observer untuk akun mentor ini.
-              </p>
             </div>
           ) : (
             <>
@@ -670,14 +632,11 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       {activeSubTab === 'wilayah' && (
         <div className="space-y-6">
           {data.wilayahObservations.length === 0 ? (
-            <div className={`border rounded-3xl p-12 text-center flex flex-col items-center gap-3 ${card}`}>
-              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                <Compass className="w-7 h-7" />
+            <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
-              <h3 className="text-base font-black">Belum Ada Laporan Observasi Wilayah</h3>
-              <p className="text-xs opacity-60 max-w-md leading-relaxed">
-                Observer pusat belum merilis laporan observasi komprehensif untuk wilayah binaan ini. Hasil observasi akan otomatis terlihat setelah diterbitkan.
-              </p>
+              <h3 className="text-base font-black">Belum Ada Laporan Akhir</h3>
             </div>
           ) : (
             <>
