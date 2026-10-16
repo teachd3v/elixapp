@@ -3,7 +3,8 @@ import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, MapPin, GraduationCap, FileText, LayoutDashboard, LineChart, BarChart3, Eye,
-  CheckCircle2, XCircle, Calendar, Clock, Award, Check, Phone, Mail, AlertCircle
+  CheckCircle2, XCircle, Calendar, Clock, Award, Check, Phone, Mail, AlertCircle,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { ResponsiveContainer,
   LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -40,6 +41,7 @@ export default function AwardeeDetailPage({ params }) {
   const [selectedCycleForModal, setSelectedCycleForModal] = useState(null);
   const [selectedDimCycleId, setSelectedDimCycleId] = useState('');
   const [selectedPdfCycleId, setSelectedPdfCycleId] = useState('ALL');
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -130,40 +132,46 @@ export default function AwardeeDetailPage({ params }) {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm self-start cursor-pointer transition-colors">
-            <ArrowLeft className="w-5 h-5" /> Kembali
+        {/* Unified Top Action Bar (Single Row, Balanced Height h-10) */}
+        <div className="flex items-center gap-2 mb-4">
+          {/* 1. Tombol Kembali (Icon only) */}
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 shrink-0 flex items-center justify-center text-slate-600 hover:text-slate-900 bg-white rounded-xl border border-slate-200 shadow-xs cursor-pointer transition-colors"
+            title="Kembali"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setSelectedCycleForModal(activeCycle?.periodId || null);
-                setShowDetailModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs rounded-xl border border-indigo-200 shadow-sm transition-colors cursor-pointer"
-              title="Lihat rincian lengkap butir pertanyaan dan jawaban ELIX"
-            >
-              <Eye className="w-4 h-4" />
-              <span>Detail Data ELIX</span>
-            </button>
 
-            {cycles.length > 1 && (
-              <select
-                value={selectedPdfCycleId}
-                onChange={(e) => setSelectedPdfCycleId(e.target.value)}
-                className="px-3 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm outline-none cursor-pointer"
-                title="Pilih siklus yang ingin di-export ke PDF"
-              >
-                <option value="ALL">Export: Semua Siklus (Terpisah)</option>
-                {cycles.map(c => (
-                  <option key={c.periodId || c.id} value={c.periodId}>
-                    Export: {c.period?.name} {c.isLive ? '(Aktif)' : '(Riwayat)'}
-                  </option>
-                ))}
-              </select>
-            )}
+          {/* 2. Tombol Mata Detail Data ELIX (Icon only) */}
+          <button
+            onClick={() => {
+              setSelectedCycleForModal(activeCycle?.periodId || null);
+              setShowDetailModal(true);
+            }}
+            className="w-10 h-10 shrink-0 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl border border-indigo-200 shadow-xs transition-colors cursor-pointer"
+            title="Detail Data ELIX"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
 
+          {/* 3. Dropdown Siklus (Label 'Siklus') */}
+          <select
+            value={selectedPdfCycleId}
+            onChange={(e) => setSelectedPdfCycleId(e.target.value)}
+            className="flex-1 min-w-0 h-10 px-3 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-xs outline-none cursor-pointer truncate"
+            title="Pilih siklus export PDF"
+          >
+            <option value="ALL">Siklus</option>
+            {cycles.map(c => (
+              <option key={c.periodId || c.id} value={c.periodId}>
+                {c.period?.name || 'Siklus'} {c.isLive ? '(Aktif)' : ''}
+              </option>
+            ))}
+          </select>
+
+          {/* 4. Tombol Save / PDF Download */}
+          <div className="shrink-0">
             <PDFDownloadButton
               key={`pdf-head-${selectedPdfCycleId}`}
               document={
@@ -178,117 +186,144 @@ export default function AwardeeDetailPage({ params }) {
                   ? 'Semua_Siklus'
                   : (cycles.find(c => c.periodId === selectedPdfCycleId)?.period?.name || 'Siklus').replace(/[^a-zA-Z0-9]/g, '_')
               }.pdf`}
-              label={selectedPdfCycleId === 'ALL' ? 'Export PDF Lengkap' : `Export PDF ${cycles.find(c => c.periodId === selectedPdfCycleId)?.period?.name || ''}`}
+              iconOnly={true}
+              className="!w-10 !h-10 !p-0 !rounded-xl"
             />
           </div>
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 items-start">
-          <img src={data.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user?.name || 'Awardee')}&background=random`} alt="Avatar" className="w-24 h-24 rounded-2xl object-cover shadow-sm shrink-0" />
-          <div className="flex-1 space-y-3 min-w-0">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl font-black text-slate-800 truncate">{data.user?.name}</h2>
+        {/* Profile Card & Scorecard */}
+        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3.5">
+          {/* Avatar & Info */}
+          <div className="flex items-start gap-3 sm:gap-4">
+            <img
+              src={data.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user?.name || 'Awardee')}&background=random`}
+              alt="Avatar"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-xs shrink-0 border border-slate-100"
+            />
+            <div className="flex-1 min-w-0 space-y-1">
+              <h2 className="text-base sm:text-lg font-black text-slate-800 truncate leading-snug">
+                {data.user?.name}
+              </h2>
+              
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-tight">
                 {activeCycle?.period?.name && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">
-                    Siklus Berjalan: {activeCycle.period.name}
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 shrink-0">
+                    Siklus: {activeCycle.period.name}
                   </span>
                 )}
-              </div>
-              <p className="text-slate-500 flex items-center gap-1.5 mt-1 text-xs">
-                <MapPin className="w-4 h-4 text-indigo-500 shrink-0"/> {data.wilayah?.name || '—'}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg font-bold">
-                <GraduationCap className="w-4 h-4 text-slate-500"/> {data.university || data.school || 'Belum diatur'}
-              </span>
-              {data.user?.email && (
-                <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-slate-500">
-                  <Mail className="w-3.5 h-3.5"/> {data.user.email}
+                <span className="flex items-center gap-1 text-slate-500 shrink-0">
+                  <MapPin className="w-3 h-3 text-indigo-500 shrink-0" />
+                  {data.wilayah?.name || '—'}
                 </span>
-              )}
+                <span className="text-slate-300">·</span>
+                <span className="flex items-center gap-1 text-slate-600 truncate max-w-[150px] sm:max-w-none">
+                  <GraduationCap className="w-3 h-3 text-slate-400 shrink-0" />
+                  {data.university || data.school || 'Belum diatur'}
+                </span>
+                {data.user?.email && (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <span className="flex items-center gap-1 text-slate-400 truncate max-w-[150px] sm:max-w-none">
+                      <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                      {data.user.email}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3 mt-4 md:mt-0 w-full md:w-auto bg-slate-50 border border-slate-100 p-4 rounded-2xl justify-around sm:justify-start">
-            <div className="text-center px-2 sm:px-3">
-              <div className="text-[10px] font-bold text-blue-500 mb-0.5">SKOR SA</div>
-              <div className="text-xl sm:text-2xl font-black text-slate-800">
+          {/* Scorecard (3 Kolom: SA, MA, ELIX) */}
+          <div className="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50 border border-slate-100 rounded-2xl py-2 px-1">
+            {/* SA */}
+            <div className="flex flex-col items-center justify-center text-center px-1">
+              <div className="mb-0.5">
+                {activeCycle?.hasFilledSA ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-rose-400" />
+                )}
+              </div>
+              <div className="text-lg sm:text-xl font-black text-slate-800 leading-tight">
                 {activeCycle?.hasFilledSA ? ((activeCycle.saScore || 0) * 25).toFixed(0) : '—'}
               </div>
-              <span className={`text-[9px] font-bold block mt-0.5 ${activeCycle?.hasFilledSA ? 'text-blue-600' : 'text-rose-500'}`}>
-                {activeCycle?.hasFilledSA ? '✓ Sudah' : '✗ Belum'}
-              </span>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">SA</span>
             </div>
-            
-            <div className="w-px h-10 bg-slate-200"></div>
-            
-            <div className="text-center px-2 sm:px-3">
-              <div className="text-[10px] font-bold text-indigo-500 mb-0.5">SKOR MA</div>
-              <div className="text-xl sm:text-2xl font-black text-slate-800">
+
+            {/* MA */}
+            <div className="flex flex-col items-center justify-center text-center px-1">
+              <div className="mb-0.5">
+                {activeCycle?.hasFilledMA ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-amber-400" />
+                )}
+              </div>
+              <div className="text-lg sm:text-xl font-black text-slate-800 leading-tight">
                 {activeCycle?.hasFilledMA ? ((activeCycle.maScore || 0) * 25).toFixed(0) : '—'}
               </div>
-              <span className={`text-[9px] font-bold block mt-0.5 ${activeCycle?.hasFilledMA ? 'text-indigo-600' : 'text-amber-500'}`}>
-                {activeCycle?.hasFilledMA ? '✓ Dinilai' : '✗ Belum'}
-              </span>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">MA</span>
             </div>
-            
-            <div className="w-px h-10 bg-slate-200"></div>
-            
-            <div
-              onClick={() => {
-                setSelectedCycleForModal(activeCycle?.periodId || null);
-                setShowDetailModal(true);
-              }}
-              className="text-center px-3 bg-amber-50 hover:bg-amber-100/70 cursor-pointer rounded-xl py-1.5 border border-amber-100 transition-colors group"
-              title="Klik untuk melihat rincian detail data ELIX"
-            >
-              <div className="text-[10px] font-bold text-amber-500 mb-0.5 flex items-center justify-center gap-1">
-                <span>INDEKS ELIX</span>
-                <Eye className="w-3 h-3 text-amber-600 opacity-70 group-hover:opacity-100" />
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+
+            {/* ELIX */}
+            <div className="flex flex-col items-center justify-center text-center px-1">
+              <button
+                onClick={() => {
+                  setSelectedCycleForModal(activeCycle?.periodId || null);
+                  setShowDetailModal(true);
+                }}
+                className="mb-0.5 inline-flex items-center gap-1 text-[10px] font-black text-amber-600 hover:text-amber-700 cursor-pointer"
+                title="Lihat Detail ELIX"
+              >
+                <span>ELIX</span>
+                <Eye className="w-3.5 h-3.5" />
+              </button>
+              <div className="text-lg sm:text-xl font-black text-slate-800 leading-tight">
                 {activeCycle?.elix != null ? activeCycle.elix.toFixed(0) : '—'}
               </div>
-              <span className="text-[9px] font-bold text-amber-600 block mt-0.5">
+              <span className="text-[10px] font-bold text-amber-600 truncate max-w-[85px]">
                 {activeCycle?.category || 'Belum Ada'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* ELIX Category Description */}
+        {/* ELIX Category Description (Collapsible) */}
         {activeCycle?.category && (
-          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="shrink-0">
-                <div className="inline-flex items-center justify-center bg-amber-500 text-white font-black px-4 py-2 rounded-xl text-base shadow-sm">
-                  {activeCycle.category}
-                </div>
-              </div>
-              <div className="text-sm text-amber-900/80 leading-relaxed">
-                {ELIX_DESCRIPTIONS[activeCycle.category] || "Kategori indeks kepemimpinan ELIX."}
-              </div>
+          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 shadow-xs">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="inline-flex items-center justify-center bg-amber-500 text-white font-black px-3 py-1 rounded-lg text-xs shadow-xs">
+                {activeCycle.category}
+              </span>
+              <button
+                onClick={() => setIsDescExpanded(!isDescExpanded)}
+                className="text-amber-700 hover:text-amber-900 px-2 py-1 rounded-lg hover:bg-amber-100/60 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+                title={isDescExpanded ? 'Tutup rincian' : 'Baca selengkapnya'}
+              >
+                <span className="text-[11px]">{isDescExpanded ? 'Tutup' : 'Selengkapnya'}</span>
+                {isDescExpanded ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
             </div>
+            <p className={`text-xs text-amber-900/80 leading-relaxed ${isDescExpanded ? '' : 'line-clamp-2'}`}>
+              {ELIX_DESCRIPTIONS[activeCycle.category] || "Kategori indeks kepemimpinan ELIX."}
+            </p>
           </div>
         )}
 
-        {/* SECTION: STATUS & RINCIAN EVALUASI PER SIKLUS (SA & MA) */}
+        {/* SECTION: RINCIAN NILAI SIKLUS */}
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-base font-black flex items-center gap-2 text-slate-800">
-                <Calendar className="w-5 h-5 text-indigo-500" />
-                <span>Status & Rincian Evaluasi per Siklus (SA & MA)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Rincian kepatuhan pengisian Self Assessment (Awardee) dan penilaian Mentor (MA) di masing-masing siklus penilaian.
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <h3 className="text-base font-black flex items-center gap-2 text-slate-800">
+              <Calendar className="w-5 h-5 text-indigo-500" />
+              <span>Rincian Nilai Siklus</span>
+            </h3>
             <span className="text-xs font-bold text-slate-400">
-              Total {cycles.length} Siklus Terdaftar
+              {cycles.length} Siklus
             </span>
           </div>
 
