@@ -22,9 +22,10 @@ const ROLE_LABEL = { ALL: 'Semua', AWARDEE: 'Awardee', MENTOR: 'Mentor' };
 // Pengumuman manager for MENTOR & SUPERADMIN.
 // MENTOR: hanya bisa kirim ke AWARDEE di wilayahnya (server enforce).
 // SUPERADMIN: bebas pilih target role & wilayah.
-export default function AnnouncementsManager({ darkMode, dbUser, role }) {
+export default function AnnouncementsManager({ darkMode, dbUser, role, wilayah: propWilayah }) {
   const [items, setItems] = useState([]);
   const [wilayahList, setWilayahList] = useState([]);
+  const [currentWilayah, setCurrentWilayah] = useState(propWilayah || null);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +34,20 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const { confirm } = useDialog();
+
+  useEffect(() => {
+    if (propWilayah) {
+      setCurrentWilayah(propWilayah);
+    } else if (role === 'mentor' || role === 'awardee') {
+      fetchJson('/api/profile')
+        .then((d) => {
+          if (d?.profile?.wilayah) {
+            setCurrentWilayah(d.profile.wilayah);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [propWilayah, role]);
 
   const isSuper = role === 'superadmin';
 
@@ -198,18 +213,43 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
 
         // Group announcements by wilayah & Nasional
         const grouped = { Nasional: [] };
-        for (const w of wilayahList) {
-          const cleanName = w.name.replace(/^Wilayah\s+/i, '');
-          if (!grouped[cleanName]) grouped[cleanName] = [];
-        }
 
-        for (const a of items) {
-          if (!a.targetRegion) {
-            grouped.Nasional.push(a);
-          } else {
-            const cleanName = (a.targetRegionName || 'Wilayah Lainnya').replace(/^Wilayah\s+/i, '');
+        if (role === 'mentor' || role === 'awardee') {
+          const myWilayah = (
+            currentWilayah?.name ||
+            items.find(a => a.targetRegion && a.targetRegionName)?.targetRegionName ||
+            ''
+          ).replace(/^Wilayah\s+/i, '').trim();
+
+          if (myWilayah) {
+            grouped[myWilayah] = [];
+          }
+
+          for (const a of items) {
+            if (!a.targetRegion) {
+              grouped.Nasional.push(a);
+            } else {
+              const cleanName = (a.targetRegionName || 'Wilayah Lainnya').replace(/^Wilayah\s+/i, '');
+              if (myWilayah && cleanName.toLowerCase() === myWilayah.toLowerCase()) {
+                if (!grouped[myWilayah]) grouped[myWilayah] = [];
+                grouped[myWilayah].push(a);
+              }
+            }
+          }
+        } else {
+          for (const w of wilayahList) {
+            const cleanName = w.name.replace(/^Wilayah\s+/i, '');
             if (!grouped[cleanName]) grouped[cleanName] = [];
-            grouped[cleanName].push(a);
+          }
+
+          for (const a of items) {
+            if (!a.targetRegion) {
+              grouped.Nasional.push(a);
+            } else {
+              const cleanName = (a.targetRegionName || 'Wilayah Lainnya').replace(/^Wilayah\s+/i, '');
+              if (!grouped[cleanName]) grouped[cleanName] = [];
+              grouped[cleanName].push(a);
+            }
           }
         }
 
@@ -223,7 +263,11 @@ export default function AnnouncementsManager({ darkMode, dbUser, role }) {
         });
 
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
+          <div className={`grid gap-3 items-start ${
+            keys.length <= 2
+              ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl'
+              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'
+          }`}>
             {keys.map((wilayah) => {
               const groupItems = grouped[wilayah] || [];
               const isExpanded = !!expandedGroups[wilayah];

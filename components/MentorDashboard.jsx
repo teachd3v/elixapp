@@ -94,7 +94,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
   if (activeTab === 'pengumuman') {
     return (
       <div className={`border rounded-3xl p-5 ${card}`}>
-        <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} />
+        <AnnouncementsManager darkMode={darkMode} dbUser={dbUser} role={role} wilayah={data?.wilayah} />
       </div>
     );
   }
