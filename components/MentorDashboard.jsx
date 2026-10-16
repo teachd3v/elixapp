@@ -375,17 +375,16 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
         ))}
       </div>
         {/* Quick-access shortcut cards for menu items */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
           {[
-            { id: 'journal', label: 'Jurnal Mentor', icon: BookOpen, gradient: 'from-indigo-500 to-purple-600' },
-            { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
             { id: 'sessions', label: 'Sesi & Presensi', icon: ClipboardCheck, gradient: 'from-sky-500 to-blue-600' },
+            { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
             { id: 'elix_analysis', label: 'Analisis Wilayah', icon: BarChart3, gradient: 'from-emerald-500 to-teal-600' },
           ].map(({ id, label, icon: Icon, gradient }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center gap-2 p-3 sm:p-4 rounded-2xl border transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
                 darkMode
                   ? 'bg-slate-900 border-slate-800 hover:border-slate-600'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
@@ -394,7 +393,7 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm`}>
                 <Icon className="w-5 h-5 text-white" />
               </div>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 text-center leading-tight">{label}</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-tight">{label}</span>
             </button>
           ))}
         </div>
