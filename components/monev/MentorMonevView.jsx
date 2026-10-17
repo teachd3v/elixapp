@@ -327,7 +327,7 @@ export default function MentorMonevView({ darkMode, dbUser }) {
                               className="w-full p-3.5 sm:p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                             >
                               <div className="min-w-0">
-                                <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">
+                                <h4 className={`font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 ${isOpen ? 'whitespace-normal leading-snug' : 'truncate'}`}>
                                   {plan.title}
                                 </h4>
                                 <span className="text-[10px] font-semibold text-slate-400">
@@ -546,7 +546,7 @@ export default function MentorMonevView({ darkMode, dbUser }) {
                               className="w-full p-3.5 sm:p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                             >
                               <div className="min-w-0">
-                                <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">
+                                <h4 className={`font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 ${isOpen ? 'whitespace-normal leading-snug' : 'truncate'}`}>
                                   {aspect.title}
                                 </h4>
                                 <span className="text-[10px] font-semibold text-slate-400">
