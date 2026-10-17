@@ -431,25 +431,27 @@ export default function AwardeeDetailPage({ params }) {
                     </div>
                   </div>
 
-                  {/* Tombol Aksi per Siklus */}
-                  <div className="mt-3.5 flex flex-col sm:flex-row items-stretch gap-2">
+                  {/* Tombol Aksi per Siklus (1 Baris) */}
+                  <div className="mt-3.5 flex items-center gap-2">
                     <button
                       onClick={() => {
                         setSelectedCycleForModal(c.periodId);
                         setShowDetailModal(true);
                       }}
-                      className="flex-1 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      <Eye className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Detail Jawaban</span>
+                      <Eye className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="truncate">Detail Jawaban</span>
                     </button>
-                    <PDFDownloadButton
-                      key={`card-pdf-${c.periodId}`}
-                      document={<AwardeeComprehensivePDF awardee={data} dimensions={dimensions} selectedCycle={c} />}
-                      fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}_${(c.period?.name || 'Siklus').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-                      label="PDF Siklus Ini"
-                      className="py-2 px-3 text-xs"
-                    />
+                    <div className="shrink-0">
+                      <PDFDownloadButton
+                        key={`card-pdf-${c.periodId}`}
+                        document={<AwardeeComprehensivePDF awardee={data} dimensions={dimensions} selectedCycle={c} />}
+                        fileName={`Laporan_ELIX_${(data.user?.name || 'Awardee').replace(/[^a-zA-Z0-9]/g, '_')}_${(c.period?.name || 'Siklus').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+                        iconOnly={true}
+                        className="!w-10 !h-10 !p-0 !rounded-xl"
+                      />
+                    </div>
                   </div>
                 </div>
               );
