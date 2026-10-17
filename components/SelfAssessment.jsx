@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { CheckCircle2, AlertCircle, RefreshCw, ClipboardCheck, TrendingUp } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Pencil, ClipboardCheck, TrendingUp, ArrowLeft } from 'lucide-react';
 import AwardeePDF from './pdf/AwardeePDF';
 import { elixCategory, blendedScore, toElixIndex } from '../lib/assessment';
 import PDFDownloadButton from './pdf/PDFDownloadButton';
@@ -23,7 +23,7 @@ async function fetchJson(url, options) {
 
 // Real Self Assessment: statements across weighted dimensions, rated 1-4.
 // Score is computed server-side; this only collects and displays.
-export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
+export default function SelfAssessment({ darkMode, onSaved, dbUser, profile, setHideNav, setActiveTab }) {
   const [responses, setResponses] = useState({});
   const [existing, setExisting] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,17 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
   const [dimensions, setDimensions] = useState([]);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [statements, setStatements] = useState([]);
+
+  const isFormMode = !loading && existing?.periodActive !== false && (editing || !existing?.hasFilledSA);
+
+  useEffect(() => {
+    if (setHideNav) {
+      setHideNav(isFormMode);
+    }
+    return () => {
+      if (setHideNav) setHideNav(false);
+    };
+  }, [isFormMode, setHideNav]);
 
   const goToStep = (stepIndex) => {
     setCurrentStep(stepIndex);
@@ -174,7 +185,6 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
     const category = getElixCategory(elix);
 
     const periods = profile?.assessmentRecords?.map(r => r.period) || [];
-    // Ensure active period is included if it exists in periods
     
     // Calculate dynamicTrend for Awardee PDF
     const dynamicTrend = (periods || []).sort((a,b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)).map(p => {
@@ -192,56 +202,83 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
 
     return (
       <div className="space-y-6 pb-24">
-        <div className={`border rounded-3xl p-6 ${card}`}>
-          <div className="flex items-center justify-between gap-3 mb-5 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
-              <div className="flex flex-col gap-1 shrink-0 px-2">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-[10px] font-bold text-slate-500">SA <strong className="text-slate-700 dark:text-slate-300">{saScore.toFixed(2)}</strong></span>
-                </div>
-                {hasMA && (
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-[10px] font-bold text-slate-500">MA <strong className="text-amber-600 dark:text-amber-400">{maScore.toFixed(2)}</strong></span>
-                  </div>
-                )}
-              </div>
-              
-              {hasMA && profile && (
-                <>
-                  <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0"></div>
-                  <select value={cycleFilter} onChange={e => setCycleFilter(e.target.value)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="ALL">Semua Siklus</option>
-                    <option value="ACTIVE">{existing?.periodName || 'Siklus Aktif'}</option>
-                    {periods.filter(p => !p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </>
+        <div className={`border rounded-3xl p-5 sm:p-6 ${card}`}>
+          {/* Top Action Bar */}
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {hasMA && profile ? (
+                <select
+                  value={cycleFilter}
+                  onChange={e => setCycleFilter(e.target.value)}
+                  className={`h-10 px-3 rounded-xl text-xs font-bold border outline-none cursor-pointer truncate ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                >
+                  <option value="ALL">Semua Siklus</option>
+                  <option value="ACTIVE">{existing?.periodName || 'Siklus Aktif'}</option>
+                  {periods.filter(p => !p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              ) : (
+                <h3 className="text-base font-black truncate">Hasil Self Assessment</h3>
               )}
             </div>
             
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setEditing(true)} className="p-2 sm:p-2.5 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-2xl flex items-center justify-center font-bold transition-colors" aria-label="Isi Ulang">
-                <RefreshCw className="w-5 h-5" />
+              <button
+                onClick={() => setEditing(true)}
+                className="w-10 h-10 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 rounded-xl flex items-center justify-center font-bold transition-colors cursor-pointer"
+                aria-label="Edit Self Assessment"
+                title="Edit Self Assessment"
+              >
+                <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               {hasMA && profile && (
                 <PDFDownloadButton 
                   document={<AwardeePDF profile={profile} dbUser={dbUser} dimensions={dimensions} activePeriodName={cycleFilter === 'ACTIVE' ? (existing?.periodName || 'Siklus Aktif') : (cycleFilter === 'ALL' ? 'Semua Siklus' : (periods.find(p=>p.id===cycleFilter)?.name || 'Siklus Aktif'))} dynamicTrend={dynamicTrend} />}
                   fileName={`Laporan_ELIX_${dbUser?.name?.replace(/\s+/g, '_')}.pdf`}
                   iconOnly={true}
+                  className="!w-10 !h-10 !p-0 !rounded-xl"
                 />
               )}
             </div>
           </div>
+
+          {/* Grid 2 Kolom: Hijau SA & Orange MA (Di atas Kategori Indeks) */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                  Skor SA
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-300 leading-tight">
+                  {saScore.toFixed(2)}
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/25 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 block">
+                  Skor MA
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-orange-700 dark:text-orange-300 leading-tight">
+                  {hasMA ? maScore.toFixed(2) : '—'}
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-orange-500/15 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+                {hasMA ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5 opacity-60" />}
+              </div>
+            </div>
+          </div>
           
-          {/* Expandable description */}
+          {/* Expandable description (Kategori Indeks ELIX) */}
           <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-indigo-500">Kategori Indeks ELIX</span>
               <span className="text-3xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400">{elix.toFixed(0)}</span>
             </div>
             <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white mb-1">{category.label}</h4>
-            {/* Show truncated or full description */}
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               {showFullDesc
                 ? category.desc
@@ -283,16 +320,16 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
                   {hasMA ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-xs mb-1">
-                      <span className="text-sky-500">SA</span>
+                      <span className="text-emerald-500 font-bold">SA</span>
                       <span className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                        <div className="h-full rounded-full bg-sky-500" style={{ width: `${saPct}%` }} />
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${saPct}%` }} />
                       </span>
                       <span className="text-slate-500">{saVal.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-amber-500">MA</span>
+                      <span className="text-orange-500 font-bold">MA</span>
                       <span className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                        <div className="h-full rounded-full bg-amber-500" style={{ width: `${maPct}%` }} />
+                        <div className="h-full rounded-full bg-orange-500" style={{ width: `${maPct}%` }} />
                       </span>
                       <span className="text-slate-500">{maVal.toFixed(2)}</span>
                     </div>
@@ -311,18 +348,38 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
     );
   }
 
-  // ---------- FORM ----------
+  // ---------- FORM (FULL INPUT MODE) ----------
   return (
-    <div className="space-y-6 scroll-mt-6 pb-32" ref={containerRef}>
-      <div className={`border rounded-3xl p-5 ${card}`}>
+    <div className="space-y-5 scroll-mt-4 pb-28" ref={containerRef}>
+      <div className={`border rounded-3xl p-4 sm:p-5 ${card}`}>
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-full bg-sky-500/10 text-sky-600"><ClipboardCheck className="w-5 h-5" /></div>
-          <div className="flex-1">
-            <h3 className="text-base font-black">Self Assessment</h3>
+          <button
+            type="button"
+            onClick={() => {
+              if (existing?.hasFilledSA) {
+                setEditing(false);
+              } else if (setActiveTab) {
+                setActiveTab('dashboard');
+              }
+            }}
+            className={`w-10 h-10 shrink-0 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+              darkMode
+                ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+            }`}
+            title="Kembali"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 shrink-0">
+            <ClipboardCheck className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-black truncate">Self Assessment</h3>
             {existing?.periodActive && (
-               <div className="mt-2 inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 font-bold text-[10px] rounded-lg border border-emerald-500/20">
-                 Siklus saat ini: {existing.periodName} ({formatDateRange(existing.periodStart, existing.periodEnd)})
-               </div>
+              <div className="mt-1 inline-block px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 font-bold text-[10px] rounded-lg border border-emerald-500/20 truncate max-w-full">
+                Siklus: {existing.periodName} ({formatDateRange(existing.periodStart, existing.periodEnd)})
+              </div>
             )}
           </div>
         </div>
@@ -343,23 +400,32 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
         </div>
       )}
 
+      {/* Dimension Step Buttons: Only active shows label, inactive shows number only */}
       {dimensions.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x mt-2">
-          {dimensions.map((dim, idx) => (
-            <button
-              key={dim.id}
-              onClick={() => goToStep(idx)}
-              className={`snap-start shrink-0 px-4 py-2 rounded-xl text-[11px] font-bold border transition-all ${
-                idx === currentStep
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                  : darkMode
-                    ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
-                    : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-              }`}
-            >
-              {idx + 1}. {dim.name}
-            </button>
-          ))}
+        <div className="flex items-center gap-1.5 mt-2">
+          {dimensions.map((dim, idx) => {
+            const isActive = idx === currentStep;
+            return (
+              <button
+                key={dim.id}
+                onClick={() => goToStep(idx)}
+                title={`${idx + 1}. ${dim.name}`}
+                className={`h-10 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer ${
+                  isActive
+                    ? 'flex-1 min-w-0 px-3 bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
+                    : darkMode
+                      ? 'w-10 shrink-0 bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                      : 'w-10 shrink-0 bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                }`}
+              >
+                {isActive ? (
+                  <span className="truncate">{idx + 1}. {dim.name}</span>
+                ) : (
+                  <span>{idx + 1}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -406,8 +472,8 @@ export default function SelfAssessment({ darkMode, onSaved, dbUser, profile }) {
         );
       })()}
 
-      {/* Make it fixed at the bottom with enough spacing for mobile nav */}
-      <div className={`fixed bottom-24 left-4 right-4 z-40 border rounded-3xl p-4 flex items-center justify-between gap-3 backdrop-blur shadow-xl ${darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'}`}>
+      {/* Fixed bottom bar (sits cleanly at bottom-4 since MobileNav is hidden during full form input) */}
+      <div className={`fixed bottom-4 left-4 right-4 max-w-7xl mx-auto z-40 border rounded-3xl p-4 flex items-center justify-between gap-3 backdrop-blur shadow-xl ${darkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'}`}>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => goToStep(currentStep - 1)}

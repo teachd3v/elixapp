@@ -39,7 +39,7 @@ function EmptyState({ icon: Icon, title, desc, darkMode }) {
 
 // Real, DB-backed Awardee dashboard. Data comes from /api/profile; scores come
 // from the real Self Assessment. New awardees see honest empty/zero states.
-export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, activeTab, setActiveTab }) {
+export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, activeTab, setActiveTab, setHideNav }) {
   const [data, setData] = useState(null);
   const [dimensions, setDimensions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export default function AwardeeDashboard({ darkMode, role, dbUser, setDbUser, ac
     return <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />;
   }
   if (activeTab === 'assessment') {
-    return <SelfAssessment darkMode={darkMode} onSaved={load} dbUser={dbUser} profile={profile} />;
+    return <SelfAssessment darkMode={darkMode} onSaved={load} dbUser={dbUser} profile={profile} setHideNav={setHideNav} setActiveTab={setActiveTab} />;
   }
   if (activeTab === 'attendance') {
     // Fase 6a: awardee bisa lihat daftar sesi (mendatang & riwayat).

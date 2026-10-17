@@ -242,6 +242,7 @@ function App() {
   const awardeeReady = role === 'awardee' && profileComplete;
   const mentorReady = role === 'mentor' && profileComplete;
   const showNav = role === 'superadmin' || awardeeReady || mentorReady;
+  const [hideNav, setHideNav] = React.useState(false);
 
 return (
     <>
@@ -334,8 +335,9 @@ return (
 
       <Show when="signed-in">
         
-    <div className={`min-h-screen ${currentTheme} flex flex-col transition-colors duration-300 pb-24 md:pb-0`}>
+    <div className={`min-h-screen ${currentTheme} flex flex-col transition-colors duration-300 ${hideNav ? 'pb-0' : 'pb-24 md:pb-0'}`}>
       {/* Floating Header / Navbar */}
+      {!hideNav && (
       <header className="w-full max-w-7xl mx-auto px-4 pt-4 sticky top-0 z-50 transition-all duration-300">
         <div className={`border rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between backdrop-blur-lg shadow-xl shadow-slate-950/5 transition-all gap-3 ${
           darkMode ? 'border-slate-800/40 bg-slate-950/65' : 'bg-white/70'
@@ -383,6 +385,7 @@ return (
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-6 space-y-6">
@@ -404,7 +407,7 @@ return (
           <RealProfile darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} />
         )}
         {role === 'awardee' && profileComplete && (
-          <AwardeeDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <AwardeeDashboard darkMode={darkMode} role={role} dbUser={dbUser} setDbUser={setDbUser} activeTab={activeTab} setActiveTab={setActiveTab} setHideNav={setHideNav} />
         )}
 
         {/* ---------- MENTOR: complete profile first, then real dashboard ---------- */}
@@ -425,7 +428,7 @@ return (
 
       {/* Floating Bottom Nav Bar for Hape / Mobile
   Responsiveness */}
-          {showNav && (
+          {showNav && !hideNav && (
           <MobileNav
             darkMode={darkMode}
             role={role}
