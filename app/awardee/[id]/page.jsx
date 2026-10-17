@@ -117,8 +117,8 @@ export default function AwardeeDetailPage({ params }) {
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 text-slate-300">
-            <span className="flex items-center gap-1.5 text-indigo-400">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" /> MA:
+            <span className="flex items-center gap-1.5 text-orange-400">
+              <span className="w-2 h-2 rounded-full bg-orange-500 inline-block" /> MA:
             </span>
             <span className="font-bold">
               {item?.hasFilledMA ? `${item.ma} (${item.maRaw?.toFixed(2)}/4)` : 'Belum dinilai'}
@@ -526,7 +526,7 @@ export default function AwardeeDetailPage({ params }) {
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 12, fontWeight: 'bold', color: '#64748b' }} />
                     <Line type="monotone" dataKey="elix" name="Indeks ELIX" stroke="#10b981" strokeWidth={3.5} dot={{r: 5, strokeWidth: 2, fill: '#10b981'}} activeDot={{r: 7}} connectNulls />
                     <Line type="monotone" dataKey="sa" name="Skor SA (Awardee)" stroke="#3b82f6" strokeWidth={2} strokeDasharray="4 4" dot={{r: 3.5, strokeWidth: 2, fill: '#3b82f6'}} connectNulls />
-                    <Line type="monotone" dataKey="ma" name="Skor MA (Mentor)" stroke="#6366f1" strokeWidth={2} strokeDasharray="4 4" dot={{r: 3.5, strokeWidth: 2, fill: '#6366f1'}} connectNulls />
+                    <Line type="monotone" dataKey="ma" name="Skor MA (Mentor)" stroke="#f97316" strokeWidth={2} strokeDasharray="4 4" dot={{r: 3.5, strokeWidth: 2, fill: '#f97316'}} connectNulls />
                   </ReLineChart>
                 </ResponsiveContainer>
               </div>
