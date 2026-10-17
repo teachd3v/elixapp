@@ -91,10 +91,10 @@ export default function AwardeeMonevView({ darkMode, dbUser }) {
 
   return (
     <div className="space-y-6 pb-32">
-      {/* HEADER BANNER */}
-      <div className={`border rounded-3xl p-5 sm:p-6 relative overflow-hidden ${card}`}>
+      {/* HEADER BANNER + METADATA 1 BARIS */}
+      <div className={`border rounded-3xl p-4 sm:p-6 relative overflow-hidden ${card}`}>
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+          <h1 className="text-lg sm:text-2xl font-black tracking-tight">
             Hasil Monev
           </h1>
 
@@ -117,6 +117,41 @@ export default function AwardeeMonevView({ darkMode, dbUser }) {
             </div>
           )}
         </div>
+
+        {activeRecord && (
+          <div className={`mt-3.5 pt-3.5 border-t ${darkMode ? 'border-slate-800' : 'border-slate-100'} grid grid-cols-3 divide-x ${darkMode ? 'divide-slate-800' : 'divide-slate-200/80'}`}>
+            <div className="pr-2 flex flex-col justify-center min-w-0">
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                <Layers className="w-2.5 h-2.5 text-emerald-500 shrink-0" /> Periode
+              </span>
+              <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                {activeRecord.periodName}
+              </span>
+            </div>
+
+            <div className="px-2.5 flex flex-col justify-center min-w-0">
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                <Calendar className="w-2.5 h-2.5 text-emerald-500 shrink-0" /> Tanggal
+              </span>
+              <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                {new Date(activeRecord.interviewDate).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+
+            <div className="pl-2.5 flex flex-col justify-center min-w-0">
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                <User className="w-2.5 h-2.5 text-emerald-500 shrink-0" /> Observer
+              </span>
+              <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                {activeRecord.evaluatedBy?.name || 'Observer Pusat'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {data.records.length === 0 ? (
@@ -130,33 +165,6 @@ export default function AwardeeMonevView({ darkMode, dbUser }) {
         <>
           {activeRecord && (
             <div className="space-y-6">
-              {/* METADATA BAR (3 KOLOM RINGKAS) */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <div className={`p-3 sm:p-4 rounded-2xl border ${subCard} flex flex-col justify-center min-w-0`}>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Periode</span>
-                  <span className="font-black text-xs text-slate-800 dark:text-white truncate mt-0.5">
-                    {activeRecord.periodName}
-                  </span>
-                </div>
-
-                <div className={`p-3 sm:p-4 rounded-2xl border ${subCard} flex flex-col justify-center min-w-0`}>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Tanggal</span>
-                  <span className="font-black text-xs text-slate-800 dark:text-white truncate mt-0.5">
-                    {new Date(activeRecord.interviewDate).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-
-                <div className={`p-3 sm:p-4 rounded-2xl border ${subCard} flex flex-col justify-center min-w-0`}>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Observer</span>
-                  <span className="font-black text-xs text-slate-800 dark:text-white truncate mt-0.5">
-                    {activeRecord.evaluatedBy?.name || 'Observer Pusat'}
-                  </span>
-                </div>
-              </div>
 
               {/* ============================================================== */}
               {/* GOLDEN HIGHLIGHT: RENCANA AKSI & REKOMENDASI PENGEMBANGAN DIRI */}
