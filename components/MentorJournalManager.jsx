@@ -463,11 +463,11 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
             <p className="text-xl sm:text-2xl font-black mt-1">{stats.total}</p>
           </div>
           <div className="p-3 sm:p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/15">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-500 block">Kegiatan Luring</span>
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-500 block">Luring</span>
             <p className="text-xl sm:text-2xl font-black mt-1">{stats.luring}</p>
           </div>
           <div className="p-3 sm:p-3.5 rounded-2xl bg-sky-500/5 border border-sky-500/15">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-sky-500 block">Kegiatan Daring</span>
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-sky-500 block">Daring</span>
             <p className="text-xl sm:text-2xl font-black mt-1">{stats.daring}</p>
           </div>
         </div>
