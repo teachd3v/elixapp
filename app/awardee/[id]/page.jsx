@@ -13,6 +13,7 @@ import { ResponsiveContainer,
 import PDFDownloadButton from '../../../components/pdf/PDFDownloadButton';
 import AwardeeComprehensivePDF from '../../../components/pdf/AwardeeComprehensivePDF';
 import ElixDetailModal from '../../../components/modals/ElixDetailModal';
+import AppLoadingScreen from '../../../components/AppLoadingScreen';
 
 const ELIX_DESCRIPTIONS = {
   'Emerging Leader': "Awardee masih berada pada tahap awal pengembangan diri dan belum menunjukkan kompetensi yang diharapkan pada sebagian besar dimensi. Kesiapan akademik masih rendah, internalisasi nilai-nilai Islam dan kedekatan dengan Al-Qur'an belum konsisten, kemampuan mengelola diri dan emosi masih terbatas, serta belum menunjukkan inisiatif dan kepemimpinan sosial yang nyata. Awardee memerlukan pendampingan intensif, penguatan karakter, dan stimulasi yang berkelanjutan untuk mengembangkan potensinya.",
@@ -60,7 +61,7 @@ export default function AwardeeDetailPage({ params }) {
     });
   }, [resolvedParams.id]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">Memuat detail profil awardee...</div>;
+  if (loading) return <AppLoadingScreen message="Memuat detail profil awardee..." />;
   if (error) return <div className="min-h-screen flex items-center justify-center text-rose-500 font-bold">{error}</div>;
   if (!data) return null;
 

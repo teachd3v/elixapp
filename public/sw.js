@@ -1,4 +1,4 @@
-const CACHE_NAME = 'exlead-pwa-v2';
+const CACHE_NAME = 'exlead-pwa-v3';
 
 // 1. Install Event: Skip waiting immediately agar SW baru langsung aktif
 self.addEventListener('install', (event) => {

@@ -20,6 +20,7 @@ import NotificationsBell from '../components/NotificationsBell';
 import AwardeeDashboard from '../components/AwardeeDashboard';
 import MentorDashboard from '../components/MentorDashboard';
 import SuperadminDashboardReal from '../components/SuperadminDashboardReal';
+import AppLoadingScreen from '../components/AppLoadingScreen';
 function App() {
   const logic = useAppLogic();
   const {
@@ -245,9 +246,7 @@ function App() {
 return (
     <>
       <ClerkLoading>
-        <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a0a]">
-          <div className="w-10 h-10 border-4 border-slate-600 border-t-amber-500 rounded-full animate-spin"></div>
-        </div>
+        <AppLoadingScreen message="Memuat Portal EXLEAD..." />
       </ClerkLoading>
 
       <Show when="signed-out">
@@ -388,8 +387,12 @@ return (
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-6 space-y-6">
         {!dbUser ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col h-72 items-center justify-center gap-4">
+            <img src="/logo-yes-simple.png" alt="EXLEAD Logo" className="w-16 h-16 object-contain animate-pulse" />
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs font-bold opacity-60">Menyiapkan akun...</span>
+            </div>
           </div>
         ) : (
           <>

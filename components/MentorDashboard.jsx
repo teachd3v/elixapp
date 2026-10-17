@@ -99,7 +99,12 @@ export default function MentorDashboard({ darkMode, role, dbUser, setDbUser, act
     );
   }
   if (loading) {
-    return <div className={`border rounded-3xl p-8 text-center ${card}`}><p className="text-sm opacity-60">Memuat data wilayah...</p></div>;
+    return (
+      <div className={`border rounded-3xl p-16 flex flex-col items-center justify-center gap-4 ${card}`}>
+        <img src="/logo-yes-simple.png" alt="EXLEAD Logo" className="w-16 h-16 object-contain animate-pulse" />
+        <p className="text-sm font-bold opacity-60">Memuat data wilayah...</p>
+      </div>
+    );
   }
   if (activeTab === 'sessions') {
     return (

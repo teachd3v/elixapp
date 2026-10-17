@@ -218,8 +218,11 @@ export default function SuperadminDashboardReal({ darkMode, activeTab, dbUser, r
   if (loading) {
     return (
       <div className={`border rounded-3xl p-16 flex flex-col items-center justify-center gap-4 ${card}`}>
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-        <p className="text-sm font-bold opacity-60">Memuat data...</p>
+        <img src="/logo-yes-simple.png" alt="EXLEAD Logo" className="w-16 h-16 object-contain animate-pulse" />
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+          <p className="text-sm font-bold opacity-60">Memuat data...</p>
+        </div>
       </div>
     );
   }

@@ -18,6 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Portal EXLEAD",
   description: "Platform Evaluasi dan Pembelajaran Interaktif YES GREAT Edunesia",
+  icons: {
+    icon: "/logo-yes-simple.png",
+    shortcut: "/logo-yes-simple.png",
+    apple: "/icon-192x192.png",
+  },
 };
 
 export default function RootLayout({
