@@ -3,10 +3,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Award, BookOpen, Compass, Calendar, User, CheckCircle2,
-  AlertCircle, ChevronRight, Layers, Sparkles, TrendingUp,
-  FileText, Clock, AlertTriangle, ThumbsUp, Lightbulb, Target
+  Layers, Sparkles, FileText, Clock, ThumbsUp, Lightbulb,
+  Target, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { getPerformanceCategory, getTeachingCategory, SCORE_RUBRICS } from '@/lib/monev';
+import { getPerformanceCategory, getTeachingCategory } from '@/lib/monev';
 
 export default function MentorMonevView({ darkMode, dbUser }) {
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,10 @@ export default function MentorMonevView({ darkMode, dbUser }) {
   const [selectedPerfId, setSelectedPerfId] = useState(null);
   const [selectedTeachId, setSelectedTeachId] = useState(null);
   const [selectedObsId, setSelectedObsId] = useState(null);
+
+  // Accordion state (default closed for minimalism on mobile)
+  const [openPlanIds, setOpenPlanIds] = useState({});
+  const [openTeachAspectIds, setOpenTeachAspectIds] = useState({});
 
   const card = darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800';
   const subCard = darkMode ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50 border-slate-200/80';
@@ -66,6 +70,14 @@ export default function MentorMonevView({ darkMode, dbUser }) {
     return data.wilayahObservations.find((o) => o.id === selectedObsId) || data.wilayahObservations[0] || null;
   }, [data.wilayahObservations, selectedObsId]);
 
+  const togglePlan = (planId) => {
+    setOpenPlanIds((prev) => ({ ...prev, [planId]: !prev[planId] }));
+  };
+
+  const toggleTeachAspect = (aspectId) => {
+    setOpenTeachAspectIds((prev) => ({ ...prev, [aspectId]: !prev[aspectId] }));
+  };
+
   if (loading) {
     return (
       <div className={`border rounded-3xl p-16 flex flex-col items-center justify-center gap-4 ${card}`}>
@@ -76,15 +88,15 @@ export default function MentorMonevView({ darkMode, dbUser }) {
   }
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="space-y-4 sm:space-y-5 pb-32">
       {/* HEADER BANNER */}
-      <div className={`border rounded-3xl p-5 sm:p-6 relative overflow-hidden ${card}`}>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight mb-4">
+      <div className={`border rounded-3xl p-4 sm:p-6 relative overflow-hidden ${card}`}>
+        <h1 className="text-lg sm:text-2xl font-black tracking-tight mb-3.5">
           Hasil Monev
         </h1>
 
         {/* SUB-TABS NAVIGATION */}
-        <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2 pt-3.5 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={() => setActiveSubTab('performance')}
             title="Performa Kerja"
@@ -157,7 +169,7 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       {/* SUB-TAB 1: PERFORMA KERJA MENTOR                               */}
       {/* ============================================================== */}
       {activeSubTab === 'performance' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {data.performanceEvaluations.length === 0 ? (
             <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
@@ -169,232 +181,212 @@ export default function MentorMonevView({ darkMode, dbUser }) {
             <>
               {/* PERIOD SELECTOR (IF MULTIPLE) */}
               {data.performanceEvaluations.length > 1 && (
-                <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap ${card}`}>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                    <Layers className="w-4 h-4 text-amber-500" />
-                    Pilih Periode Penilaian:
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {data.performanceEvaluations.map((ev) => (
-                      <button
-                        key={ev.id}
-                        onClick={() => setSelectedPerfId(ev.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activePerf?.id === ev.id
-                            ? 'bg-amber-500 text-slate-950 font-black'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                        }`}
-                      >
-                        {ev.periodName} ({ev.evaluationYear})
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {data.performanceEvaluations.map((ev) => (
+                    <button
+                      key={ev.id}
+                      onClick={() => setSelectedPerfId(ev.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        activePerf?.id === ev.id
+                          ? 'bg-amber-500 text-slate-950 font-black'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      {ev.periodName} ({ev.evaluationYear})
+                    </button>
+                  ))}
                 </div>
               )}
 
-              {/* SCORE HERO CARDS */}
               {activePerf && (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* TOTAL SCORE */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Total Nilai 1 Tahun
+                  {/* UNIFIED SCORECARD (3 KOLOM SKOR + 1 BARIS METADATA) */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card}`}>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                      {/* TOTAL */}
+                      <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col items-center justify-center text-center">
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                          Total
                         </span>
-                        <Award className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div className="my-3">
-                        <div className="text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400">
+                        <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 my-0.5">
                           {Number(activePerf.totalScore || 0).toFixed(1)}
-                        </div>
-                        <span className="text-[11px] text-slate-400">Skala 0 - 100</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase truncate max-w-full ${
                           getPerformanceCategory(activePerf.totalScore).badge
                         }`}>
-                          Kategori: {activePerf.category || getPerformanceCategory(activePerf.totalScore).label}
+                          {activePerf.category || getPerformanceCategory(activePerf.totalScore).label}
                         </span>
                       </div>
-                    </div>
 
-                    {/* SEMESTER 1 */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Skor Semester 1
+                      {/* SEM 1 */}
+                      <div className={`p-3 rounded-2xl border ${subCard} flex flex-col items-center justify-center text-center`}>
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Semester 1
                         </span>
-                        <Calendar className="w-5 h-5 text-sky-500" />
-                      </div>
-                      <div className="my-3">
-                        <div className="text-3xl font-black tracking-tight text-sky-600 dark:text-sky-400">
+                        <span className="text-xl sm:text-2xl font-black text-sky-600 dark:text-sky-400 my-0.5">
                           {activePerf.scoreSemester1 != null ? Number(activePerf.scoreSemester1).toFixed(1) : '—'}
-                        </div>
-                        <span className="text-[11px] text-slate-400">Poin Capaian Sem 1</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-                        {activePerf.scoreSemester1 != null ? 'Telah dinilai' : 'Belum terlaksana'}
-                      </div>
-                    </div>
-
-                    {/* SEMESTER 2 */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Skor Semester 2
                         </span>
-                        <Calendar className="w-5 h-5 text-indigo-500" />
+                        <span className="text-[9px] text-slate-400 font-semibold">
+                          {activePerf.scoreSemester1 != null ? 'Dinilai' : 'Belum'}
+                        </span>
                       </div>
-                      <div className="my-3">
-                        <div className="text-3xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+
+                      {/* SEM 2 */}
+                      <div className={`p-3 rounded-2xl border ${subCard} flex flex-col items-center justify-center text-center`}>
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Semester 2
+                        </span>
+                        <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 my-0.5">
                           {activePerf.scoreSemester2 != null ? Number(activePerf.scoreSemester2).toFixed(1) : '—'}
-                        </div>
-                        <span className="text-[11px] text-slate-400">Poin Capaian Sem 2</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-                        {activePerf.scoreSemester2 != null ? 'Telah dinilai' : 'Belum terlaksana'}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-semibold">
+                          {activePerf.scoreSemester2 != null ? 'Dinilai' : 'Belum'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* EVALUATOR INFO */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Info Observer
+                    {/* 1-LINE METADATA BAR */}
+                    <div className={`mt-3.5 pt-3.5 border-t ${darkMode ? 'border-slate-800' : 'border-slate-100'} grid grid-cols-3 divide-x ${darkMode ? 'divide-slate-800' : 'divide-slate-200/80'}`}>
+                      <div className="pr-2 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Layers className="w-2.5 h-2.5 text-amber-500 shrink-0" /> Periode
                         </span>
-                        <User className="w-5 h-5 text-emerald-500" />
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                          {activePerf.periodName} {activePerf.evaluationYear}
+                        </span>
                       </div>
-                      <div className="my-3">
-                        <div className="text-sm font-black truncate">
+
+                      <div className="px-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5 text-amber-500 shrink-0" /> Tanggal
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                          {new Date(activePerf.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="pl-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <User className="w-2.5 h-2.5 text-amber-500 shrink-0" /> Observer
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
                           {activePerf.evaluatedBy?.name || 'Observer Pusat'}
-                        </div>
-                        <span className="text-[11px] text-slate-400 block mt-0.5">
-                          Periode: {activePerf.periodName} ({activePerf.evaluationYear})
                         </span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
-                        Dicatat: {new Date(activePerf.createdAt).toLocaleDateString('id-ID')}
                       </div>
                     </div>
                   </div>
 
-                  {/* HIGHLIGHT FEEDBACK (WELL DONE & IMPROVEMENTS) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* WELL DONE */}
-                    <div className={`border rounded-3xl p-6 ${card} border-emerald-500/20 bg-emerald-500/5`}>
-                      <div className="flex items-center gap-2.5 mb-3 text-emerald-600 dark:text-emerald-400">
-                        <ThumbsUp className="w-5 h-5 shrink-0" />
-                        <h3 className="font-black text-sm uppercase tracking-wider">
-                          Hal yang Sudah Berjalan dengan Baik
+                  {/* HIGHLIGHT FEEDBACK (RINGKAS) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} border-emerald-500/20 bg-emerald-500/5`}>
+                      <div className="flex items-center gap-2 mb-2 text-emerald-600 dark:text-emerald-400">
+                        <ThumbsUp className="w-4 h-4 shrink-0" />
+                        <h3 className="font-black text-xs uppercase tracking-wider">
+                          Apresiasi & Kelebihan
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                         {activePerf.wellDoneNotes || (
-                          <span className="italic text-slate-400">
-                            Belum ada catatan apresiasi khusus yang dicantumkan observer.
-                          </span>
+                          <span className="italic text-slate-400">Belum ada catatan apresiasi.</span>
                         )}
                       </p>
                     </div>
 
-                    {/* IMPROVEMENTS */}
-                    <div className={`border rounded-3xl p-6 ${card} border-amber-500/20 bg-amber-500/5`}>
-                      <div className="flex items-center gap-2.5 mb-3 text-amber-600 dark:text-amber-400">
-                        <Target className="w-5 h-5 shrink-0" />
-                        <h3 className="font-black text-sm uppercase tracking-wider">
-                          Area yang Perlu Dikembangkan (Growth)
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} border-amber-500/20 bg-amber-500/5`}>
+                      <div className="flex items-center gap-2 mb-2 text-amber-600 dark:text-amber-400">
+                        <Target className="w-4 h-4 shrink-0" />
+                        <h3 className="font-black text-xs uppercase tracking-wider">
+                          Area Pengembangan
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                         {activePerf.improvementNotes || (
-                          <span className="italic text-slate-400">
-                            Belum ada catatan rekomendasi perbaikan khusus yang dicantumkan observer.
-                          </span>
+                          <span className="italic text-slate-400">Belum ada catatan rekomendasi perbaikan.</span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  {/* BREAKDOWN PER TARGET KERJA */}
-                  <div className={`border rounded-3xl p-6 ${card} space-y-5`}>
-                    <div>
-                      <h3 className="font-black text-base">Rincian Capaian Target Kerja Mentor</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Daftar indikator rencana kerja beserta skor capaian (Skala 0 - 4) dan catatan evidence.
-                      </p>
-                    </div>
+                  {/* BREAKDOWN PER TARGET KERJA (ACCORDION DEFAULT TERTUTUP) */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card} space-y-3.5`}>
+                    <h3 className="font-black text-sm sm:text-base">Rincian Target Kerja</h3>
 
-                    <div className="space-y-4">
-                      {data.plans.map((plan) => (
-                        <div key={plan.id} className={`p-5 rounded-2xl border ${subCard} space-y-3`}>
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
-                            <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                              {plan.title}
-                            </h4>
-                            <span className="text-[10px] font-bold text-slate-400">
-                              {plan.targets.length} Target
-                            </span>
+                    <div className="space-y-2.5">
+                      {data.plans.map((plan) => {
+                        const isOpen = !!openPlanIds[plan.id];
+
+                        return (
+                          <div key={plan.id} className={`rounded-2xl border ${subCard} overflow-hidden`}>
+                            <button
+                              type="button"
+                              onClick={() => togglePlan(plan.id)}
+                              className="w-full p-3.5 sm:p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                            >
+                              <div className="min-w-0">
+                                <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">
+                                  {plan.title}
+                                </h4>
+                                <span className="text-[10px] font-semibold text-slate-400">
+                                  {plan.targets.length} Indikator Target
+                                </span>
+                              </div>
+                              <div className="p-1 rounded-lg bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-300 shrink-0">
+                                {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              </div>
+                            </button>
+
+                            {isOpen && (
+                              <div className="p-3.5 pt-2.5 space-y-2.5 border-t border-slate-200/60 dark:border-slate-700/60">
+                                {plan.targets.map((tgt) => {
+                                  const scoreEntry = activePerf.itemScores?.[tgt.id] || {};
+                                  const sem1 = scoreEntry.scoreSem1;
+                                  const sem2 = scoreEntry.scoreSem2;
+
+                                  return (
+                                    <div
+                                      key={tgt.id}
+                                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs"
+                                    >
+                                      <div className="font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                                        {tgt.title}
+                                      </div>
+
+                                      {tgt.targetSemester && (
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                          Target: {tgt.targetSemester}
+                                        </p>
+                                      )}
+
+                                      {/* 1-LINE COMPACT BADGES */}
+                                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                          Bobot {tgt.weight}%
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                                          Sem 1: {sem1 != null ? `${sem1} / 4` : '—'}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                          Sem 2: {sem2 != null ? `${sem2} / 4` : '—'}
+                                        </span>
+                                      </div>
+
+                                      {scoreEntry.evidence && (
+                                        <div className="text-[11px] text-slate-600 dark:text-slate-300 pl-2.5 border-l-2 border-amber-500 pt-0.5">
+                                          {scoreEntry.evidence}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-
-                          <div className="space-y-3">
-                            {plan.targets.map((tgt) => {
-                              const scoreEntry = activePerf.itemScores?.[tgt.id] || {};
-                              const sem1 = scoreEntry.scoreSem1;
-                              const sem2 = scoreEntry.scoreSem2;
-
-                              return (
-                                <div
-                                  key={tgt.id}
-                                  className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs"
-                                >
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                    <div className="font-bold text-slate-800 dark:text-slate-100 flex-1">
-                                      {tgt.title}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                        Bobot: {tgt.weight}%
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                        {tgt.semesterScope === 'KEDUANYA' ? 'Sem 1 & 2' : tgt.semesterScope === 'SEMESTER_1' ? 'Sem 1' : 'Sem 2'}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {tgt.targetSemester && (
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                      Target: {tgt.targetSemester}
-                                    </p>
-                                  )}
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-                                      <span className="text-[10px] text-slate-400 font-bold uppercase">Skor Semester 1:</span>
-                                      <span className="font-black text-xs text-sky-600 dark:text-sky-400">
-                                        {sem1 != null ? `${sem1} / 4.0 (${SCORE_RUBRICS[sem1]?.range || ''})` : '—'}
-                                      </span>
-                                    </div>
-                                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-                                      <span className="text-[10px] text-slate-400 font-bold uppercase">Skor Semester 2:</span>
-                                      <span className="font-black text-xs text-indigo-600 dark:text-indigo-400">
-                                        {sem2 != null ? `${sem2} / 4.0 (${SCORE_RUBRICS[sem2]?.range || ''})` : '—'}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {scoreEntry.evidence && (
-                                    <div className="text-[11px] text-slate-600 dark:text-slate-300 pl-2.5 border-l-2 border-amber-500">
-                                      <span className="font-bold text-slate-400 text-[10px] uppercase block">Catatan Evidence:</span>
-                                      {scoreEntry.evidence}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </>
@@ -408,7 +400,7 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       {/* SUB-TAB 2: KOMPETENSI MENGAJAR MENTOR                           */}
       {/* ============================================================== */}
       {activeSubTab === 'teaching' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {data.teachingEvaluations.length === 0 ? (
             <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
@@ -420,218 +412,197 @@ export default function MentorMonevView({ darkMode, dbUser }) {
             <>
               {/* SESSION SELECTOR (IF MULTIPLE) */}
               {data.teachingEvaluations.length > 1 && (
-                <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap ${card}`}>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                    <Layers className="w-4 h-4 text-blue-500" />
-                    Pilih Sesi Observasi:
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {data.teachingEvaluations.map((ev) => (
-                      <button
-                        key={ev.id}
-                        onClick={() => setSelectedTeachId(ev.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeTeach?.id === ev.id
-                            ? 'bg-blue-500 text-white font-black'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                        }`}
-                      >
-                        {ev.periodName} ({new Date(ev.evaluationDate).toLocaleDateString('id-ID')})
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {data.teachingEvaluations.map((ev) => (
+                    <button
+                      key={ev.id}
+                      onClick={() => setSelectedTeachId(ev.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        activeTeach?.id === ev.id
+                          ? 'bg-blue-500 text-white font-black'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      {ev.periodName} ({new Date(ev.evaluationDate).toLocaleDateString('id-ID')})
+                    </button>
+                  ))}
                 </div>
               )}
 
-              {/* SCORE HERO CARDS */}
               {activeTeach && (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* PERCENTAGE & CATEGORY */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Persentase Capaian
+                  {/* UNIFIED SCORECARD (2 KOLOM SKOR + 1 BARIS METADATA) */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card}`}>
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                      <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col items-center justify-center text-center">
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                          Capaian Mengajar
                         </span>
-                        <BookOpen className="w-5 h-5 text-blue-500" />
-                      </div>
-                      <div className="my-3">
-                        <div className="text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+                        <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 my-0.5">
                           {Number(activeTeach.percentage || 0).toFixed(1)}%
-                        </div>
-                        <span className="text-[11px] text-slate-400">Ketercapaian Indikator</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase truncate max-w-full ${
                           getTeachingCategory(activeTeach.percentage).badge
                         }`}>
                           {activeTeach.category || getTeachingCategory(activeTeach.percentage).label}
                         </span>
                       </div>
-                    </div>
 
-                    {/* TOTAL SCORE */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Total Skor Indikator
+                      <div className={`p-3 rounded-2xl border ${subCard} flex flex-col items-center justify-center text-center`}>
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Skor Indikator
                         </span>
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div className="my-3">
-                        <div className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+                        <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 my-0.5">
                           {activeTeach.totalScore} / {activeTeach.maxScore}
-                        </div>
-                        <span className="text-[11px] text-slate-400">Poin Indikator Terpenuhi</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-                        Dari total skor maksimal
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-semibold">
+                          Poin Terpenuhi
+                        </span>
                       </div>
                     </div>
 
-                    {/* SESSION TOPIC */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Topik Sesi
+                    {/* 1-LINE METADATA BAR */}
+                    <div className={`mt-3.5 pt-3.5 border-t ${darkMode ? 'border-slate-800' : 'border-slate-100'} grid grid-cols-3 divide-x ${darkMode ? 'divide-slate-800' : 'divide-slate-200/80'}`}>
+                      <div className="pr-2 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <FileText className="w-2.5 h-2.5 text-blue-500 shrink-0" /> Topik
                         </span>
-                        <FileText className="w-5 h-5 text-purple-500" />
-                      </div>
-                      <div className="my-3">
-                        <div className="text-sm font-black line-clamp-2">
-                          {activeTeach.sessionTopic || 'Sesi Pembinaan Mengajar'}
-                        </div>
-                        <span className="text-[11px] text-slate-400 block mt-1">
-                          {activeTeach.periodName}
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                          {activeTeach.sessionTopic || activeTeach.periodName}
                         </span>
                       </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-                        Tgl: {new Date(activeTeach.evaluationDate).toLocaleDateString('id-ID')}
-                      </div>
-                    </div>
 
-                    {/* OBSERVER */}
-                    <div className={`border rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between ${card}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Observer
+                      <div className="px-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5 text-blue-500 shrink-0" /> Tanggal
                         </span>
-                        <User className="w-5 h-5 text-amber-500" />
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                          {new Date(activeTeach.evaluationDate).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
                       </div>
-                      <div className="my-3">
-                        <div className="text-sm font-black truncate">
+
+                      <div className="pl-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <User className="w-2.5 h-2.5 text-blue-500 shrink-0" /> Observer
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
                           {activeTeach.evaluatedBy?.name || 'Observer Pusat'}
-                        </div>
-                        <span className="text-[11px] text-slate-400 block mt-0.5">
-                          Superadmin Monev
                         </span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
-                        Dicatat: {new Date(activeTeach.createdAt).toLocaleDateString('id-ID')}
                       </div>
                     </div>
                   </div>
 
-                  {/* STRENGTHS & IMPROVEMENT NOTES */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* STRENGTHS */}
-                    <div className={`border rounded-3xl p-6 ${card} border-emerald-500/20 bg-emerald-500/5`}>
-                      <div className="flex items-center gap-2.5 mb-3 text-emerald-600 dark:text-emerald-400">
-                        <Sparkles className="w-5 h-5 shrink-0" />
-                        <h3 className="font-black text-sm uppercase tracking-wider">
-                          Kelebihan Mengajar & Pedagogik
+                  {/* STRENGTHS & IMPROVEMENT NOTES (RINGKAS) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} border-emerald-500/20 bg-emerald-500/5`}>
+                      <div className="flex items-center gap-2 mb-2 text-emerald-600 dark:text-emerald-400">
+                        <Sparkles className="w-4 h-4 shrink-0" />
+                        <h3 className="font-black text-xs uppercase tracking-wider">
+                          Kelebihan Mengajar
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                         {activeTeach.strengthsNotes || (
-                          <span className="italic text-slate-400">
-                            Belum ada catatan kelebihan khusus yang dicantumkan observer.
-                          </span>
+                          <span className="italic text-slate-400">Belum ada catatan kelebihan mengajar.</span>
                         )}
                       </p>
                     </div>
 
-                    {/* IMPROVEMENTS */}
-                    <div className={`border rounded-3xl p-6 ${card} border-sky-500/20 bg-sky-500/5`}>
-                      <div className="flex items-center gap-2.5 mb-3 text-sky-600 dark:text-sky-400">
-                        <Lightbulb className="w-5 h-5 shrink-0" />
-                        <h3 className="font-black text-sm uppercase tracking-wider">
-                          Saran Pengembangan Mengajar
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} border-sky-500/20 bg-sky-500/5`}>
+                      <div className="flex items-center gap-2 mb-2 text-sky-600 dark:text-sky-400">
+                        <Lightbulb className="w-4 h-4 shrink-0" />
+                        <h3 className="font-black text-xs uppercase tracking-wider">
+                          Saran Pengembangan
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                         {activeTeach.improvementNotes || (
-                          <span className="italic text-slate-400">
-                            Belum ada saran pengembangan pedagogik khusus yang dicantumkan observer.
-                          </span>
+                          <span className="italic text-slate-400">Belum ada saran pengembangan mengajar.</span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  {/* INDICATOR CHECKLIST BREAKDOWN */}
-                  <div className={`border rounded-3xl p-6 ${card} space-y-5`}>
-                    <div>
-                      <h3 className="font-black text-base">Checklist Indikator Kompetensi Mengajar</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Indikator observasi yang dinilai langsung saat sesi mengajar mentor berlangsung.
-                      </p>
-                    </div>
+                  {/* INDICATOR CHECKLIST BREAKDOWN (ACCORDION DEFAULT TERTUTUP) */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card} space-y-3.5`}>
+                    <h3 className="font-black text-sm sm:text-base">Checklist Indikator Mengajar</h3>
 
-                    <div className="space-y-4">
-                      {data.teachingAspects.map((aspect) => (
-                        <div key={aspect.id} className={`p-5 rounded-2xl border ${subCard} space-y-3`}>
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
-                            <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                              {aspect.title}
-                            </h4>
-                            <span className="text-[10px] font-bold text-slate-400">
-                              {aspect.indicators.length} Indikator
-                            </span>
-                          </div>
+                    <div className="space-y-2.5">
+                      {data.teachingAspects.map((aspect) => {
+                        const isOpen = !!openTeachAspectIds[aspect.id];
+                        const fulfilledCount = aspect.indicators.filter(
+                          (ind) => !!activeTeach.itemScores?.[ind.id]?.checked
+                        ).length;
 
-                          <div className="space-y-2.5">
-                            {aspect.indicators.map((ind) => {
-                              const item = activeTeach.itemScores?.[ind.id] || {};
-                              const checked = !!item.checked;
-                              const scoreVal = item.score !== undefined ? item.score : ind.score;
+                        return (
+                          <div key={aspect.id} className={`rounded-2xl border ${subCard} overflow-hidden`}>
+                            <button
+                              type="button"
+                              onClick={() => toggleTeachAspect(aspect.id)}
+                              className="w-full p-3.5 sm:p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                            >
+                              <div className="min-w-0">
+                                <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">
+                                  {aspect.title}
+                                </h4>
+                                <span className="text-[10px] font-semibold text-slate-400">
+                                  {fulfilledCount} / {aspect.indicators.length} Indikator Terpenuhi
+                                </span>
+                              </div>
+                              <div className="p-1 rounded-lg bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-300 shrink-0">
+                                {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              </div>
+                            </button>
 
-                              return (
-                                <div
-                                  key={ind.id}
-                                  className={`p-3.5 rounded-xl border flex items-start gap-3 transition-all ${
-                                    checked
-                                      ? 'bg-emerald-500/5 border-emerald-500/30'
-                                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60'
-                                  }`}
-                                >
-                                  <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                                    checked ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
-                                  }`}>
-                                    {checked ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
-                                  </div>
+                            {isOpen && (
+                              <div className="p-3.5 pt-2.5 space-y-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                                {aspect.indicators.map((ind) => {
+                                  const item = activeTeach.itemScores?.[ind.id] || {};
+                                  const checked = !!item.checked;
+                                  const scoreVal = item.score !== undefined ? item.score : ind.score;
 
-                                  <div className="flex-1 min-w-0 text-xs">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="font-bold text-slate-800 dark:text-slate-100">
-                                        {ind.title}
-                                      </span>
-                                      <span className="font-black text-[11px] shrink-0 text-slate-500">
-                                        {checked ? `+${scoreVal} Poin` : '0 Poin'}
-                                      </span>
+                                  return (
+                                    <div
+                                      key={ind.id}
+                                      className={`p-3 rounded-xl border flex items-start gap-2.5 transition-all ${
+                                        checked
+                                          ? 'bg-emerald-500/5 border-emerald-500/30'
+                                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60'
+                                      }`}
+                                    >
+                                      <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${
+                                        checked ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                                      }`}>
+                                        {checked ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
+                                      </div>
+
+                                      <div className="flex-1 min-w-0 text-xs">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                                            {ind.title}
+                                          </span>
+                                          <span className="font-black text-[10px] shrink-0 text-emerald-600 dark:text-emerald-400">
+                                            {checked ? `+${scoreVal}` : '0'}
+                                          </span>
+                                        </div>
+                                        {item.notes && (
+                                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 italic">
+                                            {item.notes}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
-                                    {item.notes && (
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 italic">
-                                        Catatan: {item.notes}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </>
@@ -642,10 +613,10 @@ export default function MentorMonevView({ darkMode, dbUser }) {
       )}
 
       {/* ============================================================== */}
-      {/* SUB-TAB 3: OBSERVASI WILAYAH (INSTRUMEN 3)                      */}
+      {/* SUB-TAB 3: OBSERVASI WILAYAH (LAPORAN AKHIR)                   */}
       {/* ============================================================== */}
       {activeSubTab === 'wilayah' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {data.wilayahObservations.length === 0 ? (
             <div className={`border rounded-3xl p-10 sm:p-12 text-center flex flex-col items-center gap-2.5 ${card}`}>
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
@@ -657,64 +628,69 @@ export default function MentorMonevView({ darkMode, dbUser }) {
             <>
               {/* PERIOD SELECTOR (IF MULTIPLE) */}
               {data.wilayahObservations.length > 1 && (
-                <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap ${card}`}>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                    <Layers className="w-4 h-4 text-purple-500" />
-                    Pilih Periode Observasi:
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {data.wilayahObservations.map((obs) => (
-                      <button
-                        key={obs.id}
-                        onClick={() => setSelectedObsId(obs.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeObs?.id === obs.id
-                            ? 'bg-purple-600 text-white font-black'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                        }`}
-                      >
-                        {obs.periodName} ({new Date(obs.observationDate).toLocaleDateString('id-ID')})
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {data.wilayahObservations.map((obs) => (
+                    <button
+                      key={obs.id}
+                      onClick={() => setSelectedObsId(obs.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        activeObs?.id === obs.id
+                          ? 'bg-purple-600 text-white font-black'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      {obs.periodName} ({new Date(obs.observationDate).toLocaleDateString('id-ID')})
+                    </button>
+                  ))}
                 </div>
               )}
 
               {activeObs && (
                 <>
-                  {/* OBS INFO HERO */}
-                  <div className={`border rounded-3xl p-6 ${card} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                        <Compass className="w-6 h-6" />
+                  {/* OBS INFO HERO + 1-LINE METADATA */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                        <Compass className="w-5 h-5" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                            Laporan Observasi Wilayah
-                          </span>
-                          <span className="text-xs text-slate-400">· {activeObs.periodName}</span>
-                        </div>
-                        <h2 className="text-lg font-black mt-0.5">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-500 block">
+                          Observasi Wilayah
+                        </span>
+                        <h2 className="text-base sm:text-lg font-black truncate">
                           Wilayah {activeObs.wilayah?.name || 'Program'}
                         </h2>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6 text-xs text-slate-400 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold block">Tanggal Observasi</span>
-                        <span className="font-bold text-slate-800 dark:text-white">
+                    <div className={`mt-3.5 pt-3.5 border-t ${darkMode ? 'border-slate-800' : 'border-slate-100'} grid grid-cols-3 divide-x ${darkMode ? 'divide-slate-800' : 'divide-slate-200/80'}`}>
+                      <div className="pr-2 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Layers className="w-2.5 h-2.5 text-purple-500 shrink-0" /> Periode
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
+                          {activeObs.periodName}
+                        </span>
+                      </div>
+
+                      <div className="px-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5 text-purple-500 shrink-0" /> Tanggal
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
                           {new Date(activeObs.observationDate).toLocaleDateString('id-ID', {
                             day: 'numeric',
-                            month: 'long',
+                            month: 'short',
                             year: 'numeric',
                           })}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold block">Observer</span>
-                        <span className="font-bold text-slate-800 dark:text-white">
+
+                      <div className="pl-2.5 flex flex-col justify-center min-w-0">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <User className="w-2.5 h-2.5 text-purple-500 shrink-0" /> Observer
+                        </span>
+                        <span className="font-extrabold text-[10px] sm:text-xs text-slate-800 dark:text-white truncate mt-0.5">
                           {activeObs.evaluatedBy?.name || 'Superadmin'}
                         </span>
                       </div>
@@ -722,12 +698,12 @@ export default function MentorMonevView({ darkMode, dbUser }) {
                   </div>
 
                   {/* BAGIAN A: PERKEMBANGAN PROGRAM */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className={`border rounded-3xl p-6 ${card} space-y-2`}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} space-y-2`}>
                       <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-4 h-4 shrink-0" />
                         <h3 className="font-black text-xs uppercase tracking-wider">
-                          Realisasi Pelaksanaan Program
+                          Realisasi Program
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
@@ -737,11 +713,11 @@ export default function MentorMonevView({ darkMode, dbUser }) {
                       </p>
                     </div>
 
-                    <div className={`border rounded-3xl p-6 ${card} space-y-2`}>
+                    <div className={`border rounded-3xl p-4 sm:p-5 ${card} space-y-2`}>
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <User className="w-4 h-4" />
+                        <User className="w-4 h-4 shrink-0" />
                         <h3 className="font-black text-xs uppercase tracking-wider">
-                          Performa Mentor Wilayah
+                          Performa Mentor
                         </h3>
                       </div>
                       <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
@@ -752,56 +728,46 @@ export default function MentorMonevView({ darkMode, dbUser }) {
                     </div>
                   </div>
 
-                  {/* BAGIAN B: TEMUAN & REKOMENDASI (DUE DATE) */}
-                  <div className={`border rounded-3xl p-6 ${card} space-y-4`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-black text-base">Temuan & Rekomendasi Solusi Wilayah</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Tindak lanjut perbaikan target program beserta batas waktu (due date) penyelesaian.
-                        </p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                        {Array.isArray(activeObs.findings) ? activeObs.findings.length : 0} Butir Temuan
+                  {/* BAGIAN B: TEMUAN & REKOMENDASI */}
+                  <div className={`border rounded-3xl p-4 sm:p-5 ${card} space-y-3.5`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-black text-sm sm:text-base">Temuan & Rekomendasi</h3>
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
+                        {Array.isArray(activeObs.findings) ? activeObs.findings.length : 0} Temuan
                       </span>
                     </div>
 
                     {(!Array.isArray(activeObs.findings) || activeObs.findings.length === 0) ? (
-                      <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold text-center">
-                        ✓ Tidak ada temuan kendala target program. Seluruh indikator wilayah berjalan sesuai rencana!
+                      <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold text-center">
+                        ✓ Tidak ada temuan kendala target program.
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         {activeObs.findings.map((item, idx) => (
                           <div
                             key={item.id || idx}
-                            className={`p-4 rounded-2xl border ${subCard} space-y-3`}
+                            className={`p-3.5 rounded-2xl border ${subCard} space-y-2.5`}
                           >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-black text-xs flex items-center justify-center">
-                                  {idx + 1}
-                                </span>
-                                <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
-                                  Temuan Ketidakcapaian
-                                </span>
-                              </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="px-2 py-0.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-black text-[10px] uppercase">
+                                Temuan #{idx + 1}
+                              </span>
 
                               {item.dueDate && (
-                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-black">
-                                  <Clock className="w-3.5 h-3.5" />
-                                  Due Date: {item.dueDate}
-                                </div>
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black">
+                                  <Clock className="w-3 h-3" />
+                                  {item.dueDate}
+                                </span>
                               )}
                             </div>
 
-                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 pl-8">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
                               {item.finding}
                             </p>
 
-                            <div className="ml-8 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1">
+                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1">
                               <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 block">
-                                Rekomendasi Solusi & Arahan:
+                                Rekomendasi Solusi:
                               </span>
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                                 {item.recommendation || <span className="italic text-slate-400">Belum ada arahan rekomendasi.</span>}
