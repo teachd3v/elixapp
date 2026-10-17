@@ -230,7 +230,7 @@ export default function AwardeeMonevView({ darkMode, dbUser }) {
                             </div>
                             <div>
                               <h4 className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                                Aspek: {group.aspectName}
+                                {group.aspectName}
                               </h4>
                               <span className="text-[10px] text-slate-400">
                                 {group.items.length} Pertanyaan Tercatat
