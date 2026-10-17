@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BookOpen, Plus, Calendar, Clock, MapPin, Video, Building2,
   FileText, BarChart2, AlertCircle, CheckCircle2, Image as ImageIcon,
-  Trash2, Pencil, Download, Search, Filter, X, Eye, Sparkles, Hash, UploadCloud
+  Trash2, Pencil, Download, Search, Filter, X, Eye, Sparkles, Hash, UploadCloud,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useDialog } from './DialogProvider';
 import { fileToCompressedDataUrl } from '../lib/image';
@@ -100,6 +101,7 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterActivity, setFilterActivity] = useState('ALL');
   const [filterLocationType, setFilterLocationType] = useState('ALL');
+  const [openCardId, setOpenCardId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [previewPhoto, setPreviewPhoto] = useState(null);
 
@@ -479,7 +481,7 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari Unique ID, kegiatan, tanggal (DD/MM/YYYY), lokasi, atau capaian..."
+            placeholder="Cari kegiatan, tanggal (DD/MM/YYYY), lokasi, atau capaian..."
             className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-semibold border outline-none transition-all ${inputClass}`}
           />
         </div>
@@ -528,161 +530,208 @@ export default function MentorJournalManager({ darkMode, dbUser }) {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {filteredJournals.map((j) => {
+            const isCardOpen = openCardId === j.id;
             const isExpanded = expandedId === j.id;
             const formattedDate = formatDateDDMMYYYY(j.activityDate);
             const isDaring = j.locationType === 'Daring';
 
+            const toggleCard = () => {
+              if (isCardOpen) {
+                setOpenCardId(null);
+                if (expandedId === j.id) setExpandedId(null);
+              } else {
+                setOpenCardId(j.id);
+              }
+            };
+
             return (
               <div
                 key={j.id}
-                className={`border rounded-3xl p-5 transition-all hover:shadow-md ${cardClass}`}
+                className={`border rounded-3xl p-4 sm:p-5 transition-all hover:shadow-md ${cardClass}`}
               >
-                {/* Top Row: Unique ID, Activity Badge, Date/Time, Actions */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px] font-black border border-slate-200 dark:border-slate-700">
-                      <Hash className="w-3 h-3 text-amber-500" />
-                      {j.journalCode}
-                    </span>
+                {/* Header Card (Collapsible - Default Tertutup): Nama Kegiatan, Lokasi, Tanggal/Jam, Aksi */}
+                <div className="flex flex-col gap-3">
+                  <div
+                    onClick={toggleCard}
+                    className="flex items-start justify-between gap-2.5 cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="px-3 py-1 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-xs">
+                        {j.activityName}
+                      </span>
 
-                    <span className="px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-xs">
-                      {j.activityName}
-                    </span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                          isDaring
+                            ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        }`}
+                      >
+                        {isDaring ? <Video className="w-3 h-3 shrink-0" /> : <Building2 className="w-3 h-3 shrink-0" />}
+                        <span className="truncate">{j.locationType}: {j.locationDetail}</span>
+                      </span>
+                    </div>
 
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${
-                        isDaring
-                          ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
-                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      }`}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCard();
+                      }}
+                      className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
+                      title={isCardOpen ? 'Tutup Capaian' : 'Buka Capaian'}
                     >
-                      {isDaring ? <Video className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
-                      {j.locationType}: {j.locationDetail}
-                    </span>
+                      {isCardOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-2">
-                    <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 mr-2">
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div
+                      onClick={toggleCard}
+                      className="flex items-center gap-3 text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 cursor-pointer select-none"
+                    >
                       <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                        <Calendar className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         {formattedDate}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-sky-500" />
+                        <Clock className="w-3.5 h-3.5 text-sky-500 shrink-0" />
                         {j.activityTime} WIB
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => openEditModal(j)}
-                      className="p-2 rounded-xl bg-slate-100 hover:bg-amber-500/15 text-slate-600 hover:text-amber-600 dark:bg-slate-800 dark:text-slate-300 transition-colors cursor-pointer"
-                      title="Edit Jurnal"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(j)}
-                      className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-colors cursor-pointer"
-                      title="Hapus Jurnal"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Main Grid Preview: Capaian Kualitatif & Kuantitatif */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-indigo-500 mb-1.5">
-                      <FileText className="w-3.5 h-3.5" /> Capaian Kualitatif
-                    </div>
-                    <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                      {j.qualitativeAchievement}
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-500 mb-1.5">
-                      <BarChart2 className="w-3.5 h-3.5" /> Capaian Kuantitatif (Result / Indikator)
-                    </div>
-                    <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                      {j.quantitativeAchievement}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Expandable or Visible Details: Identifikasi Masalah, Rencana Perbaikan, Evidence */}
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {j.evidenceText && (
-                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
-                        <FileText className="w-3 h-3" /> Evidence Teks: {j.evidenceText.slice(0, 45)}{j.evidenceText.length > 45 ? '...' : ''}
-                      </span>
-                    )}
-                    {j.evidencePhoto && (
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
-                        onClick={() => setPreviewPhoto(j.evidencePhoto)}
-                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        type="button"
+                        onClick={() => openEditModal(j)}
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-amber-500/15 text-slate-600 hover:text-amber-600 dark:bg-slate-800 dark:text-slate-300 transition-colors cursor-pointer"
+                        title="Edit Jurnal"
                       >
-                        <ImageIcon className="w-3 h-3" /> Lihat Foto Dokumentasi
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(j)}
+                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-colors cursor-pointer"
+                        title="Hapus Jurnal"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : j.id)}
-                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    {isExpanded ? 'Sembunyikan Detail Evaluasi' : 'Lihat Masalah & Rencana Perbaikan'}
-                  </button>
                 </div>
 
-                {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4 animate-fade-in">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/15">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-500 mb-1.5">
-                          <AlertCircle className="w-3.5 h-3.5" /> Identifikasi Masalah
+                {/* Isi Collapse: Capaian Kualitatif & Kuantitatif + Thumbnail Foto + Tombol Mata */}
+                {isCardOpen && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3.5 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-500 mb-1.5">
+                          <FileText className="w-3.5 h-3.5" /> Capaian Kualitatif
                         </div>
                         <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                          {j.problemIdentification}
+                          {j.qualitativeAchievement}
                         </p>
                       </div>
 
-                      <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/15">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
-                          <Sparkles className="w-3.5 h-3.5" /> Rencana Perbaikan
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-500 mb-1.5">
+                          <BarChart2 className="w-3.5 h-3.5" /> Capaian Kuantitatif (Result / Indikator)
                         </div>
                         <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
-                          {j.improvementPlan}
+                          {j.quantitativeAchievement}
                         </p>
                       </div>
                     </div>
 
-                    {/* Full Evidence Box */}
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                        10. Evidence / Bukti Dokumentasi Lengkap
-                      </span>
-                      {j.evidenceText && (
-                        <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mb-3 break-words">
-                          📝 <span className="font-bold">Keterangan / Tautan:</span> {j.evidenceText}
-                        </p>
-                      )}
-                      {j.evidencePhoto && (
-                        <div>
-                          <img
-                            src={j.evidencePhoto}
-                            alt="Dokumentasi Jurnal"
+                    {/* Bar Bawah Capaian: Thumbnail Foto / Unggahan File & Tombol Mata */}
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {j.evidencePhoto ? (
+                          <button
+                            type="button"
                             onClick={() => setPreviewPhoto(j.evidencePhoto)}
-                            className="max-h-60 rounded-xl border border-slate-200 dark:border-slate-700 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                          />
-                        </div>
-                      )}
+                            className="group relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 cursor-pointer"
+                            title="Klik untuk memperbesar foto dokumentasi"
+                          >
+                            <img
+                              src={j.evidencePhoto}
+                              alt="Thumbnail Dokumentasi"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-white" />
+                            </div>
+                          </button>
+                        ) : j.evidenceText ? (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : j.id)}
+                            className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 cursor-pointer"
+                            title={j.evidenceText}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">Tanpa lampiran foto</span>
+                        )}
+
+                        {j.evidenceText && (
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                            {j.evidenceText}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isExpanded ? null : j.id)}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all shrink-0 cursor-pointer ${
+                          isExpanded
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
+                            : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20'
+                        }`}
+                        title={isExpanded ? 'Sembunyikan Detail Lainnya' : 'Lihat Detail Keterangan Lainnya'}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                     </div>
+
+                    {/* Detail Keterangan Lainnya (Saat Tombol Mata Diklik) */}
+                    {isExpanded && (
+                      <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800 space-y-3.5 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                          <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/15">
+                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-500 mb-1.5">
+                              <AlertCircle className="w-3.5 h-3.5" /> Identifikasi Masalah
+                            </div>
+                            <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
+                              {j.problemIdentification}
+                            </p>
+                          </div>
+
+                          <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
+                              <Sparkles className="w-3.5 h-3.5" /> Rencana Perbaikan
+                            </div>
+                            <p className="text-xs leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200">
+                              {j.improvementPlan}
+                            </p>
+                          </div>
+                        </div>
+
+                        {j.evidenceText && (
+                          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 break-words">
+                            <span className="font-black text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+                              Keterangan Evidence / Tautan
+                            </span>
+                            {j.evidenceText}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
