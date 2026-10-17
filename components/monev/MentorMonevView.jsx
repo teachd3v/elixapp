@@ -83,56 +83,71 @@ export default function MentorMonevView({ darkMode, dbUser }) {
           Hasil Monev
         </h1>
 
-        {/* SUB-TABS NAVIGATION (3 KOLOM) */}
-        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+        {/* SUB-TABS NAVIGATION */}
+        <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={() => setActiveSubTab('performance')}
-            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            title="Performa Kerja"
+            className={`py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeSubTab === 'performance'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'flex-1 px-4 bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'px-3.5 shrink-0 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800'
             }`}
           >
             <Award className="w-4 h-4 shrink-0" />
-            <span className="truncate">Performa Kerja</span>
-            {data.performanceEvaluations.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
-                {data.performanceEvaluations.length}
-              </span>
+            {activeSubTab === 'performance' && (
+              <>
+                <span className="truncate">Performa Kerja</span>
+                {data.performanceEvaluations.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
+                    {data.performanceEvaluations.length}
+                  </span>
+                )}
+              </>
             )}
           </button>
 
           <button
             onClick={() => setActiveSubTab('teaching')}
-            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            title="Kompetensi Mengajar"
+            className={`py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeSubTab === 'teaching'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'flex-1 px-4 bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'px-3.5 shrink-0 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800'
             }`}
           >
             <BookOpen className="w-4 h-4 shrink-0" />
-            <span className="truncate">Kompetensi Mengajar</span>
-            {data.teachingEvaluations.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
-                {data.teachingEvaluations.length}
-              </span>
+            {activeSubTab === 'teaching' && (
+              <>
+                <span className="truncate">Kompetensi Mengajar</span>
+                {data.teachingEvaluations.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
+                    {data.teachingEvaluations.length}
+                  </span>
+                )}
+              </>
             )}
           </button>
 
           <button
             onClick={() => setActiveSubTab('wilayah')}
-            className={`py-2.5 px-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            title="Laporan Akhir"
+            className={`py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeSubTab === 'wilayah'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'flex-1 px-4 bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'px-3.5 shrink-0 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800'
             }`}
           >
             <FileText className="w-4 h-4 shrink-0" />
-            <span className="truncate">Laporan Akhir</span>
-            {data.wilayahObservations.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
-                {data.wilayahObservations.length}
-              </span>
+            {activeSubTab === 'wilayah' && (
+              <>
+                <span className="truncate">Laporan Akhir</span>
+                {data.wilayahObservations.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/15 shrink-0">
+                    {data.wilayahObservations.length}
+                  </span>
+                )}
+              </>
             )}
           </button>
         </div>
